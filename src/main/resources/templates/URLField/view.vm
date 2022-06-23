@@ -1,0 +1,18 @@
+<!-- Display value as hyperlinks -->
+#if ($value)
+	#if ($issue)
+		#set ($obj = $customField.getValue($issue))
+	#else
+		#set ($obj = $value)
+	#end
+#end
+#if ($obj)
+	#if ($obj.size() > 0)
+		#foreach ($item in $obj)
+			#if (!$item.displayText or $item.displayText.isEmpty())
+				#set ($item.displayText = $item.url)
+			#end
+			<a href="$!item.url" target="_blank" rel="noopener noreferrer">$!item.displayText</a><br/>
+		#end
+	#end
+#end

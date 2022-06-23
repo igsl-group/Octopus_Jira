@@ -1,0 +1,215 @@
+## i18n
+#set ($taskLabel = $i18n.getText("EffortTable.task.label"))
+#set ($taskHelpText = $i18n.getText("EffortTable.task.helpText"))
+#set ($headCountDayLabel = $i18n.getText("EffortTable.headCountDay.label"))
+#set ($headCountDayHelpText = $i18n.getText("EffortTable.headCountDay.helpText"))
+#set ($expensesLabel = $i18n.getText("EffortTable.expenses.label"))
+#set ($expensesHelpText = $i18n.getText("EffortTable.expenses.helpText"))
+#set ($totalHeadCountDayLabel = $i18n.getText("EffortTable.totalHeadCountDay.label"))
+#set ($totalHeadCountDayHelpText = $i18n.getText("EffortTable.totalHeadCountDay.helpText"))
+#set ($dollar = $i18n.getText("EffortTable.currencySymbol"))
+#set ($deleteButton = $i18n.getText("EffortTable.deleteButton"))
+#set ($addButton = $i18n.getText("EffortTable.addButton"))
+
+#if ($value)
+	#if ($issue)
+		#set ($obj = $customField.getValue($issue))
+	#else
+		#set ($obj = $configs.default)
+	#end
+#end
+
+#set ($mode = 'Edit')
+#set ($panel = ${customField.id} + ${mode})
+#set ($state = ${issue.key} + '.' + ${customField.id} + '.State')
+#set ($toggle = ${panel} + '_Toggle')
+#set ($useSessionState = $false)
+
+#controlHeader ($action $customField.id $customField.name $fieldLayoutItem.required $displayParameters.noHeader)
+<div class="table-header" onclick="${toggle}()">
+	<span id="${panel}_Collapsed" style="display: none">&#11166;</span>
+	<span id="${panel}_Expanded">&#11167;</span>
+	<span>${customField.name}</span>
+</div>
+<div id="${panel}">
+	<input type="text" style="display: none" id="${customField.id}" name="${customField.id}" value="$!{value}"/>
+	<input type="text" style="display: none" id="${customField.id}:dummy" name="${customField.id}:dummy" value="Dummy"/>
+	<table class="edit-table">
+		<thead>
+			<tr>
+				<th width="1%"></th>
+				<th>${taskLabel}</th>
+				<th>${headCountDayLabel}</th>			
+			</tr>
+		</thead>
+		<tbody id="${customField.id}_EffortTableBody">
+			#set ($idx = 0)
+			#set ($hasData = 0)
+			#if ($obj)
+				#set ($rows = $obj.rows)
+				#if ($rows.size() > 0)
+					#set ($hasData = 1)
+					#foreach ($row in $rows)
+						<tr id="${customField.id}_fieldset_${velocityCount}">
+							<td>
+								<button type="button" onclick="${customField.id}_removeRow('#${customField.id}_fieldset_${velocityCount}')">
+									<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}
+								</button>
+							</td>	
+							<td>
+								<input 	type="text" 
+										id="${customField.id}:task:${velocityCount}" 
+										name="${customField.id}:task" 
+										placeholder="${taskHelpText}" 
+										value="$!{row.task}"/>
+							</td>
+							<td>
+								<input 	type="number" step="any" min="0"
+										class="headCountDay" 
+										id="${customField.id}:headCountDay:${velocityCount}" 
+										name="${customField.id}:headCountDay" 
+										placeholder="${headCountDayHelpText}"
+										value="${row.headCountDay}" 
+										onkeyup="${customField.id}_calculateTotal()"/>
+							</td>
+						</tr>
+						#set ($idx = $velocityCount)
+					#end
+				#end
+			#end
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="100%">
+					<button type="button" onclick="${customField.id}_addRow()">
+						<span class="aui-icon aui-icon-small aui-iconfont-add"></span> ${addButton}
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<th></th>
+				<th>${expensesLabel}</th>
+				<th>${totalHeadCountDayLabel}</th>
+			</tr>
+			<tr>
+				<td></td>
+				<td>${dollar}<input type="number" 
+									min="0" 
+									step="0.01" 
+									id="${customField.id}:expenses" 
+									name="${customField.id}:expenses" 
+									value="$!{obj.expenses}" 
+									placeholder="${expensesHelpText}"/>
+				</td>
+				<td>
+					<input 	style="background: darkgrey" 
+							readonly="true" 
+							type="number" 
+							step="any" 
+							id="${customField.id}:totalHeadCountDay" 
+							name="${customField.id}:totalHeadCountDay" 
+							value="$!{obj.totalHeadCountDay}"/>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+<script type="text/javascript">
+	var ${customField.id}_idx = ${idx};
+	function ${customField.id}_removeRow(id) {
+		$(id).remove();
+		${customField.id}_calculateTotal();
+	}
+	function ${customField.id}_addRow() {
+		${customField.id}_idx++;
+		var newControlHTML =
+			'<tr id="${customField.id}_fieldset_' + ${customField.id}_idx + '">' + 
+			'	<td>' + 
+			'		<button type="button" onclick="${customField.id}_removeRow(\'#${customField.id}_fieldset_' + ${customField.id}_idx + '\')">' + 
+			'			<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}' + 
+			'		</button>' + 
+			'	</td>	' + 
+			'	<td>' + 
+			'		<input 	type="text" ' + 
+			'				id="${customField.id}:task:' + ${customField.id}_idx + '" ' + 
+			'				name="${customField.id}:task" ' + 
+			'				placeholder="${taskHelpText}" ' + 
+			'				value="$!{row.task}"/>' + 
+			'	</td>' + 
+			'	<td>' + 
+			'		<input 	type="number" step="any" min="0"' + 
+			'				class="headCountDay" ' + 
+			'				id="${customField.id}:headCountDay:' + ${customField.id}_idx + '" ' + 
+			'				name="${customField.id}:headCountDay" ' + 
+			'				placeholder="${headCountDayHelpText}"' + 
+			'				value="${row.headCountDay}" ' + 
+			'				onkeyup="${customField.id}_calculateTotal()"/>' + 
+			'	</td>' + 
+			'</tr>';
+		$('#${customField.id}_EffortTableBody').append(newControlHTML);
+		${customField.id}_calculateTotal();
+	}
+	function ${customField.id}_calculateTotal() {
+		var list = $('input.headCountDay');
+		var sum = 0;
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].value) {
+				sum += parseFloat(list[i].value);
+			}
+		}
+		var field = $('#${customField.id}\\:totalHeadCountDay')[0];
+		if (field) {
+			field.value = sum;
+		}
+	}
+	
+	// Listen to event, we need to initialize select2 on newly added edit controls
+	JIRA.bind(JIRA.Events.NEW_CONTENT_ADDED, function(e, context, reason) {
+		// Add first item if empty
+		if ($('tr[id^="${customField.id}_fieldset_"]').length == 0) {
+			${customField.id}_addRow();
+		}
+	});	
+	
+	function ${toggle}_Helper(state) {
+		var panel = '#${panel}';
+		var expanded = panel + '_Expanded';
+		var collapsed = panel + '_Collapsed';
+		if (state === null) {
+			if (${useSessionState}) {
+				// Get state from sessionStorage
+				var s = sessionStorage.getItem('${state}');
+				if (s) {
+					state = (JSON.parse(s) === true);
+				} else {
+					state = true;
+				}
+			} else {
+				// Not using session state and state not provided, do nothing
+				return;
+			}
+		} 
+		if (state) {
+			$(panel).show();
+			$(expanded).show();
+			$(collapsed).hide();
+		} else {
+			$(panel).hide();
+			$(expanded).hide();
+			$(collapsed).show();
+		}
+		if (${useSessionState}) {
+			sessionStorage.setItem('${state}', JSON.stringify(state));
+		}
+	}
+	function ${toggle}() {
+		if ($(${panel}).is(":hidden")) {
+			${toggle}_Helper(true);
+		} else {
+			${toggle}_Helper(false);
+		}
+	}
+	// Apply state
+	${toggle}_Helper(null);
+</script>
+#controlFooter ($action $customField.name $displayParameters.noHeader)

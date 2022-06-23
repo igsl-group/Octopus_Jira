@@ -1,0 +1,414 @@
+## i18n
+#set ($taskLabel = $i18n.getText("EffortTable.task.label"))
+#set ($taskHelpText = $i18n.getText("EffortTable.task.helpText"))
+#set ($headCountDayLabel = $i18n.getText("EffortTable.headCountDay.label"))
+#set ($headCountDayHelpText = $i18n.getText("EffortTable.headCountDay.helpText"))
+#set ($expensesLabel = $i18n.getText("EffortTable.expenses.label"))
+#set ($expensesHelpText = $i18n.getText("EffortTable.expenses.helpText"))
+#set ($totalHeadCountDayLabel = $i18n.getText("EffortTable.totalHeadCountDay.label"))
+#set ($totalHeadCountDayHelpText = $i18n.getText("EffortTable.totalHeadCountDay.helpText"))
+#set ($dollar = $i18n.getText("EffortTable.currencySymbol"))
+#set ($deleteButton = $i18n.getText("EffortTable.deleteButton"))
+#set ($addButton = $i18n.getText("EffortTable.addButton"))
+
+## Because EffortTable2 is masquerading as a text field, $value is a String.
+## So we provide the data class and Gson parser in Velocity parameters, and parse the string right here.
+#if ($value) 
+	#if ($issue)
+		## We are editing an issue
+		#set ($obj = $gson.fromJson($value, $class))
+	#else
+		## We are setting default, but is it in Jira Custom Field or Service Management Request Type?
+		## Use displayParameters.objectValue to decide, it is only given in Jira Custom Field
+		#if ($displayParametrers.objectValue) 
+			#set ($obj = $gson.fromJson($configs.default, $class))
+		#else
+			#set ($obj = $gson.fromJson($value, $class))
+		#end
+	#end
+#end
+
+#set ($mode = 'Edit')
+#set ($panel = ${customField.id} + ${mode})
+#set ($state = ${issue.key} + '.' + ${customField.id} + '.State')
+#set ($toggle = ${panel} + '_Toggle')
+#set ($useSessionState = $false)
+
+#controlHeader ($action $customField.id $customField.name $fieldLayoutItem.required $displayParameters.noHeader)
+<div class="table-header" onclick="${toggle}()">
+	<span id="${panel}_Collapsed" style="display: none">&#11166;</span>
+	<span id="${panel}_Expanded">&#11167;</span>
+	<span>${customField.name}</span>
+</div>
+<div id="${panel}">
+	<input type="text" style="display: none" id="${customField.id}" name="${customField.id}" value="$!{value}"/>
+	<table class="edit-table">
+		<thead>
+			<tr>
+				<th width="1%"></th>
+				<th>${taskLabel}</th>
+				<th>${headCountDayLabel}</th>			
+			</tr>
+		</thead>
+		<tbody id="${customField.id}_EffortTableBody">
+			#set ($idx = 0)
+			#set ($hasData = 0)
+			#if ($obj)
+				#set ($rows = $obj.rows)
+				#if ($rows.size() > 0)
+					#set ($hasData = 1)
+					#foreach ($row in $rows)
+						<tr id="${customField.id}_fieldset_${velocityCount}">
+							<td>
+								<button type="button" class="${customField.id}_control" onclick="${customField.id}_removeRow('#${customField.id}_fieldset_${velocityCount}')">
+									<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}
+								</button>
+							</td>	
+							<td>
+								<input 	type="text"
+										style="width: 0px" 
+										class="taskSelector ${customField.id}_control"
+										id="${customField.id}:task:${velocityCount}" 
+										name="${customField.id}:task" 
+										placeholder="${taskHelpText}" 
+										value="$!{row.task}"
+										onkeyup="${customField.id}_updateValue()"/>
+							</td>
+							<td>
+								<input 	type="number" step="any" min="0"
+										class="${customField.id}_headCountDay ${customField.id}_control" 
+										id="${customField.id}:headCountDay:${velocityCount}" 
+										name="${customField.id}:headCountDay" 
+										placeholder="${headCountDayHelpText}"
+										value="$!{row.headCountDay}" 
+										onkeyup="${customField.id}_updateValue()"/>
+							</td>
+						</tr>
+						#set ($idx = $velocityCount)
+					#end
+				#end
+			#end
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="100%">
+					<button type="button" class="${customField.id}_control" onclick="${customField.id}_addRow()">
+						<span class="aui-icon aui-icon-small aui-iconfont-add"></span> ${addButton}
+					</button>
+				</td>
+			</tr>
+			<tr>
+				<th></th>
+				<th>${expensesLabel}</th>
+				<th>${totalHeadCountDayLabel}</th>
+			</tr>
+			<tr>
+				<td></td>
+				<td>${dollar}<input type="number" 
+									min="0" 
+									step="0.01" 
+									class="${customField.id}_control"
+									id="${customField.id}:expenses" 
+									name="${customField.id}:expenses" 
+									value="$!{obj.expenses}" 
+									placeholder="${expensesHelpText}"
+									onkeyup="${customField.id}_updateValue()"/>
+				</td>
+				<td>
+					<input 	style="background: darkgrey" 
+							class="${customField.id}_control"
+							readonly="true" 
+							type="number" 
+							step="any" 
+							id="${customField.id}:totalHeadCountDay" 
+							name="${customField.id}:totalHeadCountDay" 
+							value="$!{obj.totalHeadCountDay}"
+							onkeyup="${customField.id}_updateValue()"/>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+<script type="text/javascript">
+	#disable_html_escaping()
+	var ${customField.id}_taskList = [
+		#foreach ($item in $taskList)
+			{
+				id: '${item}',
+				text: '${item}'
+			},
+		#end
+	];
+	#enable_html_escaping()
+	
+	var ${customField.id}_idx = ${idx};
+	function ${customField.id}_initIssueSelector(index) {
+		var selectControl;
+		if (!index) {
+			// Apply to all
+			selectControl = 'input.taskSelector[id^="${customField.id}:task:"]';
+		} else {
+			selectControl = 'input.taskSelector[id="${customField.id}:task:' + index + '"]';
+		}
+		// Setup dropdown list (Jira includes Select2 v3.5, not v4)
+		var select2Config = {
+			placeholder: '${taskHelpText}',
+			width: '100%',
+			minimumInputLength: 0,
+			query: function(query) {
+				var result = [];
+				if (query.term == null || query.term == "") {
+					// Provide default options
+					for (var item in ${customField.id}_taskList) {
+						result.push(${customField.id}_taskList[item]);	
+					}
+				} else {				
+					var found = false;
+					var exactMatch = false;
+					var matchingResult = [];
+					for (var item in ${customField.id}_taskList) {
+						// string::localeCompare support is still spotty, use toUpperCase to be safe
+						if (${customField.id}_taskList[item].id.toUpperCase().indexOf(query.term.toUpperCase()) != -1) {
+							found = true;
+							if (${customField.id}_taskList[item].id.toUpperCase() == query.term.toUpperCase()) {
+								exactMatch = true;
+							}
+							matchingResult.push(${customField.id}_taskList[item]);
+						}
+					}
+					if (!found || !exactMatch) {
+						// Add search term
+						result.push({id: query.term, text: query.term});
+					}
+					for (var item in matchingResult) {
+						// Add matching default options
+						result.push(matchingResult[item]);
+					}
+				}
+				query.callback({results: result});
+			}
+		};
+		$(selectControl).select2(select2Config);
+		// Setup onchange event to update project manager
+		$(selectControl).on('change', function(evt) {
+			${customField.id}_updateValue();
+		});
+		// Set initial value
+		$(selectControl).each(function() {
+			if (this.value) {
+				$(this).select2('data', {id: this.value, text: this.value});
+			}
+		});
+		${customField.id}_updateValue();
+	}
+	function ${customField.id}_updateValue() {
+		${customField.id}_calculateTotal();
+		var data = {
+			rows: [],
+			expenses: 0, 
+			totalHeadCountDay: 0
+		};
+		var field = $('#${customField.id}\\:expenses')[0];
+		if (field) {
+			data.expenses = (field.value == "")? null : field.value;
+		}
+		field = $('#${customField.id}\\:totalHeadCountDay')[0];
+		if (field) {
+			data.totalHeadCountDay = (field.value == "")? null : field.value;
+		}
+		$('tr[id^="${customField.id}_fieldset_"]').each(function() {
+			var task = null;
+			field = $(this).find('input[id^="${customField.id}\\:task\\:"]')[0];
+			if (field) {
+				task = (field.value == "")? null : field.value;
+			}
+			var headCountDay = null;
+			field = $(this).find('input[id^="${customField.id}\\:headCountDay\\:"]')[0];
+			if (field) {
+				headCountDay = (field.value == "")? null : field.value;
+			}
+			if (task != null || headCountDay != null) {
+				data.rows.push({
+					task: task,
+					headCountDay: headCountDay
+				});
+			}
+		});
+		var field = $('#${customField.id}')[0];
+		if (field) {
+			field.value = JSON.stringify(data);
+		}
+	}
+	function ${customField.id}_removeRow(id) {
+		$(id).remove();
+		${customField.id}_updateValue();
+	}
+	function ${customField.id}_addRow() {
+		${customField.id}_idx++;
+		var newControlHTML =
+			'<tr id="${customField.id}_fieldset_' + ${customField.id}_idx + '">' + 
+			'	<td>' + 
+			'		<button type="button" class="${customField.id}_control" onclick="${customField.id}_removeRow(\'#${customField.id}_fieldset_' + ${customField.id}_idx + '\')">' + 
+			'			<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}' + 
+			'		</button>' + 
+			'	</td>	' + 
+			'	<td>' + 
+			'	<input 	type="text"' + 
+			'			style="width: 0px" ' + 
+			'			class="taskSelector ${customField.id}_control"' + 
+			'			id="${customField.id}:task:' + ${customField.id}_idx + '" ' + 
+			'			name="${customField.id}:task" ' + 
+			'			placeholder="${taskHelpText}" ' + 
+			'			value="$!{row.task}"' + 
+			'			onkeyup="${customField.id}_updateValue()"/>' + 
+			'	</td>' + 
+			'	<td>' + 
+			'		<input 	type="number" step="any" min="0"' + 
+			'				class="${customField.id}_headCountDay ${customField.id}_control" ' + 
+			'				id="${customField.id}:headCountDay:' + ${customField.id}_idx + '" ' + 
+			'				name="${customField.id}:headCountDay" ' + 
+			'				placeholder="${headCountDayHelpText}"' + 
+			'				value="$!{row.headCountDay}" ' + 
+			'				onkeyup="${customField.id}_updateValue()"/>' + 
+			'	</td>' + 
+			'</tr>';
+		$('#${customField.id}_EffortTableBody').append(newControlHTML);
+		${customField.id}_initIssueSelector(${customField.id}_idx);
+		${customField.id}_updateValue();
+	}
+	function ${customField.id}_calculateTotal() {
+		var list = $('input.${customField.id}_headCountDay');
+		var sum = 0;
+		for (var i = 0; i < list.length; i++) {
+			if (list[i].value) {
+				sum += parseFloat(list[i].value);
+			}
+		}
+		var field = $('#${customField.id}\\:totalHeadCountDay')[0];
+		if (field) {
+			field.value = sum;
+		}
+	}
+	
+	// Service Management added some extra event listener on blur, causing Select2 to automatically close inline edit mode.
+	// See https://jira.atlassian.com/browse/JSDSERVER-5777
+	// 
+	// Jira has several events for quick edit:
+	// INLINE_EDIT_STARTED - Start of inline edit
+	// INLINE_EDIT_BLURRED - On blur
+	// BEFORE_INLINE_EDIT_CANCEL - On canceling inline edit, i.e. the X button
+	// INLINE_EDIT_SAVE_COMPLETE - After save, but this is after a reload of this Velocity template, meaning data stored in JavaScript will be lost
+	// 
+	// Ideally we want to disable the blur event when starting quick edit in EffortTable2, then put the listeners back on save/cancel.
+	//
+	// Sadly blur is fired on using select2 as well as on save. The data in the event cannot be used to distinguish if it is using select2 or save. 
+	// And save complete is fired after the template got reloaded.
+	// Which means we don't have an opportunity to put the listeners back. 
+	//
+	// So the only workaround available is to disable blur completely.
+	// Which means user has to explicitly click the buttons to close inline edit, clicking outside has no effect.
+	//
+	// Unbind all blur events on starting inline edit. We cannot do this on load, blur events are not yet binded at that point.
+	JIRA.bind(JIRA.Events.INLINE_EDIT_STARTED, function(e, context, reason) {
+		JIRA.unbind(JIRA.Events.INLINE_EDIT_BLURRED);
+	});
+	
+	// Listen to event, we need to initialize select2 on newly added edit controls
+	// This event is bound to the whole document, and it triggers whenever the DOM tree changes (i.e. edit mode activated)
+	JIRA.bind(JIRA.Events.NEW_CONTENT_ADDED, function(e, context, reason) {
+		// Add first item if empty
+		if ($('tr[id^="${customField.id}_fieldset_"]').length == 0) {
+			${customField.id}_addRow();
+		} else {
+			${customField.id}_initIssueSelector(null);
+		}
+	});	
+	
+	AJS.toInit(function() {
+		${customField.id}_initIssueSelector(null);
+	});
+	
+	// Integration with ScriptRunner behavior
+	function ${customField.id}_ScriptRunnerHelper(mutationList, observer) {
+		// Check disabled attribute and class clientReadOnly
+		var enable = true;
+		if (mutationList) {
+			for (var i in mutationList) {
+				if (mutationList[i].attributeName = 'class') {
+					enable = !$(mutationList[i].target).hasClass('clientreadonly');
+				}
+			}
+		} else {
+			enabled = !$('#${customField.id}').hasClass('clientreadonly');
+		}
+		// If found, disable controls, otherwise enable controls
+		$('.${customField.id}_control').each(function() {
+			if (enable) {
+				$(this).prop('disabled', false);
+			} else {
+				$(this).prop('disabled', true);
+			}
+		});
+		// Select2 version 3.5 does not support disabled attribute, so update them directly.
+		$('.taskSelector').each(function() {
+			if (enable) {
+				$(this).select2('enable');
+			} else {
+				$(this).select2('disable');
+			}
+		});
+	}
+	var ${customField.id}_observer = null;
+	// Register DOM observer
+	var ${customField.id}_observerConfig = { 
+		attributes: true, 
+		childList: false, 
+		subtree: false
+	};
+	${customField.id}_observer = new MutationObserver(${customField.id}_ScriptRunnerHelper);
+	${customField.id}_observer.observe($('#${customField.id}')[0], ${customField.id}_observerConfig);
+	// Invoke it once immediately
+	${customField.id}_ScriptRunnerHelper();
+	
+	function ${toggle}_Helper(state) {
+		var panel = '#${panel}';
+		var expanded = panel + '_Expanded';
+		var collapsed = panel + '_Collapsed';
+		if (state === null) {
+			if (${useSessionState}) {
+				// Get state from sessionStorage
+				var s = sessionStorage.getItem('${state}');
+				if (s) {
+					state = (JSON.parse(s) === true);
+				} else {
+					state = true;
+				}
+			} else {
+				// Not using session state and state not provided, do nothing
+				return;
+			}
+		} 
+		if (state) {
+			$(panel).show();
+			$(expanded).show();
+			$(collapsed).hide();
+		} else {
+			$(panel).hide();
+			$(expanded).hide();
+			$(collapsed).show();
+		}
+		if (${useSessionState}) {
+			sessionStorage.setItem('${state}', JSON.stringify(state));
+		}
+	}
+	function ${toggle}() {
+		if ($(${panel}).is(":hidden")) {
+			${toggle}_Helper(true);
+		} else {
+			${toggle}_Helper(false);
+		}
+	}
+	// Apply state
+	${toggle}_Helper(null);
+</script>
+#controlFooter ($action $customField.name $displayParameters.noHeader)
