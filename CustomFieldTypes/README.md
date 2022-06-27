@@ -33,7 +33,7 @@
 
 ### Complex Custom Field
 1. Always name the HTML and JavaScript elements with the custom field's ID. This is to support multiple instances of the custom field.
-1. You can name additional form fields with name attribute = "${customField.id}:[Key]". Their values will be to CustomFieldParams parameter in .validateFromParams(). 
+1. You can name additional form fields with name attribute = "${customField.id}:[Key]". Their values will be supplied as CustomFieldParams parameter in .validateFromParams(). 
 
 ### Inline Edit Mode
 1. Jira's inline edit mode verifies that the edit template contains a non-hidden form field with an id attribute equals to the custom field ID.
