@@ -1,0 +1,243 @@
+## i18n 
+#set ($issueIdLabel = $i18n.getText("ChangeRequest.issueId.label"))
+#set ($issueIdHelpText = $i18n.getText("ChangeRequest.issueId.helpText"))
+#set ($projectManagerLabel = $i18n.getText("ChangeRequest.projectManager.label"))
+#set ($projectManagerHelpText = $i18n.getText("ChangeRequest.projectManager.helpText"))
+#set ($deleteButton = $i18n.getText("ChangeRequest.deleteButton"))
+#set ($addButton = $i18n.getText("ChangeRequest.addButton"))
+
+## Get value, or default if no issue
+#if ($issue) 
+	#set ($obj = $customField.getValue($issue))
+#else
+	#set ($obj = $configs.default)
+#end
+
+## Index for no. of data
+#set ($idx = 0)
+
+#set ($mode = 'Edit')
+#set ($panel = ${customField.id} + ${mode})
+#set ($state = ${issue.key} + '.' + ${customField.id} + '.State')
+#set ($toggle = ${panel} + '_Toggle')
+#set ($useSessionState = $false)
+
+#controlHeader ($action $customField.id $customField.name $fieldLayoutItem.required $displayParameters.noHeader)
+<!-- 
+	The way inline-edit works, Jira will load the edit template and check if there is a visible field with the expected name starting with ${customField.id}.
+	If you make the field hidden, Jira will disable inline edit for you.
+	So here we make the input width 0 to hide it.
+-->
+<div class="table-header" onclick="${toggle}()">
+	<span id="${panel}_Collapsed" style="display: none">&#11166;</span>
+	<span id="${panel}_Expanded">&#11167;</span>
+	<span>${customField.name}</span>
+</div>
+<div id="${panel}">
+	<table class="edit-table">
+		<thead>
+			<th width="1%"></th>
+			<th>${issueIdLabel}</th>
+			<th>${projectManagerLabel}</th>
+		</thead>
+		<tbody id="${customField.id}_ChangeRequestEdit_Body">
+			#if ($obj)
+				#if ($obj.size() > 0)
+					#foreach ($item in $obj)
+						<tr id="${customField.id}_fieldSet_${velocityCount}">
+							<td>
+								<button type="button" onclick="${customField.id}_removeCR('#${customField.id}_fieldSet_${velocityCount}')">
+									<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}
+								</button>
+							</td>	
+							<td>
+								<input 	type="text" 
+										style="width: 0px"
+										class="issueSelector" 
+										name="${customField.id}:issueId" 
+										id="${customField.id}:issueId:${velocityCount}" 
+										value="$!item.issueId"/>
+								<input 	type="hidden" 
+										id="${customField.id}:issueSummary:${velocityCount}" 
+										value="$!item.issueSummary"/>
+							</td>
+							<td>
+								<span 	style="display:block; text-align:center; margin:0 auto;" 
+										id="${customField.id}:projectManager:${velocityCount}">$!{item.projectManager}</span>
+							</td>
+						</tr>
+						#set ($idx = $velocityCount)
+					#end
+				#end
+			#end
+		</tbody>
+		<tfoot>
+			<tr>
+				<td colspan="100%">
+					<button type="button" onclick="${customField.id}_addCR()">
+						<span class="aui-icon aui-icon-small aui-iconfont-add"></span> ${addButton}
+					</button>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+<script type="text/javascript">
+	function ${customField.id}_initIssueSelector(index) {
+		var selectControl;
+		if (!index) {
+			// Apply to all
+			selectControl = 'input.issueSelector[id^="${customField.id}:issueId:"]';
+		} else {
+			selectControl = 'input.issueSelector[id="${customField.id}:issueId:' + index + '"]';
+		}
+		// Setup dropdown list
+		var select2Config = {
+			delay: 250,
+			placeholder: "${issueIdHelpText}",
+			width: '100%',
+			ajax: {
+				type: 'POST',
+				url: AJS.contextPath() + '/rest/igsl/latest/changeRequest',
+				dataType: 'json',
+				params: {
+					contentType:'application/json'
+				},
+				data: function(params) {
+					var q = {
+						"searchString": (params? params : null)
+					};
+					var s = JSON.stringify(q);
+					return s;
+				},
+				results: function(data, params) {
+					var list = [];
+					if (data && data.length) {
+						for (var i = 0; i < data.length; i++) {
+							list.push({
+								id: data[i].issueId,
+								text: data[i].issueSummary,
+								projectManager: data[i].projectManager
+							});
+						}
+					}
+					return {
+						results: list
+					};
+				}
+			}
+		};
+		$(selectControl).select2(select2Config);
+		// Setup onchange event to update project manager
+		$(selectControl).on('change', function(evt) {
+			var summary = $(evt.target).next('input[id^="${customField.id}:issueSummary:');
+			summary[0].value = evt.added.text;
+			var projectManager = $(evt.target).parent().next('td').children('span[id^="${customField.id}:projectManager:"]');
+			projectManager[0].innerText = evt.added.projectManager;
+		});
+		// Set initial value
+		$(selectControl).each(function() {
+			var summary = $(this).next('input[id^="${customField.id}:issueSummary:"]')[0].value;
+			$(this).select2('data', {id: this.value, text: summary});
+		});
+	}
+	var ${customField.id}_idx = ${idx};
+	function ${customField.id}_removeCR(id) {
+		$(id).remove();
+	}
+	function ${customField.id}_addCR() {
+		${customField.id}_idx++;
+		var newControlHTML =
+			'<tr id="${customField.id}_fieldSet_' + ${customField.id}_idx + '">' + 
+			'	<td>' + 
+			'		<button type="button" onclick="${customField.id}_removeCR(\'#${customField.id}_fieldSet_' + ${customField.id}_idx + '\')">' + 
+			'			<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}' + 
+			'		</button>' + 
+			'	</td>	' + 
+			'	<td>' + 
+			'		<input 	type="text" ' + 
+			'				style="width: 0px" ' + 	
+			'				class="issueSelector" ' + 
+			'				name="${customField.id}:issueId" ' + 
+			'				id="${customField.id}:issueId:' + ${customField.id}_idx + '" ' + 
+			'				value="$!item.issueId"/>' + 
+			'		<input 	type="hidden" ' + 
+			'				id="${customField.id}:issueSummary:' + ${customField.id}_idx + '" ' + 
+			'				value="$!item.issueSummary"/>' + 
+			'	</td>' + 
+			'	<td>' + 
+			'		<span 	style="display:block; text-align:center; margin:0 auto;" ' + 
+			'				id="${customField.id}:projectManager:' + ${customField.id}_idx + '">$!{item.projectManager}</span>' + 
+			'	</td>' + 
+			'</tr>';
+		$('#${customField.id}_ChangeRequestEdit_Body').append(newControlHTML);
+		${customField.id}_initIssueSelector(${customField.id}_idx);
+	}
+	function ${customField.id}_togglePanel() {
+		if ($('#${customField.id}_ChangeRequestEdit').is(":hidden")) {
+			$('#${customField.id}_ChangeRequestEdit').show();
+			$('#${customField.id}_ChangeRequestEdit_Expanded').show();
+			$('#${customField.id}_ChangeRequestEdit_Collapsed').hide();
+		} else {
+			$('#${customField.id}_ChangeRequestEdit').hide();
+			$('#${customField.id}_ChangeRequestEdit_Expanded').hide();
+			$('#${customField.id}_ChangeRequestEdit_Collapsed').show();
+		}
+		return false;
+	}
+	// Listen to event, we need to initialize select2 on newly added edit controls
+	JIRA.bind(JIRA.Events.NEW_CONTENT_ADDED, function(e, context, reason) {
+		// Add first item if empty
+		if ($('tr[id^="${customField.id}_fieldSet_"]').length == 0) {
+			${customField.id}_addCR();
+		} else {
+			${customField.id}_initIssueSelector(null);
+		}
+	});
+	
+	AJS.toInit(function() {
+		${customField.id}_initIssueSelector(null);
+	});
+	
+	function ${toggle}_Helper(state) {
+		var panel = '#${panel}';
+		var expanded = panel + '_Expanded';
+		var collapsed = panel + '_Collapsed';
+		if (state === null) {
+			if (${useSessionState}) {
+				// Get state from sessionStorage
+				var s = sessionStorage.getItem('${state}');
+				if (s) {
+					state = (JSON.parse(s) === true);
+				} else {
+					state = true;
+				}
+			} else {
+				// Not using session state and state not provided, do nothing
+				return;
+			}
+		} 
+		if (state) {
+			$(panel).show();
+			$(expanded).show();
+			$(collapsed).hide();
+		} else {
+			$(panel).hide();
+			$(expanded).hide();
+			$(collapsed).show();
+		}
+		if (${useSessionState}) {
+			sessionStorage.setItem('${state}', JSON.stringify(state));
+		}
+	}
+	function ${toggle}() {
+		if ($(${panel}).is(":hidden")) {
+			${toggle}_Helper(true);
+		} else {
+			${toggle}_Helper(false);
+		}
+	}
+	// Apply state
+	${toggle}_Helper(null);
+</script>
+#controlFooter ($action $customField.name $displayParameters.noHeader)

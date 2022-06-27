@@ -1,0 +1,13 @@
+## i18n
+#set ($noImage = $i18n.getText("CustomFieldTypes.noImage"))
+
+#if ($issue)
+	#set ($obj = $customField.getDefaultValue($issue))
+#else
+	#set ($obj = $value)
+#end
+#if ($obj and !$obj.isEmpty())
+	<img src="$!obj" />
+#else
+	${noImage}
+#end

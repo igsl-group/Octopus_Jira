@@ -1,0 +1,25 @@
+## Get default value
+#set ($obj = $configs.default)
+#controlHeader ($action $customField.id $customField.name $fieldLayoutItem.required $displayParameters.noHeader)
+#if ($displayParameters.defaultScreen)
+	## Edit mode
+	<div>
+		<input type="text" id="${customField.id}" name="${customField.id}" value="$!obj" onkeyup="${customField.id}_updateImage()" /><br/>
+		Preview: <br/>
+		<img id="${customField.id}_Image" src="" />
+	</div>
+	<script type="text/javascript">
+		function ${customField.id}_updateImage() {
+			$('#${customField.id}_Image')[0].src = $('#${customField.id}')[0].value;
+		}
+	</script>
+#else
+	## View mode
+		<input style="display: none" id="${customField.id}" name="${customField.id}" value="."/>
+	#if ($obj and !$obj.isEmpty())
+		<img src="$!obj" />
+	#else
+		No Image
+	#end
+#end
+#controlFooter ($action $customField.name $displayParameters.noHeader)
