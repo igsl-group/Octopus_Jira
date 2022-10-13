@@ -1,0 +1,263 @@
+#set($newline="
+")
+
+## i18n
+#set ($title = $i18n.getText('title'))
+#set ($providerURL = $i18n.getText('providerURL'))
+#set ($baseDN = $i18n.getText('baseDN'))
+#set ($filter = $i18n.getText('filter'))
+#set ($scope = $i18n.getText('scope'))
+#set ($userName = $i18n.getText('userName'))
+#set ($password = $i18n.getText('password'))
+#set ($source = $i18n.getText('source'))
+#set ($target = $i18n.getText('target'))
+#set ($deleteButton = $i18n.getText("deleteButton"))
+#set ($addButton = $i18n.getText("addButton"))
+#set ($saveButton = $i18n.getText('saveButton'))
+#set ($testResult = $i18n.getText('testResult'))
+#set ($success = $i18n.getText('success'))
+#set ($frequency = $i18n.getText('frequency'))
+#set ($userNameAttr = $i18n.getText('userNameAttr'))
+#set ($attributes = $i18n.getText('attributes'))
+#set ($connection = $i18n.getText('connection'))
+#set ($pageSize = $i18n.getText('pageSize'))
+#set ($referral = $i18n.getText('referral'))
+#set ($runAtTime = $i18n.getText('runAtTime'))
+#set ($ignoreExpiredUser = $i18n.getText('ignoreExpiredUser'))
+#set ($expiresAttribute=$i18n.getText('expiresAttribute'))
+
+<html>
+	<head>
+		<title>$!{title}</title>
+		<meta content="admin" name="decorator" />
+		<script type="text/javascript">
+			function go(action) {
+				document.forms.LDAPUserAttributesAction.elements.action = action;
+				document.forms.LDAPUserAttributesAction.submit();
+			}
+		</script>
+	</head>
+	<body>
+		#if ($action)
+			#set ($data = $action.getData())
+		#end
+		<h4 class="formtitle">$!{title}:</h4>
+		<form action="LDAPUserAttributesAction.jspa" method="post" id="LDAPUserAttributesAction">
+			<table class="LDAPUserAttributes">
+				<tbody>
+					<tr>
+						<th colspan="100%">
+							<h4><u>$!{connection}</u></h4>
+						</th>
+					</tr>
+					<tr>
+						<th width="50%">${providerURL}</th>
+						<td width="50%">
+							<input type="text" id="providerURL" name="providerURL" value="$!{data.providerURL}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${baseDN}</th>
+						<td>
+							<input type="text" id="baseDN" name="baseDN" value="$!{data.baseDN}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${scope}</th>
+						<td>
+							<select id="scope" name="scope">
+								<option value="0" #if($data.scope == 0) selected #end>Object</option>
+								<option value="1" #if($data.scope == 1) selected #end>One Level</option>
+								<option value="2" #if($data.scope == 2) selected #end>Subtree</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th>${filter}</th>
+						<td>
+							<input type="text" id="filter" name="filter" value="$!{data.filter}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${ignoreExpiredUser}</th>
+						<td>
+							<select id="ignoreExpiredUser" name="ignoreExpiredUser">
+							<option value="true" #if($data.ignoreExpiredUser == $true) selected #end>Ignore Expired Users</option>
+								<option value="false" #if($data.ignoreExpiredUser == $false) selected #end>Include Expired Users</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th>${expiresAttribute}</th>
+						<td>
+							<input type="text" id="expiresAttribute" name="expiresAttribute" value="$!{data.expiresAttribute}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${pageSize}</th>
+						<td>
+							<input type="number" id="pageSize" name="pageSize" value="$!{data.pageSize}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${referral}</th>
+						<td>
+							<select id="referral" name="referral">
+								<option value="true" #if($data.referral == $true) selected #end>Follow</option>
+								<option value="false" #if($data.referral == $false) selected #end>Ignore</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th>${userNameAttr}</th>
+						<td>
+							<input type="text" id="userNameAttribute" name="userNameAttribute" value="$!{data.userNameAttribute}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${userName}</th>
+						<td>
+							<input type="text" id="userName" name="userName" value="$!{data.userName}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${password}</th>
+						<td>
+							<input type="password" id="password" name="password" value="$!{data.encryptedPassword}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${runAtTime}</th>
+						<td>
+							<input style="width: 10% !important" type="text" pattern="[0-1][0-9]|[2][0-3]" title="00-23" id="hour" name="hour" value="$!{data.hour}" />
+							:
+							<input style="width: 10% !important" type="text" pattern="[0-5][0-9]" title="00-59" id="minute" name="minute" value="$!{data.minute}" />
+							:
+							<input style="width: 10% !important" type="text" pattern="[0-5][0-9]" title="00-59" id="second" name="second" value="$!{data.second}" />
+						</td>
+					</tr>
+					<tr>
+						<th>${frequency}</th>
+						<td>
+							Every <input style="width: 10% !important" type="number" id="frequency" name="frequency" value="$!{data.frequency}" />
+							<select style="width: 15% !important" id="frequencyMultiplier" name="frequencyMultiplier">
+								<option value="1" #if($data.frequencyMultiplier == 1) selected #end>millisecond(s)</option>
+								<option value="1000" #if($data.frequencyMultiplier == 1000) selected #end>second(s)</option>
+								<option value="60000" #if($data.frequencyMultiplier == 60000) selected #end>minute(s)</option>
+								<option value="3600000" #if($data.frequencyMultiplier == 3600000) selected #end>hour(s)</option>
+								<option value="86400000" #if($data.frequencyMultiplier == 86400000) selected #end>day(s)</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<br/>
+			<table class="LDAPUserAttributes">
+				<thead>
+					<tr>
+						<th colspan="100%">
+							<h4><u>$!{attributes}</u></h4>
+						</th>
+					</tr>
+					<tr>
+						<th></th>
+						<th width="50%">$!{source}</th>
+						<th width="50%">$!{target}</th>
+					</tr>
+				</thead>			
+				<tbody id="DataTable">
+					#set ($idx = 0)
+					#if ($data)
+						#if ($data.attributeMap.size() > 0)
+							#foreach ($item in $data.attributeMap.entrySet())
+								<tr id="fieldset_${velocityCount}">
+									<td style="width: 1%">
+										<button type="button" onclick="removeRow('#fieldset_${velocityCount}')">
+											<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}
+										</button>
+									</td>
+									<td>
+										<input type="text" id="source" name="source" value="$!{item.key}" />
+									</td>
+									<td>
+										<input type="text" id="target" name="target" value="$!{item.value}" />
+									</td>
+								</tr>
+								#set ($idx = $velocityCount)
+							#end
+						#end
+					#end
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="100%">
+							<button type="button" onclick="addRow()">
+								<span class="aui-icon aui-icon-small aui-iconfont-add"></span> ${addButton}
+							</button>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+			<br/>
+			<table class="LDAPUserAttributes">
+				<tbody>
+					<tr>
+						<td colspan="100%">
+							<input type="submit" id="Save" name="Save" value="${saveButton}"/>
+						</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					#set ($msg = '')
+					#foreach ($line in $errorMessages) 
+						#set ($msg = $msg + $newline + $line)
+					#end
+					#if ($msg == '')
+						#set ($msg = $success)
+						#foreach ($line in $data.lastTestResults) 
+							#set ($msg = $msg + $newline + $line)
+						#end
+					#end
+					<tr>
+						<th colspan="100%">
+							<h4><u>${testResult}</u></h4>
+						</th>
+					</tr>
+					<tr>
+						<td colspan="100%">
+							<textarea readonly="readonly" rows="5" cols="150">$!{msg}</textarea>
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+		</form>
+		<script type="text/javascript">
+			var idx = ${idx};
+			function removeRow(id) {
+				$(id).remove();
+			}
+			function addRow() {
+				idx++;
+				var newControlHTML =
+					'<tr id="fieldset_' + idx + '">' + 
+					'	<td style="width: 1%">' + 
+					'		<button type="button" onclick="removeRow(\'#fieldset_' + idx + '\')">' + 
+					'			<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span> ${deleteButton}' + 
+					'		</button>' + 
+					'	</td>' + 
+					'<td>' + 
+					'	<input type="text" id="source" name="source" value="$!{item.key}" />' + 
+					'</td>' + 
+					'<td>' + 
+					'	<input type="text" id="target" name="target" value="$!{item.value}" />' + 
+					'</td>' + 
+					'</tr>';
+				$('#DataTable').append(newControlHTML);
+			}
+			// Add initial row
+			if (idx == 0) {
+				addRow();
+			}
+		</script>
+	</body>
+</html>

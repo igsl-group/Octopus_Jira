@@ -1,0 +1,12 @@
+table.LDAPUserAttributes {
+	width: 80%;
+	border: 1 !important;
+}
+
+table.LDAPUserAttributes td,th {
+	text-align: left;
+}
+
+table.LDAPUserAttributes input {
+	width: 95%
+}

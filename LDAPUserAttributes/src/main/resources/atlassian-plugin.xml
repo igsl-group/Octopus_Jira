@@ -1,0 +1,68 @@
+<atlassian-plugin key="${atlassian.plugin.key}"
+	name="${project.name}" plugins-version="2">
+
+	<!-- Do not reuse name attributes here. All of them are considered a module 
+		in this plugin -->
+
+	<plugin-info>
+		<description>${project.description}</description>
+		<version>${project.version}</version>
+		<vendor name="${project.organization.name}"
+			url="${project.organization.url}" />
+	</plugin-info>
+
+	<resource type="i18n" name="i18n"
+		location="LDAPUserAttributes" />
+
+	<!-- Web resources like CSS and JS -->
+	<web-resource key="resources" name="Jira Resources">
+		<!-- Since Jira 5.0, edit screen no longer supports $webResourceManager.requireResource. 
+			We need to put resources in specific context instead. -->
+		<context>atl.general</context> <!-- General context -->
+		<context>atl.admin</context> <!-- Admin context, i.e. custom field configuration pages -->
+		<context>customerportal</context> <!-- Customer portal, i.e. service management pages -->
+		<context>servicedesk.general</context> <!-- Service Desk general -->
+		<context>servicedesk.admin</context> <!-- Sercice Desk admin -->
+
+		<!-- This will transform AJS.I18n.getText('xxx') in .js files -->
+		<transformation extension="js">
+			<transformer key="jsI18n" />
+		</transformation>
+
+		<resource type="download" name="LDAPUserAttributes.css"
+			location="/css/LDAPUserAttributes.css" />
+		<resource type="download" name="LDAPUserAttributes.js"
+			location="/js/LDAPUserAttributes.js" />
+
+		<!-- Request inclusion of jquery-ui library for select2, a dropdown with 
+			autocomplete -->
+		<dependency>com.atlassian.auiplugin:ajs</dependency>
+		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
+		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
+	</web-resource>
+
+	<!-- Configuration page -->
+	<web-section key="LDAPUserAttributesConfigSection"
+		location="admin_plugins_menu">
+		<label key="LDAP User Attributes" />
+	</web-section>
+	<web-item key="LDAPUserAttributesConfigMenu"
+		name="LDAP User Attributes" section="admin_plugins_menu/LDAPUserAttributesConfigSection" weight="10">
+		<description key="desc">LDAP User Attributes Configuration
+		</description>
+		<label key="title" />
+		<link linkId="LDAPUserAttributesLink">/secure/admin/plugins/handler/LDAPUserAttributesAction.jspa</link>
+	</web-item>
+	<webwork1 key="LDAPUserAttributesConfig"
+		name="LDAP User Attribtues Configuration" class="java.lang.Object">
+		<description>Attribute List</description>
+		<actions>
+			<action
+				name="com.igsl.ldapuserattributes.LDAPUserAttributesAction"
+				alias="LDAPUserAttributesAction">
+				<view name="input">templates/edit-config.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+
+</atlassian-plugin>
