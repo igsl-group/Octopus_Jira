@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -68,7 +69,7 @@ public class LDAPUserAttributes {
 //				"CN=Administrator,CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
 //				"P@ssw0rd", 
 //				"CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
-//				"(&(objectClass=user)(objectClass=user)(|(sAMAccountName=t*)(sAMAccountName=a*)))", 
+//				"(&(objectClass=user))", 
 //				SearchControls.SUBTREE_SCOPE,
 //				readAttrs,
 //				pageSize,
@@ -144,48 +145,61 @@ public class LDAPUserAttributes {
 				});
 				SearchControls sc = new SearchControls();
 				sc.setSearchScope(scope);
-				sc.setReturningAttributes(readAttrs);
+				boolean ignoreExpiredAttribute = true;
+				if (ignoreExpiredUser) {
+					// Add expiresAttribute to the list
+					List<String> attrs = new ArrayList<>();
+					attrs.addAll(Arrays.asList(readAttrs));
+					if (attrs.contains(expiresAttribute)) {
+						ignoreExpiredAttribute = false;
+					} else {
+						attrs.add(expiresAttribute);
+					}
+					sc.setReturningAttributes(attrs.toArray(new String[0]));
+				} else {
+					sc.setReturningAttributes(readAttrs);
+				}
 				sc.setDerefLinkFlag(true);
 				sc.setReturningObjFlag(false);
 				byte[] pageCookie = null;
 				int total = 0;
 				LOGGER.debug("Start of LDAP query");
+				Date now = new Date();
 				do {
-					if (ignoreExpiredUser) {
-						Date now = new Date();
-						// Add clause to filter
-						filter = 	"(&(" + filter + ")" +	// Original filter 
-									"(|(" + 
-										"(" + expiresAttribute + "=0)" + // Never expires option 1
-										"(" + expiresAttribute + "=9223372036854775807)" + // Never expires option 2
-										"(!(" + expiresAttribute + "<=" + getLDAPDate(now) + "))" + 
-									")))";
-					}
 					LOGGER.debug("filter: " + filter);
 					NamingEnumeration<SearchResult> results = ctx.search(
 							baseDN, 
 							filter, 
 							sc);
-							//null);
-							//new SearchControls(SearchControls.SUBTREE_SCOPE, PAGE_SIZE, 0, readAttrs, false, false));
 					LOGGER.debug("results: " + results);
 					int count = 0;
 					try {
 						while (results != null && results.hasMore()) {
 							count++;
 							SearchResult result = results.next();
-							Map<String, List<String>> userData = new HashMap<String, List<String>>();
 							Attributes attrs = result.getAttributes();
+							if (ignoreExpiredUser) {
+								Attribute expires = attrs.get(expiresAttribute);
+								long expiresValue = Long.parseLong(expires.get().toString());
+								if (expiresValue != 0 && expiresValue != 9223372036854775807L && expiresValue <= getLDAPDate(now)) {
+									// User expired
+									LOGGER.debug("Processed user #" + count + ": Ignored expired user " + result.getName());
+									continue;
+								}
+							}
+							Map<String, List<String>> userData = new HashMap<String, List<String>>();
 							for (int i = 0; i < readAttrs.length; i++) {
 								Attribute attr = attrs.get(readAttrs[i]);
 								if (attr != null) {
-									NamingEnumeration<?> values = attr.getAll();
-									List<String> valueList = new ArrayList<String>();
-									while (values.hasMore()) {
-										Object value = values.next();
-										valueList.add(String.valueOf(value));
+									if (!ignoreExpiredAttribute && !attr.getID().equals(expiresAttribute)) {
+										NamingEnumeration<?> values = attr.getAll();
+										List<String> valueList = new ArrayList<String>();
+										while (values.hasMore()) {
+											Object value = values.next();
+											valueList.add(String.valueOf(value));
+										}
+										userData.put(attr.getID(), valueList);
 									}
-									userData.put(attr.getID(), valueList);
 								}
 							}
 							output.put(result.getName(), userData);

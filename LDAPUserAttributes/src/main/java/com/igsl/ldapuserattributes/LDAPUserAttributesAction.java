@@ -167,7 +167,7 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 			try {
 				int ps = Integer.parseInt(pageSize[0]);
 				if (ps >= 0) {
-					data.setFrequency(ps);
+					data.setPageSize(ps);
 				} else {
 					errors.add("Please specify a valid page size");
 				}
