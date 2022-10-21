@@ -50,48 +50,48 @@ public class LDAPUserAttributes {
 	    // e.g. 133132608000000000	2022-11-19 00:00:00
 	}
 	
-	public static void main(String[] args) throws Exception {
-		String[] readAttrs = new String[] {
-			"distinguishedName",
-			"sAMAccountName",
-			"displayName",
-			"mail",
-			"telephone",
-			"memberOf",
-			"createTimestamp",
-			"modifyTimestamp",
-			"objectClass",
-			"dn"//,
-			//"accountExpires"
-		};
-		int pageSize = 1000;
-		Map<String, Map<String, List<String>>> ad = getLDAPUsers(
-				"ldap://192.168.56.120:389", 
-				"CN=Administrator,CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
-				"P@ssw0rd", 
-				"CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
-				"(&(objectClass=user))", 
-				SearchControls.SUBTREE_SCOPE,
-				readAttrs,
-				pageSize,
-				false,
-				true,
-				"accountExpires");
-		System.out.println(OM.writeValueAsString(ad));
-//		Map<String, Map<String, List<String>>> apacheDS = getLDAPUsers(
-//				"ldap://127.0.0.1:10389", 
-//				"uid=admin,ou=system", 
-//				"admin", 
-//				"ou=users,ou=system", 
-//				"(&(objectClass=person))", 
+//	public static void main(String[] args) throws Exception {
+//		String[] readAttrs = new String[] {
+//			"distinguishedName",
+//			"sAMAccountName",
+//			"displayName",
+//			"mail",
+//			"telephone",
+//			"memberOf",
+//			"createTimestamp",
+//			"modifyTimestamp",
+//			"objectClass",
+//			"dn"//,
+//			//"accountExpires"
+//		};
+//		int pageSize = 1000;
+//		Map<String, Map<String, List<String>>> ad = getLDAPUsers(
+//				"ldap://192.168.56.120:389", 
+//				"CN=Administrator,CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
+//				"P@ssw0rd", 
+//				"CN=Users,DC=win2022,DC=kcwong,DC=igsl", 
+//				"(&(objectClass=user))", 
 //				SearchControls.SUBTREE_SCOPE,
 //				readAttrs,
 //				pageSize,
 //				false,
 //				true,
 //				"accountExpires");
-//		System.out.println(OM.writeValueAsString(apacheDS));
-	}
+//		System.out.println(OM.writeValueAsString(ad));
+////		Map<String, Map<String, List<String>>> apacheDS = getLDAPUsers(
+////				"ldap://127.0.0.1:10389", 
+////				"uid=admin,ou=system", 
+////				"admin", 
+////				"ou=users,ou=system", 
+////				"(&(objectClass=person))", 
+////				SearchControls.SUBTREE_SCOPE,
+////				readAttrs,
+////				pageSize,
+////				false,
+////				true,
+////				"accountExpires");
+////		System.out.println(OM.writeValueAsString(apacheDS));
+//	}
 	
 	public static Map<String, Map<String, List<String>>> getLDAPUsers(LDAPUserAttributesConfigData data) throws Exception {
 		Set<String> readAttrs = new HashSet<String>();
