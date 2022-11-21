@@ -1,0 +1,21 @@
+table.ConfigMigration {
+	width: 100%;
+	border: solid 1px !important;
+}
+
+table.ConfigMigration td,th {
+	text-align: left;
+	border: solid 1px !important;
+	overflow: auto; 
+	vertical-align: top;
+}
+
+span.sectionTitle {
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+td.different {
+	background-color: yellow;
+	font-weight: bold; 
+}

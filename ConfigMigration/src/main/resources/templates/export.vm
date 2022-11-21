@@ -1,0 +1,171 @@
+#set($newline="
+")
+
+## i18n
+#set ($title = $i18n.getText('export'))
+
+<html>
+	<head>
+		<title>$!{title}</title>
+		<meta content="admin" name="decorator" />
+		<style type="text/css" ></style>
+		<script type="text/javascript">
+			function submitForm(section, action) {
+				document.getElementById('section').value = section;
+				document.getElementById('action').value = action;
+				document.forms['exportForm'].submit();
+			}
+			
+			function selectAll(section, value) {
+				if (section) {
+					$('table[id="' + section + '"] input[type="checkbox"]').prop('checked', value);
+					$('input[id="globalSelectAll"]').prop('checked', false);
+				} else {
+					var newValue = $('input[id="globalSelectAll"]').prop('checked');
+					newValue = !newValue;
+					$('input[id="globalSelectAll"]').prop('checked', newValue);
+					$('table.section input[type="checkbox"]').prop('checked', newValue);
+				}
+				refreshCount(section);
+			}
+			
+			function clearSelectAll(section) {
+				$('input[id="' + section + '.selectAll"]').prop('checked', false);
+				$('input[id="globalSelectAll"]').prop('checked', false);
+				refreshCount(section);
+			}
+			
+			function refreshCount(section) {
+				if (section) {
+					var count = 0;
+					$('table[id="' + section + '"] input[type="checkbox"]').not('[id*=".selectAll"]').each(function() {
+						if ($(this).prop('checked')) {
+							count++;
+						}
+					});
+					$('span[id="' + section + '_count"]').text(count);
+				} else {
+					$('table.section').each(function() {
+						var section = $(this).prop('id');
+						var count = 0;
+						$(this).find('input[type="checkbox"]').not('[id*=".selectAll"]').each(function() {
+							if ($(this).prop('checked')) {
+								count++;
+							}
+						});
+						$('span[id="' + section + '_count"]').text(count);
+					});
+				}
+			}
+			
+			function toggleTable(section) {
+				if (section != null) {
+					$('table[id="' + section + '"]').toggle();
+					$('span[id="' + section + '.up"]').toggle();
+					$('span[id="' + section + '.down"]').toggle();
+				} else {
+					$('table.section').toggle();
+					$('span.section').toggle();
+				}
+			}
+			
+			function download() {
+				var data = document.getElementById('exportData').value;
+				var element = document.createElement('a');
+				element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(data));
+				element.setAttribute('download', "Test.txt");
+				element.style.display = 'none';
+				document.body.appendChild(element);
+				element.click();
+				document.body.removeChild(element);
+			}
+		</script>
+	</head>
+	<body>
+		<form action="ExportAction.jspa" method="post" id="exportForm">
+			<input type="hidden" id="section" name="section" value=""/> 
+			<input type="hidden" id="action" name="action" value=""/>
+			<input type="hidden" id="exportData" value="$!{action.exportData}"/>
+			<input type="button" value="Toggle All Sections" onclick="toggleTable()"/>
+			<input type="button" value="Search All Sections" onclick="submitForm(null, 'search')"/>
+			<input type="checkbox" id="globalSelectAll" style="display: none" />
+			<input type="button" value="Select All Sections" onclick="selectAll(null, document.getElementById('globalSelectAll').checked)"/>
+			<input type="button" value="Clear All Sections" onclick="submitForm(null, 'clear')"/>
+			<input type="button" value="Export Selected" onclick="submitForm(null, 'export')"/>
+			#set ($data = $action.getSessionData())
+			#foreach ($entry in $data.entrySet())
+				<div>
+					<span class="sectionTitle" onclick="toggleTable('${entry.key}')">$!{entry.value.util.getName()} (<span 
+						id="${entry.key}_count">0</span><span>/$!{entry.value.exportData.size()})</span></span>
+					<span class="section" id="${entry.key}.up" style="display: none">&#9650;</span>
+					<span class="section" id="${entry.key}.down">&#9660;</span>
+					<table 	class="section ConfigMigration" 
+							id="${entry.key}" 
+							style="display: none">
+						<thead>
+							<tr>
+								<th colspan="100%">
+									<input type="button" value="Search" onclick="submitForm('${entry.key}', 'search')"/>
+									<input type="button" value="Clear" onclick="submitForm('${entry.key}', 'clear')"/>
+								</th>		
+							</tr>
+							<tr>
+								<th>
+									<input 	type="checkbox" 
+											id="${entry.key}.selectAll" 
+											onclick="selectAll('${entry.key}', this.checked)"/>
+								</th>
+								<th>Identifier</th>
+								<th>Details</th>
+							</tr>
+						</thead>
+						<tbody>
+						#foreach ($item in $entry.value.exportData.entrySet()) 
+							<tr>
+								<td>
+									#set($checked = "")
+									#if ($item.value.isSelected())
+										#set($checked = "checked")
+									#end
+									<input 	type="checkbox" 
+											name="${entry.key}.select" 
+											value="${item.key}"
+											onclick="clearSelectAll('${entry.key}')" 
+											${checked} />
+								</td>
+								<td>$!{item.key}</td>	
+								<td>
+									<table 	class="ConfigMigration"
+											style="width: 800px; table-layout: fixed;">
+										<thead>
+											<tr>
+												<th width="40%">Property</th>
+												<th width="60%">Value</th>
+											</tr>
+										</thead>
+										<tbody>
+										#foreach ($kv in $item.value.getMap().entrySet())
+											<tr>
+												<td>$!{kv.key}</td>
+												<td>$!{kv.value}</td>
+											</tr>
+										#end
+										</tbody>
+									</table>
+								</td> 
+							</tr>
+						#end
+						</tbody>
+					</table>
+				</div>
+				<br/>
+			#end
+		</form><br/>
+		<script type="text/javascript">
+			#if ($action.exportData)
+				download();
+			#end
+		</script>
+		<textarea rows="10" cols="100">$!{action.debug}</textarea>
+	</body>
+</html>
