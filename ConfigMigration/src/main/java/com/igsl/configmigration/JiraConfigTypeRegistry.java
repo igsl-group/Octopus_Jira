@@ -12,6 +12,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.igsl.configmigration.avatar.AvatarConfigItem;
+import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigItem;
+import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigUtil;
 import com.igsl.configmigration.issuetype.IssueTypeConfigItem;
 import com.igsl.configmigration.issuetype.IssueTypeConfigUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeConfigItem;
@@ -54,6 +56,11 @@ public class JiraConfigTypeRegistry {
 		// Resolution
 		ResolutionConfigItem.class,
 		ResolutionConfigUtil.class,
+		
+		// IssueSecurityLevelScheme
+		// IssueSecurityLevel is referenced from IssueSecurityLevelScheme
+		IssueSecurityLevelSchemeConfigItem.class,
+		IssueSecurityLevelSchemeConfigUtil.class,
 		
 		// Project
 		// TODO

@@ -15,6 +15,7 @@ public class GenericPrint {
 	private static final ObjectMapper OM = new ObjectMapper();	
 	private static final String NEWLINE = "\n";
 	private static final String INDENT = "\t";
+	private static final int MAX_LEVEL = 4;
 	private static String getIndent(int level) {
 		StringBuilder indent = new StringBuilder(""); 
 		for (int i = 0; i < level; i++) {
@@ -87,7 +88,7 @@ public class GenericPrint {
 						sb.append(e.getClass().getCanonicalName()).append(": ").append(e.getMessage());
 					}
 					sb.append(NEWLINE);
-					if (v != null && level < 3) {
+					if (v != null && level < MAX_LEVEL) {
 						if (Collection.class.isAssignableFrom(v.getClass())) {
 							sb.append(genericPrint(level + 1, null, (Collection<?>) v));
 						} else if (Map.class.isAssignableFrom(v.getClass())) {
