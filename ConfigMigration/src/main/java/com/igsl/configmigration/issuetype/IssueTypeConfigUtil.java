@@ -1,19 +1,13 @@
 package com.igsl.configmigration.issuetype;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.avatar.Avatar;
-import com.atlassian.jira.avatar.AvatarManager;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.IssueTypeManager;
-import com.atlassian.jira.icon.IconOwningObjectId;
-import com.atlassian.jira.icon.IconType;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -41,7 +35,7 @@ public class IssueTypeConfigUtil extends JiraConfigUtil {
 	
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		for (IssueType it : ISSUE_MANAGER.getIssueTypes()) {
 			IssueTypeConfigItem item = new IssueTypeConfigItem();
 			item.setJiraObject(it);

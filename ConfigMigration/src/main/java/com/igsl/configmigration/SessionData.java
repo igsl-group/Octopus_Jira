@@ -1,9 +1,8 @@
 package com.igsl.configmigration;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -72,8 +71,8 @@ public class SessionData {
 	}
 	
 	private JiraConfigUtil util;
-	private Map<String, JiraConfigItem> exportData = new HashMap<>();
-	private Map<String, ImportData> importData = new HashMap<>();
+	private Map<String, JiraConfigItem> exportData = new TreeMap<>();
+	private Map<String, ImportData> importData = new TreeMap<>();
 	
 	public SessionData() {
 	}

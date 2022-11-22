@@ -1,7 +1,7 @@
 package com.igsl.configmigration.status;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -37,7 +37,7 @@ public class StatusConfigUtil extends JiraConfigUtil {
 	
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		for (Status it : MANAGER.getStatuses()) {
 			StatusConfigItem item = new StatusConfigItem();
 			item.setJiraObject(it);

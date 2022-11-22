@@ -1,14 +1,13 @@
 package com.igsl.configmigration.issuesecuritylevelscheme;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.ofbiz.core.entity.GenericValue;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
-import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.atlassian.jira.scheme.Scheme;
@@ -38,7 +37,7 @@ public class IssueSecurityLevelSchemeConfigUtil extends JiraConfigUtil {
 	
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		for (IssueSecurityLevelScheme s : SCHEME_MANAGER.getIssueSecurityLevelSchemes()) {
 			IssueSecurityLevelSchemeConfigItem item = new IssueSecurityLevelSchemeConfigItem();
 			item.setJiraObject(s);

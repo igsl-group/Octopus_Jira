@@ -10,55 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.startup.PluginInfoProvider;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.internal.LinkedTreeMap;
 
-/*
-	= Not needed (as we don't move issue data)
-	User and Groups in Reporter, Assignee, Component Lead, Project Lead
-	Issue data
-	Attachments 
-	
-	= Required
-	Custom field type - CustomFieldManager
-	Custom field config - Get using each CustomField
-	Workflow - WorkflowManager
-	Workflow screens - Workflow -> action -> getView()?
-	Issue Type - IssueTypeManager
-	Workflow scheme - WorkflowSchemeManager
-	Status - StatusManager
-	Security level - IssueSecurityLevelManager
-	Priority - PriorityManager
-	Resolution - PrioritySchemeManager
-	Issue Link Type - IssueLinkManager
-	Project Role - ProjectRoleManager
-	Group - GroupManager
-	Project settings - ProjectManager
-	Components - ComponentAccessor, com.atlassian.jira.component.pico.ComponentManager
-	Versions - VersionManager
-	Field layout? Field layout scheme? - FieldConfigSchemeManager
-	Screen - FieldScreenManager?
-	How to associate the items from a project
-	
-	= Features
-	Allow selecting items to export 
-	On import check for duplicates and allow merging or replace
-	Export before import as part of undo
-	Support undo import
-	Option to find all associated items with project
-*/
 @Named
 public class ExportAction extends JiraWebActionSupport {
 	
 	private static final long serialVersionUID = 1L;
-	
-	// Generic print constants
-	private static final String NEWLINE = "<br/>";
-	private static final String INDENT = "----";
-	private static final int MAX_LEVEL = 2;
 	
 	// Custom field configuration URL
 	private static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction.jspa";
@@ -150,7 +112,7 @@ public class ExportAction extends JiraWebActionSupport {
 				data.getExportData().putAll(data.getUtil().readAllItems());
 			}
 		}
-
+		
 		// Save selection
 		for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 			SessionData data = sessionData.get(entry.getKey());

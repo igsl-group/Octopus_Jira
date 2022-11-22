@@ -1,7 +1,7 @@
 package com.igsl.configmigration.resolution;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -33,7 +33,7 @@ public class ResolutionConfigUtil extends JiraConfigUtil {
 	
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
 			ResolutionConfigItem item = new ResolutionConfigItem();
 			item.setJiraObject(r);

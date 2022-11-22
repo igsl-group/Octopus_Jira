@@ -1,14 +1,13 @@
 package com.igsl.configmigration.optionset;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
-import com.atlassian.jira.issue.fields.option.Option;
 import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.atlassian.jira.issue.fields.option.OptionSetManager;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,7 +39,7 @@ public class OptionSetConfigUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
 		FieldConfig fieldConfig = (FieldConfig) params[0];
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		OptionSet os = MANAGER.getOptionsForConfig(fieldConfig);
 		OptionSetConfigItem item = new OptionSetConfigItem();
 		item.setJiraObject(os);

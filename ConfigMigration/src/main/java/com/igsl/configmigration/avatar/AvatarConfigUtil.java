@@ -2,8 +2,8 @@ package com.igsl.configmigration.avatar;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -40,7 +40,7 @@ public class AvatarConfigUtil extends JiraConfigUtil {
 	 */
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
 			AvatarConfigItem item = new AvatarConfigItem();

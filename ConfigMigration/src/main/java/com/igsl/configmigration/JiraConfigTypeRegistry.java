@@ -11,6 +11,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.igsl.configmigration.avatar.AvatarConfigItem;
+import com.igsl.configmigration.customfield.CustomFieldConfigItem;
+import com.igsl.configmigration.customfield.CustomFieldConfigUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigItem;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigUtil;
 import com.igsl.configmigration.issuetype.IssueTypeConfigItem;
@@ -67,9 +69,10 @@ public class JiraConfigTypeRegistry {
 		PluginConfigItem.class, 
 		PluginConfigUtil.class,
 		
-		// CustomFieldType
-		
+		// CustomFieldType		
 		// CustomField
+		CustomFieldConfigItem.class,
+		CustomFieldConfigUtil.class,
 		
 		// Project
 		// TODO

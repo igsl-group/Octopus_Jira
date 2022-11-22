@@ -1,9 +1,9 @@
 package com.igsl.configmigration.issuetypescheme;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -38,7 +38,7 @@ public class IssueTypeSchemeConfigUtil extends JiraConfigUtil {
 	
 	@Override
 	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new HashMap<>();
+		Map<String, JiraConfigItem> result = new TreeMap<>();
 		for (FieldConfigScheme scheme : MANAGER.getAllSchemes()) {
 			IssueTypeSchemeConfigItem item = new IssueTypeSchemeConfigItem();
 			item.setJiraObject(scheme);
