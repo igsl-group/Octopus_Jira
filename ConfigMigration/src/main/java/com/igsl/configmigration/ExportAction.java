@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.startup.PluginInfoProvider;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -142,7 +144,7 @@ public class ExportAction extends JiraWebActionSupport {
 		if (action == null || sessionData == null) {
 			initSessionData();
 			
-			// TODO Debug
+			// TODO Load all sections
 			for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 				SessionData data = sessionData.get(entry.getKey());
 				data.getExportData().putAll(data.getUtil().readAllItems());

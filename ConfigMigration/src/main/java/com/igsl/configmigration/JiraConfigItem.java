@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,13 +37,16 @@ public abstract class JiraConfigItem {
 	private static final Logger LOGGER = Logger.getLogger(JiraConfigItem.class);
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
-	private static final List<String> EXCLUDE_METHODS = Arrays.asList(
+	// Methods not to be included in getMap(), i.e. display
+	private static final List<String> MAP_EXCLUDE_METHODS = Arrays.asList(
 			"getClass",
-			"getMap",
 			"getJiraObject",
 			"isSelected",
 			"getUniqueKey",
-			"getInternalId"
+			"getInternalId",
+			"getImplementation",
+			"getMap",
+			"getMapIgnoredMethods"
 		);
 	
 	protected abstract List<String> getCompareMethods();
@@ -62,7 +66,7 @@ public abstract class JiraConfigItem {
 					m.getParameterCount() == 0 && 
 					(m.getName().startsWith("get") || m.getName().startsWith("is")) && 
 					compareMethods.contains(m.getName()) && 
-					!EXCLUDE_METHODS.contains(m.getName())) {
+					!MAP_EXCLUDE_METHODS.contains(m.getName())) {
 					try {
 						Object v1 = m.invoke(o1);
 						Object v2 = m.invoke(o2);
@@ -187,6 +191,16 @@ public abstract class JiraConfigItem {
 		return result;
 	}
 	
+	/**
+	 * Overload this method to not display specific methods but still include in exported JSON
+	 * @return
+	 */
+	@JsonIgnore
+	protected List<String> getMapIgnoredMethods() {
+		return Collections.emptyList();
+	}
+	
+	@JsonIgnore
 	public final Map<String, String> getMap() {
 		return JiraConfigItem.getMap("", this);
 	}
@@ -230,7 +244,8 @@ public abstract class JiraConfigItem {
 				if (Modifier.isPublic(method.getModifiers()) && 
 					method.getParameterCount() == 0 && 
 					(method.getName().startsWith("is") || method.getName().startsWith("get")) &&
-					!EXCLUDE_METHODS.contains(method.getName())
+					!MAP_EXCLUDE_METHODS.contains(method.getName()) && 
+					!o.getMapIgnoredMethods().contains(method.getName())
 				) {
 					try {
 						Object v = method.invoke(o);
@@ -289,7 +304,9 @@ public abstract class JiraConfigItem {
 	}
 	public final void setJiraObject(Object obj) throws Exception {
 		this.jiraObject = obj;
-		this.fromJiraObject(obj);
+		if (obj != null) {
+			this.fromJiraObject(obj);
+		}
 	}
 	
 	@JsonIgnore

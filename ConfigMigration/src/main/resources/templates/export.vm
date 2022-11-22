@@ -101,7 +101,7 @@
 					<span class="section" id="${entry.key}.down">&#9660;</span>
 					<table 	class="section ConfigMigration" 
 							id="${entry.key}" 
-							style="display: none">
+							style="display: none;">
 						<thead>
 							<tr>
 								<th colspan="100%">
@@ -136,7 +136,7 @@
 								<td>$!{item.key}</td>	
 								<td>
 									<table 	class="ConfigMigration"
-											style="width: 800px; table-layout: fixed;">
+											style="width: 780px; table-layout: fixed;">
 										<thead>
 											<tr>
 												<th width="40%">Property</th>

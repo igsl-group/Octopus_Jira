@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -18,6 +17,8 @@ import com.igsl.configmigration.issuetype.IssueTypeConfigItem;
 import com.igsl.configmigration.issuetype.IssueTypeConfigUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeConfigItem;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeConfigUtil;
+import com.igsl.configmigration.plugin.PluginConfigItem;
+import com.igsl.configmigration.plugin.PluginConfigUtil;
 import com.igsl.configmigration.priority.PriorityConfigItem;
 import com.igsl.configmigration.priority.PriorityConfigUtil;
 import com.igsl.configmigration.resolution.ResolutionConfigItem;
@@ -62,6 +63,14 @@ public class JiraConfigTypeRegistry {
 		IssueSecurityLevelSchemeConfigItem.class,
 		IssueSecurityLevelSchemeConfigUtil.class,
 		
+		// Plugin
+		PluginConfigItem.class, 
+		PluginConfigUtil.class,
+		
+		// CustomFieldType
+		
+		// CustomField
+		
 		// Project
 		// TODO
 		
@@ -70,7 +79,7 @@ public class JiraConfigTypeRegistry {
 		
 		// IssueTypeScheme
 		IssueTypeSchemeConfigItem.class,
-		IssueTypeSchemeConfigUtil.class
+		IssueTypeSchemeConfigUtil.class,
 	};
 	
 	private static Map<String, Class<? extends JiraConfigItem>> CONFIG_ITEM = new LinkedHashMap<>();
