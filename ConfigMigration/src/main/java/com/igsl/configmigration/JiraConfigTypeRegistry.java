@@ -10,24 +10,24 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.igsl.configmigration.avatar.AvatarConfigItem;
-import com.igsl.configmigration.customfield.CustomFieldConfigItem;
-import com.igsl.configmigration.customfield.CustomFieldConfigUtil;
-import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigItem;
-import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeConfigUtil;
-import com.igsl.configmigration.issuetype.IssueTypeConfigItem;
-import com.igsl.configmigration.issuetype.IssueTypeConfigUtil;
-import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeConfigItem;
-import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeConfigUtil;
-import com.igsl.configmigration.plugin.PluginConfigItem;
-import com.igsl.configmigration.plugin.PluginConfigUtil;
-import com.igsl.configmigration.priority.PriorityConfigItem;
-import com.igsl.configmigration.priority.PriorityConfigUtil;
-import com.igsl.configmigration.resolution.ResolutionConfigItem;
-import com.igsl.configmigration.resolution.ResolutionConfigUtil;
-import com.igsl.configmigration.status.StatusConfigItem;
-import com.igsl.configmigration.status.StatusConfigUtil;
-import com.igsl.configmigration.statuscategory.StatusCategoryConfigItem;
+import com.igsl.configmigration.avatar.AvatarDTO;
+import com.igsl.configmigration.customfield.CustomFieldDTO;
+import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeDTO;
+import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
+import com.igsl.configmigration.issuetype.IssueTypeDTO;
+import com.igsl.configmigration.issuetype.IssueTypeUtil;
+import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeDTO;
+import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
+import com.igsl.configmigration.plugin.PluginDTO;
+import com.igsl.configmigration.plugin.PluginUtil;
+import com.igsl.configmigration.priority.PriorityDTO;
+import com.igsl.configmigration.priority.PriorityUtil;
+import com.igsl.configmigration.resolution.ResolutionDTO;
+import com.igsl.configmigration.resolution.ResolutionUtil;
+import com.igsl.configmigration.status.StatusDTO;
+import com.igsl.configmigration.status.StatusUtil;
+import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
 @SuppressWarnings("unchecked")
 public class JiraConfigTypeRegistry {
@@ -38,41 +38,41 @@ public class JiraConfigTypeRegistry {
 	private static final Class<?>[] CLASS_LIST = new Class[] {
 		// Avatar
 		// Used when referenced, so Util is not added
-		AvatarConfigItem.class,
+		AvatarDTO.class,
 			
 		// StatusCategory
 		// Used when referenced, so Util is not added
-		StatusCategoryConfigItem.class,
+		StatusCategoryDTO.class,
 
 		// Status
-		StatusConfigItem.class,
-		StatusConfigUtil.class,
+		StatusDTO.class,
+		StatusUtil.class,
 		
 		// IssueType
-		IssueTypeConfigItem.class, 
-		IssueTypeConfigUtil.class,
+		IssueTypeDTO.class, 
+		IssueTypeUtil.class,
 		
 		// Priority
-		PriorityConfigItem.class,
-		PriorityConfigUtil.class,
+		PriorityDTO.class,
+		PriorityUtil.class,
 		
 		// Resolution
-		ResolutionConfigItem.class,
-		ResolutionConfigUtil.class,
+		ResolutionDTO.class,
+		ResolutionUtil.class,
 		
 		// IssueSecurityLevelScheme
 		// IssueSecurityLevel is referenced from IssueSecurityLevelScheme
-		IssueSecurityLevelSchemeConfigItem.class,
-		IssueSecurityLevelSchemeConfigUtil.class,
+		IssueSecurityLevelSchemeDTO.class,
+		IssueSecurityLevelSchemeUtil.class,
 		
 		// Plugin
-		PluginConfigItem.class, 
-		PluginConfigUtil.class,
+		PluginDTO.class, 
+		PluginUtil.class,
 		
 		// CustomFieldType		
 		// CustomField
-		CustomFieldConfigItem.class,
-		CustomFieldConfigUtil.class,
+		CustomFieldDTO.class,
+		CustomFieldUtil.class,
 		
 		// Project
 		// TODO
@@ -81,8 +81,8 @@ public class JiraConfigTypeRegistry {
 		// TODO
 		
 		// IssueTypeScheme
-		IssueTypeSchemeConfigItem.class,
-		IssueTypeSchemeConfigUtil.class,
+		IssueTypeSchemeDTO.class,
+		IssueTypeSchemeUtil.class,
 	};
 	
 	private static Map<String, Class<? extends JiraConfigItem>> CONFIG_ITEM = new LinkedHashMap<>();

@@ -208,11 +208,14 @@ public abstract class JiraConfigItem {
 	public static final Map<String, String> getMap(String title, Collection<?> o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
+			result.put(title + DIFFERENCE_INDEX, Integer.toString(o.size()));
 			int count = 0;
 			for (Object item : o) {
 				result.putAll(getMap(title + DIFFERENCE_INDEX + count, item));
 				count++;
 			}
+		} else {
+			result.put(title, "null");
 		}
 		return result;
 	}
@@ -220,9 +223,12 @@ public abstract class JiraConfigItem {
 	public static final Map<String, String> getMap(String title, Map<?, ?> o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
+			result.put(title + DIFFERENCE_INDEX, Integer.toString(o.size()));
 			for (Map.Entry<?, ?> entry : o.entrySet()) {
 				result.putAll(getMap(title + DIFFERENCE_DELIMITER + entry.getKey(), entry.getValue()));
 			}
+		} else {
+			result.put(title, "null");
 		}
 		return result;
 	}
@@ -230,9 +236,12 @@ public abstract class JiraConfigItem {
 	public static final Map<String, String> getMap(String title, Object[] o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
+			result.put(title + DIFFERENCE_INDEX, Integer.toString(o.length));
 			for (int i = 0; i < o.length; i++) {
 				result.putAll(getMap(title + DIFFERENCE_INDEX + i, o[i]));
 			}
+		} else {
+			result.put(title, "null");
 		}
 		return result;
 	}
@@ -258,6 +267,8 @@ public abstract class JiraConfigItem {
 					}
 				}
 			}
+		} else {
+			result.put(title, "null");
 		}
 		return result;
 	}
@@ -293,6 +304,8 @@ public abstract class JiraConfigItem {
 					result.put(title, e.getClass().getCanonicalName() + ": " + e.getMessage());
 				}
 			}
+		} else {
+			result.put(title, "null");
 		}
 		return result;
 	}
