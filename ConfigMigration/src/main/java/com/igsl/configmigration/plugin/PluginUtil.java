@@ -19,6 +19,8 @@ import com.atlassian.jira.startup.PluginInfoProvider;
 import com.atlassian.jira.startup.PluginInfos;
 import com.atlassian.plugin.JarPluginArtifact;
 import com.atlassian.plugin.Plugin;
+import com.atlassian.plugin.PluginAccessor;
+import com.atlassian.plugin.metadata.PluginMetadataManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -34,6 +36,10 @@ public class PluginUtil extends JiraConfigUtil {
 			ComponentAccessor.getComponent(JiraPluginManager.class);
 	private static final PluginInfoProvider PLUGIN_INFO_PROVIDER = 
 			ComponentAccessor.getComponent(PluginInfoProvider.class);
+	private static final PluginAccessor PLUGIN_ACCESSOR = ComponentAccessor.getPluginAccessor();
+	private static final PluginMetadataManager PLUGIN_METADATA_MANAGER = 
+			ComponentAccessor.getComponent(PluginMetadataManager.class);
+	
 	
 	// APIs provided by Jira is unable to retrieve only User Installed plugins.
 	// Looking at Jira code, they seem to be hardcoding package names.
@@ -70,6 +76,16 @@ public class PluginUtil extends JiraConfigUtil {
 				result.put(item.getUniqueKey(), item);
 			}
 		}
+//		Iterator<Plugin> pluginList = PLUGIN_ACCESSOR
+//			.getPlugins()
+//			.parallelStream()
+//			.filter(PLUGIN_METADATA_MANAGER::isUserInstalled).iterator();
+//		while (pluginList.hasNext()) {
+//			Plugin p = pluginList.next();
+//			PluginDTO item = new PluginDTO();
+//			item.setJiraObject(p);
+//			result.put(item.getUniqueKey(), item);
+//		}		
 		return result;
 	}
 
