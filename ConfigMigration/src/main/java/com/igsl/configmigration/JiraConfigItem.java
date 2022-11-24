@@ -54,6 +54,7 @@ public abstract class JiraConfigItem {
 	private static final String DIFFERENCE_DELIMITER = ".";
 	public static final String DIFFERENCE_WILDCARD = DIFFERENCE_DELIMITER + "*";
 	public static final String DIFFERENCE_INDEX = DIFFERENCE_DELIMITER + "#";
+	public static final String DIFFERENCE_KEYS = DIFFERENCE_DELIMITER + "@";
 	
 	public static final List<String> getDifferences(String title, JiraConfigItem o1, JiraConfigItem o2) {
 		List<String> result = new ArrayList<>();
@@ -224,6 +225,13 @@ public abstract class JiraConfigItem {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
 			result.put(title + DIFFERENCE_INDEX, Integer.toString(o.size()));
+			String keySet = "";
+			try {
+				keySet = OM.writeValueAsString(o.keySet());
+			} catch (Exception ex) {
+				keySet = ex.getClass().getCanonicalName() + ": " + ex.getMessage();
+			}
+			result.put(title + DIFFERENCE_KEYS, keySet);
 			for (Map.Entry<?, ?> entry : o.entrySet()) {
 				result.putAll(getMap(title + DIFFERENCE_DELIMITER + entry.getKey(), entry.getValue()));
 			}
@@ -315,10 +323,14 @@ public abstract class JiraConfigItem {
 	public final Object getJiraObject() {
 		return jiraObject;
 	}
-	public final void setJiraObject(Object obj) throws Exception {
+	public final void setJiraObject(Object obj, Object... params) throws Exception {
 		this.jiraObject = obj;
 		if (obj != null) {
-			this.fromJiraObject(obj);
+			if (params != null) {
+				this.fromJiraObject(obj, params);
+			} else {
+				this.fromJiraObject(obj);
+			}
 		}
 	}
 	

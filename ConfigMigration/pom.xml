@@ -32,17 +32,33 @@
 
 	<dependencies>
 
+		<!-- Insight -->
+		<dependency>
+			<groupId>com.riadalabs.jira.plugins</groupId>
+			<artifactId>insight</artifactId>
+			<version>9.0.7</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.riadalabs</groupId>
+			<artifactId>insight-core-model</artifactId>
+			<version>0.3.9</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.13.4</version>
+			<!-- <version>2.13.4</version> -->
+			<version>2.9.7</version> <!-- Need this version due to Insight -->
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.13.4</version>
+			<!-- <version>2.13.4</version> -->
+			<version>2.9.7</version> <!-- Need this version due to Insight -->
 		</dependency>
 
 		<dependency>

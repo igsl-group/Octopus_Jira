@@ -49,7 +49,13 @@ public class FieldConfigSchemeDTO extends JiraConfigItem {
 		for (Map.Entry<String, FieldConfig> entry : obj.getConfigs().entrySet()) {
 			FieldConfigDTO item = new FieldConfigDTO();
 			item.setJiraObject(entry.getValue());
-			this.configs.put(entry.getKey(), item);
+			String key;
+			if (entry.getKey() == null) {
+				key = "null";	// JSON does not allow null map keys
+			} else {
+				key = entry.getKey();
+			}
+			this.configs.put(key, item);
 		}
 		this.projectId = new ArrayList<>();
 		for (JiraContextNode node : obj.getContexts()) {

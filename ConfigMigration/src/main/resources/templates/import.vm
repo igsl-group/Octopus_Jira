@@ -3,7 +3,6 @@
 
 ## i18n
 #set ($title = $i18n.getText('import'))
-
 <html>
 	<head>
 		<title>$!{title}</title>

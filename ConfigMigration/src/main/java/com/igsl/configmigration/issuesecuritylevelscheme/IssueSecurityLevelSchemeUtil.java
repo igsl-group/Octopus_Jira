@@ -14,10 +14,12 @@ import com.atlassian.jira.scheme.Scheme;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.ConfigUtil;
 import com.igsl.configmigration.JiraConfigItem;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
 
+@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 

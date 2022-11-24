@@ -1,143 +1,172 @@
 package com.igsl.configmigration;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.lang.annotation.Annotation;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.log4j.Logger;
 
-import com.igsl.configmigration.avatar.AvatarDTO;
-import com.igsl.configmigration.customfield.CustomFieldDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
-import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeDTO;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
-import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
-import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeDTO;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
-import com.igsl.configmigration.plugin.PluginDTO;
 import com.igsl.configmigration.plugin.PluginUtil;
-import com.igsl.configmigration.priority.PriorityDTO;
 import com.igsl.configmigration.priority.PriorityUtil;
-import com.igsl.configmigration.resolution.ResolutionDTO;
 import com.igsl.configmigration.resolution.ResolutionUtil;
-import com.igsl.configmigration.status.StatusDTO;
 import com.igsl.configmigration.status.StatusUtil;
-import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
 @SuppressWarnings("unchecked")
 public class JiraConfigTypeRegistry {
 
-	private static final Logger LOGGER = Logger.getLogger(JiraConfigTypeRegistry.class);
+	private static List<String> UTIL_ORDER = Arrays.asList(
+			StatusUtil.class.getCanonicalName(),
+			IssueTypeUtil.class.getCanonicalName(),
+			PriorityUtil.class.getCanonicalName(),
+			ResolutionUtil.class.getCanonicalName(),
+			IssueSecurityLevelSchemeUtil.class.getCanonicalName(),
+			PluginUtil.class.getCanonicalName(),
+			CustomFieldUtil.class.getCanonicalName(),
+			IssueTypeSchemeUtil.class.getCanonicalName()
+			);
 	
-	// TODO Get this information from class loader? Spring?
-	private static final Class<?>[] CLASS_LIST = new Class[] {
-		// Avatar
-		// Used when referenced, so Util is not added
-		AvatarDTO.class,
-			
-		// StatusCategory
-		// Used when referenced, so Util is not added
-		StatusCategoryDTO.class,
-
-		// Status
-		StatusDTO.class,
-		StatusUtil.class,
-		
-		// IssueType
-		IssueTypeDTO.class, 
-		IssueTypeUtil.class,
-		
-		// Priority
-		PriorityDTO.class,
-		PriorityUtil.class,
-		
-		// Resolution
-		ResolutionDTO.class,
-		ResolutionUtil.class,
-		
-		// IssueSecurityLevelScheme
-		// IssueSecurityLevel is referenced from IssueSecurityLevelScheme
-		IssueSecurityLevelSchemeDTO.class,
-		IssueSecurityLevelSchemeUtil.class,
-		
-		// Plugin
-		PluginDTO.class, 
-		PluginUtil.class,
-		
-		// CustomFieldType		
-		// CustomField
-		CustomFieldDTO.class,
-		CustomFieldUtil.class,
-		
-		// Project
-		// TODO
-		
-		// PriorityScheme
-		// TODO
-		
-		// IssueTypeScheme
-		IssueTypeSchemeDTO.class,
-		IssueTypeSchemeUtil.class,
-	};
+	private static class UtilComparator implements Comparator<String> {
+		@Override
+		public int compare(String o1, String o2) {
+			int i1 = -1;
+			int i2 = -1;
+			if (UTIL_ORDER.contains(o1)) {
+				i1 = UTIL_ORDER.indexOf(o1);
+			}
+			if (UTIL_ORDER.contains(o2)) {
+				i2 = UTIL_ORDER.indexOf(o2);
+			}
+			return Integer.compare(i1, i2);
+		}
+	}
 	
-	private static Map<String, Class<? extends JiraConfigItem>> CONFIG_ITEM = new LinkedHashMap<>();
-	private static Map<String, Class<? extends JiraConfigUtil>> CONFIG_UTIL = new LinkedHashMap<>();
-	private static Map<String, JiraConfigUtil> CONFIG_UTIL_LIST = new LinkedHashMap<>();
+	private static final String LOGGER_NAME = "com.igsl.configmigration.JiraConfigTypeRegistry";
+	
+	private static final String CLASS_SUFFIX = ".class";
+	
+	// Used to store class names
+	private static List<String> ITEM_NAMES = new ArrayList<>();
+	private static List<String> UTIL_NAMES = new ArrayList<>();
+	
+	// Used to store classes and instances
+	private static Map<String, Class<? extends JiraConfigItem>> ITEM_LIST = new LinkedHashMap<>();
+	private static Map<String, Class<? extends JiraConfigUtil>> UTIL_LIST = new TreeMap<>(new UtilComparator());
+	private static Map<String, JiraConfigUtil> UTIL_INSTANCE_LIST = new LinkedHashMap<>();
 	
 	public static Map<String, Class<? extends JiraConfigItem>> getConfigItemMap() {
-		return Collections.unmodifiableMap(CONFIG_ITEM);
+		return Collections.unmodifiableMap(ITEM_LIST);
 	}
 	
 	public static Map<String, Class<? extends JiraConfigUtil>> getConfigUtilMap() {
-		return Collections.unmodifiableMap(CONFIG_UTIL);
+		return Collections.unmodifiableMap(UTIL_LIST);
 	}
 	
 	public static Collection<JiraConfigUtil> getConfigUtilList() {
-		return Collections.unmodifiableCollection(CONFIG_UTIL_LIST.values());
+		return Collections.unmodifiableCollection(UTIL_INSTANCE_LIST.values());
 	}
 	
 	public static JiraConfigUtil getConfigUtil(String key) {
-		if (CONFIG_UTIL.containsKey(key)) {
-			try {
-				return CONFIG_UTIL.get(key).newInstance();
-			} catch (InstantiationException | IllegalAccessException e) {
-				LOGGER.error("Failed to instantiate JiraConfigUtil instance for " + key, e);
-			}
+		if (UTIL_INSTANCE_LIST.containsKey(key)) {
+			return UTIL_INSTANCE_LIST.get(key);
 		}
 		return null;
 	}
 	
 	static {
+		Logger logger = Logger.getLogger(LOGGER_NAME);
+		// Get JiraConfigItme and JiraConfigUtil class list from JAR file
 		try {
-			for (Class<?> cls : CLASS_LIST) {
-				if (JiraConfigItem.class.isAssignableFrom(cls)) {
-					CONFIG_ITEM.put(cls.getCanonicalName(), (Class<? extends JiraConfigItem>) cls);
-				} else if (JiraConfigUtil.class.isAssignableFrom(cls)) {
-					CONFIG_UTIL.put(cls.getCanonicalName(), (Class<? extends JiraConfigUtil>) cls);
-					try {
-						CONFIG_UTIL_LIST.put(cls.getCanonicalName(), (JiraConfigUtil) cls.newInstance());
-					} catch (InstantiationException | IllegalAccessException e) {
-						LOGGER.error("Failed to instantiate JiraConfigUtil instance for " + cls, e);
+			ProtectionDomain pd = ExportAction.class.getProtectionDomain();
+			if (pd != null) {
+				CodeSource cs = pd.getCodeSource();
+				if (cs != null) {
+					URL url = cs.getLocation();
+					URL[] urls = new URL[] {url};
+					ObjectMapper OM = new ObjectMapper();
+					ClassLoader cloader = new URLClassLoader(urls);
+					Class<?> configItemClass = cloader.loadClass(JiraConfigItem.class.getCanonicalName());
+					Class<?> utilClass = cloader.loadClass(JiraConfigUtil.class.getCanonicalName());
+					Class<? extends Annotation> annoClass = 
+							(Class<? extends Annotation>) cloader.loadClass(ConfigUtil.class.getCanonicalName());
+					logger.debug("annoClass: " + annoClass.getCanonicalName());
+					try (ZipInputStream in = new ZipInputStream(url.openStream())) {
+						while (true) {
+							ZipEntry entry = in.getNextEntry();
+							if (entry == null) {
+								break;
+							}
+							String entryName = entry.getName();
+							if (entryName.toLowerCase().endsWith(CLASS_SUFFIX)) {
+								String className = entryName
+										.substring(0, entryName.length() - CLASS_SUFFIX.length())
+										.replaceAll("/", ".");
+								try {
+									Class<?> cls = cloader.loadClass(className);
+									if (configItemClass.isAssignableFrom(cls) && 
+										!className.equals(JiraConfigItem.class.getCanonicalName())) {
+										ITEM_NAMES.add(cls.getCanonicalName());
+									} else if (
+										utilClass.isAssignableFrom(cls) && 
+										cls.getAnnotation(annoClass) != null && 
+										!className.equals(JiraConfigUtil.class.getCanonicalName())) {
+										UTIL_NAMES.add(cls.getCanonicalName());
+									}
+								} catch (Throwable ex) {
+									// Ignore
+								}
+							}
+						}
 					}
 				}
 			}
 		} catch (Exception ex) {
-			// TODO
-			PrintStream ps = null;
+			logger.error("Error: " + ex.getClass().getCanonicalName() + ": " + ex.getMessage() + "\n");
+		}	
+		// Load the class with real classloader
+		ClassLoader cloader = JiraConfigTypeRegistry.class.getClassLoader();
+		for (String s : ITEM_NAMES) {
 			try {
-				ps = new PrintStream(new FileOutputStream("C:\\KC\\log.txt", true));
-				ex.printStackTrace(ps);
-			} catch (IOException ioex) {
-				// Ignore
-			} finally {
-				if (ps != null) {
-					ps.close();
-				}
+				Class<?> cls = cloader.loadClass(s);
+				ITEM_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigItem>) cls); 
+			} catch (Throwable t) {
+				logger.error("Failed to load JiraConfigItem for " + s, t);
+			}
+		}
+		for (String s : UTIL_NAMES) {
+			try {
+				Class<?> cls = cloader.loadClass(s);
+				UTIL_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigUtil>) cls); 
+			} catch (Throwable t) {
+				logger.error("Failed to load JiraConfigUtil for " + s, t);
+			}
+		}
+		for (Class<? extends JiraConfigUtil> cls : UTIL_LIST.values()) {
+			try {
+				UTIL_INSTANCE_LIST.put(
+						cls.getCanonicalName(), 
+						(JiraConfigUtil) cls.newInstance());
+			} catch (Throwable ex) {
+				logger.error(
+						"Failed to instantiate JiraConfigUtil instance for " + cls, 
+						ex);
 			}
 		}
 	}

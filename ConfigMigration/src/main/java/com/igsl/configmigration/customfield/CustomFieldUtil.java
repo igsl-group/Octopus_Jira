@@ -16,6 +16,7 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.ConfigUtil;
 import com.igsl.configmigration.JiraConfigItem;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
@@ -24,6 +25,7 @@ import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 
+@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldUtil extends JiraConfigUtil {
 
@@ -103,7 +105,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					src.getDescription(), 
 					fieldType,
 					fieldSearcher, 
-					null, 	// TODO How to find context? via config
+					null, 	// TODO How to find context? via config?
 					issueTypes);
 		}
 	}

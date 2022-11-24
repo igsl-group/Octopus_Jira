@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.atlassian.jira.issue.context.manager.JiraContextTreeManager;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -13,10 +13,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigItem;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
+import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.options.OptionsDTO;
-import com.igsl.configmigration.optionset.OptionSetDTO;
 import com.igsl.configmigration.propertyset.PropertySetDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -33,6 +33,7 @@ public class CustomFieldDTO extends JiraConfigItem {
 	private List<FieldConfigSchemeDTO> configurationSchemes;
 	private PropertySetDTO propertySet;
 	private OptionsDTO options;
+	private DefaultValueOperationsDTO defaultValueOperations;
 	
 	@Override
 	public void fromJiraObject(Object o, Object... params) throws Exception {
@@ -55,7 +56,6 @@ public class CustomFieldDTO extends JiraConfigItem {
 		this.customFieldType = new CustomFieldTypeDTO();
 		this.customFieldType.setJiraObject(obj.getCustomFieldType());
 		this.defaultSortOrder = obj.getDefaultSortOrder();
-		//obj.getDefaultValueOperations();
 		this.description = obj.getDescription();
 		this.fieldName = obj.getFieldName();
 		this.id = obj.getId();
@@ -65,7 +65,10 @@ public class CustomFieldDTO extends JiraConfigItem {
 		this.options = new OptionsDTO();
 		// TODO Can there be more than 1 scheme? What about no scheme?
 		FieldConfigScheme scheme = (FieldConfigScheme) this.configurationSchemes.get(0).getJiraObject();
-		this.options.setJiraObject(obj.getOptions(null, scheme.getOneAndOnlyConfig(), null));
+		FieldConfig fieldConfig = scheme.getOneAndOnlyConfig();
+		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null));
+		this.defaultValueOperations = new DefaultValueOperationsDTO();
+		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfig);
 	}
 
 	@Override
@@ -90,7 +93,8 @@ public class CustomFieldDTO extends JiraConfigItem {
 				"getCustomFieldSearcher",
 				"getConfigurationSchemes",
 				"getPropertySet",
-				"getOptions");
+				"getOptions",
+				"getDefaultValueOperations");
 	}
 
 	public List<IssueTypeDTO> getAssociatedIssueTypes() {
@@ -179,6 +183,14 @@ public class CustomFieldDTO extends JiraConfigItem {
 
 	public void setOptions(OptionsDTO options) {
 		this.options = options;
+	}
+
+	public DefaultValueOperationsDTO getDefaultValueOperations() {
+		return defaultValueOperations;
+	}
+
+	public void setDefaultValueOperations(DefaultValueOperationsDTO defaultValueOperations) {
+		this.defaultValueOperations = defaultValueOperations;
 	}
 
 }

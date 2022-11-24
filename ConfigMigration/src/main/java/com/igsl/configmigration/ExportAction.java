@@ -1,7 +1,13 @@
 package com.igsl.configmigration;
 
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.CodeSource;
+import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
@@ -9,9 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.issue.CustomFieldManager;
-import com.atlassian.jira.startup.PluginInfoProvider;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -112,7 +115,7 @@ public class ExportAction extends JiraWebActionSupport {
 				data.getExportData().putAll(data.getUtil().readAllItems());
 			}
 		}
-		
+
 		// Save selection
 		for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 			SessionData data = sessionData.get(entry.getKey());

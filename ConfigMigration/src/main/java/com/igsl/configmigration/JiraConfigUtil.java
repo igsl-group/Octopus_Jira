@@ -10,6 +10,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.SessionData.ImportData;
 
+/**
+ * Implementations that are to be displayed in the interface should add @ConfigType annotation.
+ */
 @JsonDeserialize(using=JiraConfigUtilDeserializer.class)
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigUtil {

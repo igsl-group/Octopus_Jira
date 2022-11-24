@@ -6,11 +6,9 @@ import java.util.List;
 
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.customfields.option.Options;
-import com.atlassian.jira.issue.priority.Priority;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigItem;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionsDTO extends JiraConfigItem {

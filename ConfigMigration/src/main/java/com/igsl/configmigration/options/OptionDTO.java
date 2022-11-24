@@ -15,7 +15,6 @@ public class OptionDTO extends JiraConfigItem {
 	private Long optionId;
 	private String value;
 	private boolean disabled;
-//	private OptionDTO parentOption;
 	private List<OptionDTO> childOptions;
 	
 	@Override
@@ -24,8 +23,6 @@ public class OptionDTO extends JiraConfigItem {
 		this.optionId = obj.getOptionId();
 		this.value = obj.getValue();
 		this.disabled = obj.getDisabled();
-//		this.parentOption = new OptionDTO();
-//		this.parentOption.setJiraObject(obj.getParentOption());
 		this.childOptions = new ArrayList<>();
 		for (Option opt : obj.getChildOptions()) {
 			OptionDTO item = new OptionDTO();
@@ -49,7 +46,6 @@ public class OptionDTO extends JiraConfigItem {
 		return Arrays.asList(
 				"getValue",
 				"isDisabled",
-//				"getParentOption",
 				"getChildOptions");
 	}
 
@@ -76,14 +72,6 @@ public class OptionDTO extends JiraConfigItem {
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}
-
-//	public OptionDTO getParentOption() {
-//		return parentOption;
-//	}
-//
-//	public void setParentOption(OptionDTO parentOption) {
-//		this.parentOption = parentOption;
-//	}
 
 	public List<OptionDTO> getChildOptions() {
 		return childOptions;

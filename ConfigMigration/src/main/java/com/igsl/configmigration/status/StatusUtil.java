@@ -13,11 +13,13 @@ import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.ConfigUtil;
 import com.igsl.configmigration.JiraConfigItem;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
+@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusUtil extends JiraConfigUtil {
 

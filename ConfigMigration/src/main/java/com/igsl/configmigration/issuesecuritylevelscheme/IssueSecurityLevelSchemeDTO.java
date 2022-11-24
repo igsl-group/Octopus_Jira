@@ -8,7 +8,6 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
 import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
-import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigItem;
