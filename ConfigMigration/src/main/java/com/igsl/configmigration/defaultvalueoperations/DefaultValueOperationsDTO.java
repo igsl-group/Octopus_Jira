@@ -3,6 +3,7 @@ package com.igsl.configmigration.defaultvalueoperations;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -20,7 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigItem;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.group.GroupDTO;
-import com.igsl.configmigration.insight.InsightObjectBeanDTO;
+import com.igsl.configmigration.insight.ObjectBeanDTO;
 import com.igsl.configmigration.label.LabelDTO;
 import com.igsl.configmigration.options.OptionDTO;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectBean;
@@ -77,6 +78,35 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 	private ValueType valueType;
 	private String valueClass;
 	
+	public Object getDefaultValueObject() {
+		// Do the reverse of parseDefaultValue
+		if (this.valueType != null) {
+			switch (this.valueType) {
+			case DTO: 
+				return this.getDefaultDTO().getJiraObject();
+			case LIST_DTO: 
+				List<Object> dtoList = new ArrayList<>();
+				for (JiraConfigItem item : this.getDefaultDTOList()) {
+					dtoList.add(item.getJiraObject());
+				}
+				return dtoList;
+			case MAP_DTO: 
+				Map<Object, Object> dtoMap = new HashMap<>();
+				for (Map.Entry<Object, JiraConfigItem> entry : this.getDefaultDTOMap().entrySet()) {
+					dtoMap.put(entry.getKey(), entry.getValue().getJiraObject());
+				}
+				return dtoMap;
+			case OBJECT: 
+				return this.getDefaultValue();
+			case LIST_OBJECT: 
+				return this.getDefaultValueList();
+			case MAP_OBJECT: 
+				return this.getDefaultValueMap();
+			}
+		}
+		return null;
+	}
+	
 	private ParseResult parseDefaultValue(Object o) throws Exception {
 		ParseResult result = null;
 		if (o != null) {
@@ -98,7 +128,7 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 				r.setJiraObject(o);
 				result = new ParseResult(ValueType.DTO, r.getClass().getCanonicalName(), r);
 			} else if (ObjectBean.class.isAssignableFrom(cls)) {
-				InsightObjectBeanDTO r = new InsightObjectBeanDTO();
+				ObjectBeanDTO r = new ObjectBeanDTO();
 				r.setJiraObject(o);
 				result = new ParseResult(ValueType.DTO, r.getClass().getCanonicalName(), r);
 			} else if (cls.isArray()) {
@@ -137,9 +167,11 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 						key = "null";
 					}
 					ParseResult item = parseDefaultValue(entry.getValue());
-					itemType = item.getValueType();
-					itemClass = item.getValueClass();
-					map.put(key, item.getValue());
+					if (item != null) {
+						itemType = item.getValueType();
+						itemClass = item.getValueClass();
+						map.put(key, item.getValue());
+					}
 				}
 				switch (itemType) {
 				case DTO:
@@ -160,9 +192,11 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 				String itemClass = null;
 				for (Object e : src) {
 					ParseResult item = parseDefaultValue(e);
-					itemType = item.getValueType();
-					itemClass = item.getValueClass();
-					array.add(item.getValue());
+					if (item != null) {
+						itemType = item.getValueType();
+						itemClass = item.getValueClass();
+						array.add(item.getValue());
+					}
 				}
 				switch (itemType) {
 				case DTO:

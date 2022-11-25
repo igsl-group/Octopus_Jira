@@ -55,8 +55,10 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	public Object findObject(Object... params) throws Exception {
 		CustomFieldType<?, ?> type = (CustomFieldType<?, ?>) params[0];
 		String identifier = (String) params[1];
+		LOGGER.debug("CustomFieldType: " + type);
 		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(type)) {
-			if (s.getDescriptor().getKey().equals(identifier)) {
+			LOGGER.debug(s.getDescriptor().getCompleteKey() + " vs " + identifier);
+			if (s.getDescriptor().getCompleteKey().equals(identifier)) {
 				return s;
 			}
 		}

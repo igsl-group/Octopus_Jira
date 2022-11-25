@@ -11,13 +11,13 @@ import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeBean;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectBean;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class InsightObjectBeanDTO extends JiraConfigItem {
+public class ObjectBeanDTO extends JiraConfigItem {
 
 	private Integer id;
 	private String label;
 	private String objectKey;
 	private Integer objectTypeId;
-	private List<InsightObjectAttributeBeanDTO> objectAttributeBeans;
+	private List<ObjectAttributeBeanDTO> objectAttributeBeans;
 	
 	@Override
 	public void fromJiraObject(Object obj, Object... params) throws Exception {
@@ -26,7 +26,7 @@ public class InsightObjectBeanDTO extends JiraConfigItem {
 		this.label = o.getLabel();
 		this.objectAttributeBeans = new ArrayList<>();
 		for (ObjectAttributeBean e : o.getObjectAttributeBeans()) {
-			InsightObjectAttributeBeanDTO item = new InsightObjectAttributeBeanDTO();
+			ObjectAttributeBeanDTO item = new ObjectAttributeBeanDTO();
 			item.setJiraObject(e);
 			this.objectAttributeBeans.add(item);
 		}
@@ -85,11 +85,11 @@ public class InsightObjectBeanDTO extends JiraConfigItem {
 		this.objectTypeId = objectTypeId;
 	}
 
-	public List<InsightObjectAttributeBeanDTO> getObjectAttributeBeans() {
+	public List<ObjectAttributeBeanDTO> getObjectAttributeBeans() {
 		return objectAttributeBeans;
 	}
 
-	public void setObjectAttributeBeans(List<InsightObjectAttributeBeanDTO> objectAttributeBeans) {
+	public void setObjectAttributeBeans(List<ObjectAttributeBeanDTO> objectAttributeBeans) {
 		this.objectAttributeBeans = objectAttributeBeans;
 	}
 

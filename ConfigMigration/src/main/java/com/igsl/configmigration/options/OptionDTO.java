@@ -16,6 +16,7 @@ public class OptionDTO extends JiraConfigItem {
 	private String value;
 	private boolean disabled;
 	private List<OptionDTO> childOptions;
+	private Long sequence;
 	
 	@Override
 	public void fromJiraObject(Object o, Object... params) throws Exception {
@@ -29,6 +30,7 @@ public class OptionDTO extends JiraConfigItem {
 			item.setJiraObject(opt);
 			this.childOptions.add(item);
 		}
+		this.sequence = obj.getSequence();
 	}
 
 	@Override
@@ -46,7 +48,8 @@ public class OptionDTO extends JiraConfigItem {
 		return Arrays.asList(
 				"getValue",
 				"isDisabled",
-				"getChildOptions");
+				"getChildOptions",
+				"getSequence");
 	}
 
 	public Long getOptionId() {
@@ -79,6 +82,14 @@ public class OptionDTO extends JiraConfigItem {
 
 	public void setChildOptions(List<OptionDTO> childOptions) {
 		this.childOptions = childOptions;
+	}
+
+	public Long getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Long sequence) {
+		this.sequence = sequence;
 	}
 
 }

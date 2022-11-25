@@ -24,12 +24,12 @@ public class CustomFieldTypeDTO extends JiraConfigItem {
 	@Override
 	public void fromJiraObject(Object o, Object... params) throws Exception {
 		CustomFieldType<?, ?> obj = (CustomFieldType<?, ?>) o;
-		obj.getConfigurationItemTypes();
+		// obj.getConfigurationItemTypes();
 		this.description = obj.getDescription();
-		obj.getDescriptor();
+		// obj.getDescriptor();
 		this.key = obj.getKey();
 		this.name = obj.getName();
-		obj.getNonNullCustomFieldProvider();
+		// obj.getNonNullCustomFieldProvider();
 	}
 
 	@Override
@@ -45,8 +45,7 @@ public class CustomFieldTypeDTO extends JiraConfigItem {
 	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
-				"getName",
-				"getKey", 
+				"getName", 
 				"getDescription");
 	}
 

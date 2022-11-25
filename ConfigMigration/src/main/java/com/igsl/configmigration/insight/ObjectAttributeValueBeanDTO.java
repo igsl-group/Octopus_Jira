@@ -10,7 +10,7 @@ import com.igsl.configmigration.JiraConfigItem;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeValueBean;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class InsightObjectAttributeValueBeanDTO extends JiraConfigItem {
+public class ObjectAttributeValueBeanDTO extends JiraConfigItem {
 
 	private Long id;
 	private String additionalValue;

@@ -21,6 +21,8 @@ import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.insight.ObjectBeanUtil;
+import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
@@ -37,6 +39,8 @@ public class JiraConfigTypeRegistry {
 			IssueTypeUtil.class.getCanonicalName(),
 			PriorityUtil.class.getCanonicalName(),
 			ResolutionUtil.class.getCanonicalName(),
+			ObjectSchemaBeanUtil.class.getCanonicalName(),
+			ObjectBeanUtil.class.getCanonicalName(),
 			IssueSecurityLevelSchemeUtil.class.getCanonicalName(),
 			PluginUtil.class.getCanonicalName(),
 			CustomFieldUtil.class.getCanonicalName(),

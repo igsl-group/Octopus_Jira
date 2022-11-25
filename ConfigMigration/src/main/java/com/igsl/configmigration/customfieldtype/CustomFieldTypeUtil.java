@@ -50,7 +50,7 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 	public Object findObject(Object... params) throws Exception {
 		String identifier = (String) params[0];
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
-			if (p.getName().equals(identifier)) {
+			if (p.getKey().equals(identifier)) {
 				return p;
 			}
 		}
