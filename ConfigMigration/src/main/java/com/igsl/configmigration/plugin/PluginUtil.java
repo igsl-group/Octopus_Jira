@@ -21,15 +21,12 @@ import com.atlassian.plugin.JarPluginArtifact;
 import com.atlassian.plugin.Plugin;
 import com.atlassian.plugin.PluginAccessor;
 import com.atlassian.plugin.metadata.PluginMetadataManager;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 
-@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PluginUtil extends JiraConfigUtil {
 
@@ -131,6 +128,11 @@ public class PluginUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return PluginDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		return true;
 	}
 
 }

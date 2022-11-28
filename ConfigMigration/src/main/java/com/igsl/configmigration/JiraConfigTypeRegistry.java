@@ -1,6 +1,5 @@
 package com.igsl.configmigration;
 
-import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.CodeSource;
@@ -20,7 +19,6 @@ import java.util.zip.ZipInputStream;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
 import com.igsl.configmigration.insight.ObjectBeanUtil;
 import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
@@ -35,6 +33,9 @@ import com.igsl.configmigration.status.StatusUtil;
 @SuppressWarnings("unchecked")
 public class JiraConfigTypeRegistry {
 
+	/**
+	 * This list is to mandate the order of the utils during export and import.
+	 */
 	private static List<String> UTIL_ORDER = Arrays.asList(
 			StatusUtil.class.getCanonicalName(),
 			IssueTypeUtil.class.getCanonicalName(),
@@ -71,15 +72,13 @@ public class JiraConfigTypeRegistry {
 	private static List<String> ITEM_NAMES = new ArrayList<>();
 	private static List<String> UTIL_NAMES = new ArrayList<>();
 	
-	// Used to store classes and instances
+	// Maps canonical name to Class for deserialization
 	private static Map<String, Class<? extends JiraConfigDTO>> ITEM_LIST = new LinkedHashMap<>();
 	private static Map<String, Class<? extends JiraConfigUtil>> UTIL_LIST = new TreeMap<>(new UtilComparator());
+	
+	// Stores list of Util instances
 	private static Map<String, JiraConfigUtil> UTIL_INSTANCE_LIST = new LinkedHashMap<>();
-	
-	// TODO Singleton instances of all Utils
-	// TODO Check object if there is a matching DTO
-	// TODO Get Util based on DTO class?
-	
+
 	public static Map<String, Class<? extends JiraConfigDTO>> getConfigItemMap() {
 		return Collections.unmodifiableMap(ITEM_LIST);
 	}
@@ -89,12 +88,34 @@ public class JiraConfigTypeRegistry {
 	}
 	
 	public static Collection<JiraConfigUtil> getConfigUtilList() {
-		return Collections.unmodifiableCollection(UTIL_INSTANCE_LIST.values());
+		return getConfigUtilList(true);
+	}
+	public static Collection<JiraConfigUtil> getConfigUtilList(boolean publicOnly) {
+		if (publicOnly) {
+			Collection<JiraConfigUtil> result = new ArrayList<JiraConfigUtil>();
+			for (JiraConfigUtil util : UTIL_INSTANCE_LIST.values()) {
+				if (util.isPublic()) {
+					result.add(util);
+				}
+			}
+			return Collections.unmodifiableCollection(result);
+		} else {
+			return Collections.unmodifiableCollection(UTIL_INSTANCE_LIST.values());
+		}
 	}
 	
-	public static JiraConfigUtil getConfigUtil(String key) {
-		if (UTIL_INSTANCE_LIST.containsKey(key)) {
-			return UTIL_INSTANCE_LIST.get(key);
+	public static JiraConfigUtil getConfigUtil(String className) {
+		if (UTIL_INSTANCE_LIST.containsKey(className)) {
+			return UTIL_INSTANCE_LIST.get(className);
+		}
+		return null;
+	}
+
+	// Caller should check if item is array, Collection or Map first, if so, handle each item separately.
+	public static JiraConfigUtil checkConfigUtil(Object item) {
+		if (item != null && item instanceof JiraConfigDTO) {
+			JiraConfigDTO dto = (JiraConfigDTO) item;
+			return getConfigUtil(dto.getUtilClass().getCanonicalName());
 		}
 		return null;
 	}
@@ -113,9 +134,6 @@ public class JiraConfigTypeRegistry {
 					ClassLoader cloader = new URLClassLoader(urls);
 					Class<?> configItemClass = cloader.loadClass(JiraConfigDTO.class.getCanonicalName());
 					Class<?> utilClass = cloader.loadClass(JiraConfigUtil.class.getCanonicalName());
-					Class<? extends Annotation> annoClass = 
-							(Class<? extends Annotation>) cloader.loadClass(ConfigUtil.class.getCanonicalName());
-					logger.debug("annoClass: " + annoClass.getCanonicalName());
 					try (ZipInputStream in = new ZipInputStream(url.openStream())) {
 						while (true) {
 							ZipEntry entry = in.getNextEntry();
@@ -134,7 +152,6 @@ public class JiraConfigTypeRegistry {
 										ITEM_NAMES.add(cls.getCanonicalName());
 									} else if (
 										utilClass.isAssignableFrom(cls) && 
-										cls.getAnnotation(annoClass) != null && 
 										!className.equals(JiraConfigUtil.class.getCanonicalName())) {
 										UTIL_NAMES.add(cls.getCanonicalName());
 									}

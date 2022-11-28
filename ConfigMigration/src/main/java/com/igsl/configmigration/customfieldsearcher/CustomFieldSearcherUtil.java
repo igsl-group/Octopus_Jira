@@ -9,7 +9,6 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.managers.CustomFieldSearcherManager;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -80,6 +79,12 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return CustomFieldSearcherDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		// Referenced from CustomField only
+		return false;
 	}
 
 }

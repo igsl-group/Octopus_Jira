@@ -42,14 +42,26 @@
 	</web-resource>
 
 	<!-- Configuration page -->
+
+	<!-- 
 	<web-section key="ConfigMigrationSection"
 		location="admin_plugins_menu">
+		<label key="Config Migration" />
+	</web-section>
+	-->
+	<web-section key="ConfigMigrationSection"
+		location="system.admin.top.navigation.bar">
+		<label key="Config Migration" />
+	</web-section>
+
+	<web-section key="ConfigMigrationSubSection"
+		location="ConfigMigrationSection">
 		<label key="Config Migration" />
 	</web-section>
 	
 	<!-- Export -->
 	<web-item key="Export"
-		name="Export" section="admin_plugins_menu/ConfigMigrationSection" weight="10">
+		name="Export" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Export
 		</description>
 		<label key="export" />
@@ -69,7 +81,7 @@
 
 	<!-- Import -->
 	<web-item key="Import"
-		name="Import" section="admin_plugins_menu/ConfigMigrationSection" weight="10">
+		name="Import" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Import
 		</description>
 		<label key="import" />

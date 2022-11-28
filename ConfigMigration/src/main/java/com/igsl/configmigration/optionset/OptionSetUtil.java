@@ -96,4 +96,10 @@ public class OptionSetUtil extends JiraConfigUtil {
 		return OptionSetDTO.class;
 	}
 
+	@Override
+	public boolean isPublic() {
+		// Referenced only
+		return false;
+	}
+
 }

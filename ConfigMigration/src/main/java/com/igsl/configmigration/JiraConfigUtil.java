@@ -9,15 +9,19 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.SessionData.ImportData;
 
-/**
- * Implementations that are to be displayed in the interface should add @ConfigType annotation.
- */
 @JsonDeserialize(using=JiraConfigUtilDeserializer.class)
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigUtil {
 	
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
+	/**
+	 * Return true if this JiraConfigUtil is to be included in user interface.
+	 * Return false if the associated JiraConfigDTO is only referenced via other JiraConfigDTOs.
+	 */
+	@JsonIgnore
+	public abstract boolean isPublic();
+	
 	/**
 	 * Return implementation name. This is used to identify the JiraConfigUtil to be used.
 	 * @return String

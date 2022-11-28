@@ -8,15 +8,12 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.ResolutionManager;
 import com.atlassian.jira.issue.resolution.Resolution;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 
-@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ResolutionUtil extends JiraConfigUtil {
 
@@ -91,6 +88,11 @@ public class ResolutionUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return ResolutionDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		return true;
 	}
 
 }

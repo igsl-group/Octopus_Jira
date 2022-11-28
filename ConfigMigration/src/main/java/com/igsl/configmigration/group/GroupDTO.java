@@ -46,7 +46,6 @@ public class GroupDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return GroupUtil.class;
 	}
 }

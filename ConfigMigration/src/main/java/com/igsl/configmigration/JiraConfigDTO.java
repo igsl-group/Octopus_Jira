@@ -46,7 +46,8 @@ public abstract class JiraConfigDTO {
 			"getInternalId",
 			"getImplementation",
 			"getMap",
-			"getMapIgnoredMethods"
+			"getMapIgnoredMethods",
+			"getUtilClass"
 		);
 	
 	protected abstract List<String> getCompareMethods();
@@ -56,6 +57,7 @@ public abstract class JiraConfigDTO {
 	public static final String DIFFERENCE_INDEX = DIFFERENCE_DELIMITER + "#";
 	public static final String DIFFERENCE_KEYS = DIFFERENCE_DELIMITER + "@";
 	
+	@JsonIgnore
 	public abstract Class<? extends JiraConfigUtil> getUtilClass();
 	
 	public static final List<String> getDifferences(String title, JiraConfigDTO o1, JiraConfigDTO o2) {

@@ -11,15 +11,12 @@ import com.atlassian.jira.issue.security.IssueSecurityLevel;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.atlassian.jira.scheme.Scheme;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 
-@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 
@@ -117,6 +114,11 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return IssueSecurityLevelSchemeDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		return true;
 	}
 
 }

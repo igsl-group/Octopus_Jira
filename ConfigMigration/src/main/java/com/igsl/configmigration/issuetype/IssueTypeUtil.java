@@ -9,16 +9,13 @@ import com.atlassian.jira.avatar.Avatar;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.IssueTypeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.avatar.AvatarUtil;
 
-@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueTypeUtil extends JiraConfigUtil {
 
@@ -96,6 +93,11 @@ public class IssueTypeUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return IssueTypeDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		return true;
 	}
 
 }

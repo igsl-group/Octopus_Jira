@@ -10,16 +10,13 @@ import com.atlassian.jira.config.StatusCategoryManager;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
-@ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusUtil extends JiraConfigUtil {
 
@@ -95,6 +92,11 @@ public class StatusUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return StatusDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		return true;
 	}
 
 }

@@ -159,4 +159,10 @@ public class AvatarUtil extends JiraConfigUtil {
 		return AvatarDTO.class;
 	}
 
+	@Override
+	public boolean isPublic() {
+		// Avatar is only referenced via other DTOs
+		return false;
+	}
+
 }

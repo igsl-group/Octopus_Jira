@@ -100,4 +100,10 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 		return ObjectSchemaBeanDTO.class;
 	}
 
+	@Override
+	public boolean isPublic() {
+		// Referenced by other DTOs
+		return false;
+	}
+
 }

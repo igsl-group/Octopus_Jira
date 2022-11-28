@@ -8,13 +8,11 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.annotation.ConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldTypeUtil extends JiraConfigUtil {
@@ -72,6 +70,12 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return CustomFieldTypeDTO.class;
+	}
+
+	@Override
+	public boolean isPublic() {
+		// Referenced from CustomField only
+		return false;
 	}
 
 }
