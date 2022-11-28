@@ -14,10 +14,10 @@ import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.optionset.OptionSetUtil;
 
 @ConfigUtil
@@ -34,13 +34,8 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, IssueTypeSchemeDTO>>() {};
-	}
-	
-	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (FieldConfigScheme scheme : MANAGER.getAllSchemes()) {
 			IssueTypeSchemeDTO item = new IssueTypeSchemeDTO();
 			item.setJiraObject(scheme);
@@ -65,7 +60,7 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		IssueTypeSchemeDTO original = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -101,6 +96,11 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return IssueTypeSchemeDTO.class;
 	}
 
 }

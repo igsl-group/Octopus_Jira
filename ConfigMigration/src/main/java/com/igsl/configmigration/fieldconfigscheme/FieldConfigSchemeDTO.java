@@ -13,13 +13,14 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.project.ProjectDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class FieldConfigSchemeDTO extends JiraConfigItem {
+public class FieldConfigSchemeDTO extends JiraConfigDTO {
 
 	private List<IssueTypeDTO> associatedIssueTypes;
 	private List<ProjectDTO> assocatedProjectObjects;
@@ -153,6 +154,12 @@ public class FieldConfigSchemeDTO extends JiraConfigItem {
 
 	public void setConfigs(Map<String, FieldConfigDTO> configs) {
 		this.configs = configs;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

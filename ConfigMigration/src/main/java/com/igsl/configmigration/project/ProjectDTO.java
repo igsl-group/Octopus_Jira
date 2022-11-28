@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class ProjectDTO extends JiraConfigItem {
+public class ProjectDTO extends JiraConfigDTO {
 
 	protected Long id;
 	protected String key;
@@ -62,6 +63,12 @@ public class ProjectDTO extends JiraConfigItem {
 		return Arrays.asList(
 				"getName",
 				"getKey");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -13,10 +13,11 @@ import com.atlassian.plugin.ReferenceMode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class PluginArtifactDTO extends JiraConfigItem {
+public class PluginArtifactDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(PluginArtifactDTO.class);
 	
@@ -84,6 +85,12 @@ public class PluginArtifactDTO extends JiraConfigItem {
 
 	public void setReferenceMode(ReferenceMode referenceMode) {
 		this.referenceMode = referenceMode;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -9,10 +9,11 @@ import com.atlassian.jira.issue.fields.config.FieldConfigItemType;
 import com.atlassian.jira.plugin.customfield.CustomFieldTypeModuleDescriptor;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class CustomFieldTypeDTO extends JiraConfigItem {
+public class CustomFieldTypeDTO extends JiraConfigDTO {
 
 	private String key;
 	private String name;
@@ -71,6 +72,11 @@ public class CustomFieldTypeDTO extends JiraConfigItem {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return CustomFieldTypeUtil.class;
 	}
 
 }

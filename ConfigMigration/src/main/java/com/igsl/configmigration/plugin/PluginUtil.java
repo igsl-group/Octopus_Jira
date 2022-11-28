@@ -24,10 +24,10 @@ import com.atlassian.plugin.metadata.PluginMetadataManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.annotation.ConfigUtil;
 
 @ConfigUtil
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -60,13 +60,8 @@ public class PluginUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, PluginDTO>>() {};
-	}
-	
-	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		PluginInfos infos = PLUGIN_INFO_PROVIDER.getUserPlugins();
 		Iterator<PluginInfo> it = infos.iterator();
 		while (it.hasNext()) {
@@ -105,7 +100,7 @@ public class PluginUtil extends JiraConfigUtil {
 		return null;
 	}
 	
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		PluginDTO src = (PluginDTO) newItem;
 		byte[] data = src.getPluginArtifact().getArtifactDataBytes();
 		Path tempFile = Files.createTempFile(src.getName(), ".jar");
@@ -131,6 +126,11 @@ public class PluginUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return PluginDTO.class;
 	}
 
 }

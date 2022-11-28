@@ -13,10 +13,10 @@ import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
 @ConfigUtil
@@ -33,13 +33,8 @@ public class StatusUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, StatusDTO>>() {};
-	}
-	
-	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Status it : MANAGER.getStatuses()) {
 			StatusDTO item = new StatusDTO();
 			item.setJiraObject(it);
@@ -57,7 +52,7 @@ public class StatusUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		Status original = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -95,6 +90,11 @@ public class StatusUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return StatusDTO.class;
 	}
 
 }

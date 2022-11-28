@@ -7,10 +7,11 @@ import java.util.Map;
 import com.atlassian.plugin.PluginInformation;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class PluginInformationDTO extends JiraConfigItem {
+public class PluginInformationDTO extends JiraConfigDTO {
 
 	private String description;
 	private Map<String, String> parameters;
@@ -85,6 +86,12 @@ public class PluginInformationDTO extends JiraConfigItem {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

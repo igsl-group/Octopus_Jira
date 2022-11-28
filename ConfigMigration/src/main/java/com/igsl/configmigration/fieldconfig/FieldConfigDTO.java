@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class FieldConfigDTO extends JiraConfigItem {
+public class FieldConfigDTO extends JiraConfigDTO {
 
 	private Long id;
 	private String name;
@@ -76,6 +77,12 @@ public class FieldConfigDTO extends JiraConfigItem {
 				"getName", 
 				"getDescription",
 				"getFieldId");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

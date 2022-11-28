@@ -11,10 +11,10 @@ import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.annotation.ConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldTypeUtil extends JiraConfigUtil {
@@ -28,13 +28,8 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, CustomFieldTypeDTO>>() {};
-	}
-	
-	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
 			CustomFieldTypeDTO item = new CustomFieldTypeDTO();
 			item.setJiraObject(p);
@@ -57,7 +52,7 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 		return null;
 	}
 	
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		return null;
 	}
 	
@@ -72,6 +67,11 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return CustomFieldTypeDTO.class;
 	}
 
 }

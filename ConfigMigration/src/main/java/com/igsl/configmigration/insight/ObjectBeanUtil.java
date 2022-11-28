@@ -10,7 +10,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
 import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade;
@@ -51,13 +51,8 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, ObjectBeanDTO>>() {};
-	}
-	
-	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		List<ObjectBean> objects = IQL_FACADE.findObjects("Name like \"\"");
 		for (ObjectBean ob : objects) {
 			ObjectBeanDTO item = new ObjectBeanDTO();
@@ -88,7 +83,7 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		return null;
 	}
 	
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		ObjectBean original = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -120,6 +115,11 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return ObjectBeanDTO.class;
 	}
 
 }

@@ -20,6 +20,7 @@ import java.util.zip.ZipInputStream;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
 import com.igsl.configmigration.insight.ObjectBeanUtil;
 import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
@@ -71,11 +72,15 @@ public class JiraConfigTypeRegistry {
 	private static List<String> UTIL_NAMES = new ArrayList<>();
 	
 	// Used to store classes and instances
-	private static Map<String, Class<? extends JiraConfigItem>> ITEM_LIST = new LinkedHashMap<>();
+	private static Map<String, Class<? extends JiraConfigDTO>> ITEM_LIST = new LinkedHashMap<>();
 	private static Map<String, Class<? extends JiraConfigUtil>> UTIL_LIST = new TreeMap<>(new UtilComparator());
 	private static Map<String, JiraConfigUtil> UTIL_INSTANCE_LIST = new LinkedHashMap<>();
 	
-	public static Map<String, Class<? extends JiraConfigItem>> getConfigItemMap() {
+	// TODO Singleton instances of all Utils
+	// TODO Check object if there is a matching DTO
+	// TODO Get Util based on DTO class?
+	
+	public static Map<String, Class<? extends JiraConfigDTO>> getConfigItemMap() {
 		return Collections.unmodifiableMap(ITEM_LIST);
 	}
 	
@@ -106,7 +111,7 @@ public class JiraConfigTypeRegistry {
 					URL[] urls = new URL[] {url};
 					ObjectMapper OM = new ObjectMapper();
 					ClassLoader cloader = new URLClassLoader(urls);
-					Class<?> configItemClass = cloader.loadClass(JiraConfigItem.class.getCanonicalName());
+					Class<?> configItemClass = cloader.loadClass(JiraConfigDTO.class.getCanonicalName());
 					Class<?> utilClass = cloader.loadClass(JiraConfigUtil.class.getCanonicalName());
 					Class<? extends Annotation> annoClass = 
 							(Class<? extends Annotation>) cloader.loadClass(ConfigUtil.class.getCanonicalName());
@@ -125,7 +130,7 @@ public class JiraConfigTypeRegistry {
 								try {
 									Class<?> cls = cloader.loadClass(className);
 									if (configItemClass.isAssignableFrom(cls) && 
-										!className.equals(JiraConfigItem.class.getCanonicalName())) {
+										!className.equals(JiraConfigDTO.class.getCanonicalName())) {
 										ITEM_NAMES.add(cls.getCanonicalName());
 									} else if (
 										utilClass.isAssignableFrom(cls) && 
@@ -149,7 +154,7 @@ public class JiraConfigTypeRegistry {
 		for (String s : ITEM_NAMES) {
 			try {
 				Class<?> cls = cloader.loadClass(s);
-				ITEM_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigItem>) cls); 
+				ITEM_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigDTO>) cls); 
 			} catch (Throwable t) {
 				logger.error("Failed to load JiraConfigItem for " + s, t);
 			}

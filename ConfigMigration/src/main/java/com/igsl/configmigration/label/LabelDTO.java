@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.issue.label.Label;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class LabelDTO extends JiraConfigItem {
+public class LabelDTO extends JiraConfigDTO {
 
 	private Long id;
 	private String label;
@@ -51,6 +52,12 @@ public class LabelDTO extends JiraConfigItem {
 
 	public void setLabel(String label) {
 		this.label = label;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -11,10 +11,11 @@ import com.atlassian.jira.util.Base64InputStreamConsumer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class AvatarDTO extends JiraConfigItem {
+public class AvatarDTO extends JiraConfigDTO {
 
 	private static AvatarManager AVATAR_MANAGER = ComponentAccessor.getComponent(AvatarManager.class);
 
@@ -24,6 +25,11 @@ public class AvatarDTO extends JiraConfigItem {
 	protected String iconType;
 	protected String contentType;
 	protected String imageData;
+	
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return AvatarUtil.class;
+	}
 	
 	@Override
 	public void fromJiraObject(Object obj, Object... params) throws Exception {

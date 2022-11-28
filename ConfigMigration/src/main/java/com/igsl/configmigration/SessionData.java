@@ -14,24 +14,24 @@ public class SessionData {
 	private static final Logger LOGGER = Logger.getLogger(SessionData.class);
 	
 	public static class ImportData {
-		private JiraConfigItem server;
-		private JiraConfigItem data;
+		private JiraConfigDTO server;
+		private JiraConfigDTO data;
 		private boolean identical;
 		private List<String> differences;
 		private String importResult;
 		private void checkIdentical() {
-			differences = JiraConfigItem.getDifferences("", this.server, this.data);
+			differences = JiraConfigDTO.getDifferences("", this.server, this.data);
 			identical = (differences.size() == 0);
 		}
 		public boolean isKeyDifferent(String key) {
 			boolean result = false;
 			for (String s : this.differences) {
-				if (s.endsWith(JiraConfigItem.DIFFERENCE_INDEX)) {
-					if (key.startsWith(s.substring(0, s.length() - JiraConfigItem.DIFFERENCE_INDEX.length()))) {
+				if (s.endsWith(JiraConfigDTO.DIFFERENCE_INDEX)) {
+					if (key.startsWith(s.substring(0, s.length() - JiraConfigDTO.DIFFERENCE_INDEX.length()))) {
 						return true;
 					}
-				} else if (s.endsWith(JiraConfigItem.DIFFERENCE_WILDCARD)) {
-					if (key.startsWith(s.substring(0, s.length() - JiraConfigItem.DIFFERENCE_WILDCARD.length()))) {
+				} else if (s.endsWith(JiraConfigDTO.DIFFERENCE_WILDCARD)) {
+					if (key.startsWith(s.substring(0, s.length() - JiraConfigDTO.DIFFERENCE_WILDCARD.length()))) {
 						return true;
 					}
 				} else {
@@ -45,17 +45,17 @@ public class SessionData {
 		public boolean isIdentical() {
 			return identical;
 		}
-		public JiraConfigItem getServer() {
+		public JiraConfigDTO getServer() {
 			return server;
 		}
-		public void setServer(JiraConfigItem server) {
+		public void setServer(JiraConfigDTO server) {
 			this.server = server;
 			checkIdentical();
 		}
-		public JiraConfigItem getData() {
+		public JiraConfigDTO getData() {
 			return data;
 		}
-		public void setData(JiraConfigItem data) {
+		public void setData(JiraConfigDTO data) {
 			this.data = data;
 			checkIdentical();
 		}
@@ -71,7 +71,7 @@ public class SessionData {
 	}
 	
 	private JiraConfigUtil util;
-	private Map<String, JiraConfigItem> exportData = new TreeMap<>();
+	private Map<String, JiraConfigDTO> exportData = new TreeMap<>();
 	private Map<String, ImportData> importData = new TreeMap<>();
 	
 	public SessionData() {
@@ -89,7 +89,7 @@ public class SessionData {
 		return util;
 	}
 	
-	public Map<String, JiraConfigItem> getExportData() {
+	public Map<String, JiraConfigDTO> getExportData() {
 		return exportData;
 	}
 	

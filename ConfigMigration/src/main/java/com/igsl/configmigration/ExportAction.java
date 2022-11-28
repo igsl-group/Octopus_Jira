@@ -113,7 +113,7 @@ public class ExportAction extends JiraWebActionSupport {
 		// Save selection
 		for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 			SessionData data = sessionData.get(entry.getKey());
-			for (Map.Entry<String, JiraConfigItem> item : data.getExportData().entrySet()) { 
+			for (Map.Entry<String, JiraConfigDTO> item : data.getExportData().entrySet()) { 
 				item.getValue().setSelected(false);
 			}
 			int count = 0;
@@ -158,7 +158,7 @@ public class ExportAction extends JiraWebActionSupport {
 				SessionData data = sessionData.get(entry.getKey());
 				if (!data.getExportData().isEmpty()) {
 					SessionData clone = new SessionData(data.getUtil());
-					for (Map.Entry<String, JiraConfigItem> item : data.getExportData().entrySet()) {
+					for (Map.Entry<String, JiraConfigDTO> item : data.getExportData().entrySet()) {
 						if (item.getValue().isSelected()) {
 							clone.getExportData().put(item.getKey(), item.getValue());
 						}

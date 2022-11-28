@@ -7,10 +7,11 @@ import java.util.List;
 import com.atlassian.jira.issue.fields.option.Option;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class OptionDTO extends JiraConfigItem {
+public class OptionDTO extends JiraConfigDTO {
 
 	private String description;
 	private List<OptionDTO> childOptions;
@@ -80,6 +81,12 @@ public class OptionDTO extends JiraConfigItem {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

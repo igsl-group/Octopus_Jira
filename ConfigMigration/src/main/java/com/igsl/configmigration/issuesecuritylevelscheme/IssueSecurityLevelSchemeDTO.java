@@ -10,10 +10,11 @@ import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class IssueSecurityLevelSchemeDTO extends JiraConfigItem {
+public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 
 	private static final IssueSecurityLevelManager LEVEL_MANAGER = 
 			ComponentAccessor.getIssueSecurityLevelManager();
@@ -95,6 +96,11 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigItem {
 
 	public void setIssueSecurityLevels(List<IssueSecurityLevelDTO> issueSecurityLevels) {
 		this.issueSecurityLevels = issueSecurityLevels;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return IssueSecurityLevelSchemeUtil.class;
 	}
 
 }

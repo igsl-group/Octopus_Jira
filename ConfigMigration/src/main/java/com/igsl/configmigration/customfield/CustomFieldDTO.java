@@ -10,7 +10,8 @@ import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
@@ -20,7 +21,7 @@ import com.igsl.configmigration.options.OptionsDTO;
 import com.igsl.configmigration.propertyset.PropertySetDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class CustomFieldDTO extends JiraConfigItem {
+public class CustomFieldDTO extends JiraConfigDTO {
 
 	private List<IssueTypeDTO> associatedIssueTypes;
 	private CustomFieldTypeDTO customFieldType;
@@ -191,6 +192,11 @@ public class CustomFieldDTO extends JiraConfigItem {
 
 	public void setDefaultValueOperations(DefaultValueOperationsDTO defaultValueOperations) {
 		this.defaultValueOperations = defaultValueOperations;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return CustomFieldUtil.class;
 	}
 
 }

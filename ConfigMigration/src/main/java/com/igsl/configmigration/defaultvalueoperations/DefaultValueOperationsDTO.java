@@ -18,7 +18,8 @@ import com.atlassian.jira.issue.label.Label;
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.group.GroupDTO;
 import com.igsl.configmigration.insight.ObjectBeanDTO;
@@ -27,7 +28,7 @@ import com.igsl.configmigration.options.OptionDTO;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectBean;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class DefaultValueOperationsDTO extends JiraConfigItem {
+public class DefaultValueOperationsDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultValueOperationsDTO.class);
 	
@@ -72,9 +73,9 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 	private Object defaultValue;
 	private List<Object> defaultValueList;
 	private Map<Object, Object> defaultValueMap;
-	private JiraConfigItem defaultDTO;
-	private List<JiraConfigItem> defaultDTOList;
-	private Map<Object, JiraConfigItem> defaultDTOMap;
+	private JiraConfigDTO defaultDTO;
+	private List<JiraConfigDTO> defaultDTOList;
+	private Map<Object, JiraConfigDTO> defaultDTOMap;
 	private ValueType valueType;
 	private String valueClass;
 	
@@ -86,13 +87,13 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 				return this.getDefaultDTO().getJiraObject();
 			case LIST_DTO: 
 				List<Object> dtoList = new ArrayList<>();
-				for (JiraConfigItem item : this.getDefaultDTOList()) {
+				for (JiraConfigDTO item : this.getDefaultDTOList()) {
 					dtoList.add(item.getJiraObject());
 				}
 				return dtoList;
 			case MAP_DTO: 
 				Map<Object, Object> dtoMap = new HashMap<>();
-				for (Map.Entry<Object, JiraConfigItem> entry : this.getDefaultDTOMap().entrySet()) {
+				for (Map.Entry<Object, JiraConfigDTO> entry : this.getDefaultDTOMap().entrySet()) {
 					dtoMap.put(entry.getKey(), entry.getValue().getJiraObject());
 				}
 				return dtoMap;
@@ -238,13 +239,13 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 			this.valueClass = item.getValueClass();
 			switch (this.valueType) {
 			case DTO:
-				this.defaultDTO = (JiraConfigItem) item.getValue();
+				this.defaultDTO = (JiraConfigDTO) item.getValue();
 				break;
 			case LIST_DTO:
-				this.defaultDTOList = (List<JiraConfigItem>) item.getValue();
+				this.defaultDTOList = (List<JiraConfigDTO>) item.getValue();
 				break;
 			case MAP_DTO: 
-				this.defaultDTOMap = (Map<Object, JiraConfigItem>) item.getValue();
+				this.defaultDTOMap = (Map<Object, JiraConfigDTO>) item.getValue();
 				break;
 			case OBJECT:
 				this.defaultValue = item.getValue();
@@ -305,27 +306,27 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 		this.defaultValueMap = defaultValueMap;
 	}
 
-	public JiraConfigItem getDefaultDTO() {
+	public JiraConfigDTO getDefaultDTO() {
 		return defaultDTO;
 	}
 
-	public void setDefaultDTO(JiraConfigItem defaultDTO) {
+	public void setDefaultDTO(JiraConfigDTO defaultDTO) {
 		this.defaultDTO = defaultDTO;
 	}
 
-	public List<JiraConfigItem> getDefaultDTOList() {
+	public List<JiraConfigDTO> getDefaultDTOList() {
 		return defaultDTOList;
 	}
 
-	public void setDefaultDTOList(List<JiraConfigItem> defaultDTOList) {
+	public void setDefaultDTOList(List<JiraConfigDTO> defaultDTOList) {
 		this.defaultDTOList = defaultDTOList;
 	}
 
-	public Map<Object, JiraConfigItem> getDefaultDTOMap() {
+	public Map<Object, JiraConfigDTO> getDefaultDTOMap() {
 		return defaultDTOMap;
 	}
 
-	public void setDefaultDTOMap(Map<Object, JiraConfigItem> defaultDTOMap) {
+	public void setDefaultDTOMap(Map<Object, JiraConfigDTO> defaultDTOMap) {
 		this.defaultDTOMap = defaultDTOMap;
 	}
 
@@ -343,6 +344,11 @@ public class DefaultValueOperationsDTO extends JiraConfigItem {
 
 	public void setValueClass(String valueClass) {
 		this.valueClass = valueClass;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return null;
 	}
 
 }

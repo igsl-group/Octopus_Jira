@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
-public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigItem> {
+public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigDTO> {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOGGER = Logger.getLogger(JiraConfigItemDeserializer.class);
@@ -20,11 +20,11 @@ public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigItem> 
 	public static final String IMPLMEMENTATION = "implementation";
 	
 	protected JiraConfigItemDeserializer() {
-		super(JiraConfigItem.class);
+		super(JiraConfigDTO.class);
 	}
 
 	@Override
-	public JiraConfigItem deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+	public JiraConfigDTO deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
 		TreeNode node = p.readValueAsTree();		
 		TreeNode impl = node.get(IMPLMEMENTATION);
 		if (impl != null && impl.isValueNode()) {
@@ -32,11 +32,11 @@ public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigItem> 
 			ValueNode vn = (ValueNode) impl;
 			String implementation = vn.asText();
 			LOGGER.debug("Implementation: [" + implementation + "]");
-			Map<String, Class<? extends JiraConfigItem>> map = JiraConfigTypeRegistry.getConfigItemMap();
+			Map<String, Class<? extends JiraConfigDTO>> map = JiraConfigTypeRegistry.getConfigItemMap();
 			if (map.containsKey(implementation)) {
-				Class<? extends JiraConfigItem> cls = map.get(implementation);
+				Class<? extends JiraConfigDTO> cls = map.get(implementation);
 				LOGGER.debug("cls: " + cls.getCanonicalName());
-				JiraConfigItem result = p.getCodec().treeToValue(node, cls);
+				JiraConfigDTO result = p.getCodec().treeToValue(node, cls);
 				LOGGER.debug("result: " + result);
 				return result;
 			} else {

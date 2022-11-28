@@ -10,11 +10,12 @@ import com.atlassian.jira.icon.IconType;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class IssueTypeDTO extends JiraConfigItem {
+public class IssueTypeDTO extends JiraConfigDTO {
 
 	private static final AvatarManager AVATAR_MANAGER = ComponentAccessor.getComponent(AvatarManager.class);
 	
@@ -87,6 +88,11 @@ public class IssueTypeDTO extends JiraConfigItem {
 				"getName",
 				"getDescription",
 				"getAvatarConfigItem");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return IssueTypeUtil.class;
 	}
 
 }

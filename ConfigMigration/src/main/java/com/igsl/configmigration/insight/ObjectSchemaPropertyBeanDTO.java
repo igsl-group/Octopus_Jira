@@ -5,11 +5,12 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaPropertyBean;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class ObjectSchemaPropertyBeanDTO extends JiraConfigItem {
+public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 
 	private Integer id;
 	private Integer objectSchemaId;
@@ -52,6 +53,12 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigItem {
 
 	public void setObjectSchemaId(Integer objectSchemaId) {
 		this.objectSchemaId = objectSchemaId;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

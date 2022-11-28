@@ -3,15 +3,14 @@ package com.igsl.configmigration.applicationuser;
 import java.util.Arrays;
 import java.util.List;
 
-import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class ApplicationUserDTO extends JiraConfigItem {
+public class ApplicationUserDTO extends JiraConfigDTO {
 
 	private Long id;
 	private String key;
@@ -19,6 +18,11 @@ public class ApplicationUserDTO extends JiraConfigItem {
 	private String userName;
 	private String emailAddress;
 	private String displayName;
+	
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return null;
+	}
 	
 	@Override
 	public void fromJiraObject(Object obj, Object... params) throws Exception {

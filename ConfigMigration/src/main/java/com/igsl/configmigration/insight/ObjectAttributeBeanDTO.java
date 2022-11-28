@@ -6,12 +6,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeBean;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeValueBean;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class ObjectAttributeBeanDTO extends JiraConfigItem {
+public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 
 	private Long id;
 	private Integer objectId;
@@ -78,6 +79,12 @@ public class ObjectAttributeBeanDTO extends JiraConfigItem {
 
 	public void setObjectAttributeValueBeans(List<ObjectAttributeValueBeanDTO> objectAttributeValueBeans) {
 		this.objectAttributeValueBeans = objectAttributeValueBeans;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

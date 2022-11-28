@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class StatusCategoryDTO extends JiraConfigItem {
+public class StatusCategoryDTO extends JiraConfigDTO {
 
 	protected List<String> aliases;
 	protected String colorName;
@@ -106,6 +107,12 @@ public class StatusCategoryDTO extends JiraConfigItem {
 				"getKey",
 				"getColorName",
 				"getAliases");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

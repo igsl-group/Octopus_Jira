@@ -4,7 +4,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -35,11 +34,10 @@ public abstract class JiraConfigUtil {
 	public abstract String getName();
 	
 	/**
-	 * Return TypeReference of a Jira object class for Jackson parser.
-	 * @return TypeReference
+	 * Return associated DTO class.
 	 */
 	@JsonIgnore
-	public abstract TypeReference<?> getTypeReference();
+	public abstract Class<? extends JiraConfigDTO> getDTOClass();
 	
 	/**
 	 * Read all Jira objects in current environment and store them into JiraConfigItem.
@@ -47,7 +45,7 @@ public abstract class JiraConfigUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public abstract Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception;
+	public abstract Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception;
 	
 	/**
 	 * Find Jira object
@@ -64,7 +62,7 @@ public abstract class JiraConfigUtil {
 	 * @return Underlying Jira object.
 	 * @throws Exception
 	 */
-	public abstract Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception;
+	public abstract Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception;
 	
 	/**
 	 * Merge items. Result will be stored in ImportData.

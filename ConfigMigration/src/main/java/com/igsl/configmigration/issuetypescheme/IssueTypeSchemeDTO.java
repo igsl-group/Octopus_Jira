@@ -13,13 +13,14 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.project.ProjectDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class IssueTypeSchemeDTO extends JiraConfigItem {
+public class IssueTypeSchemeDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(IssueTypeSchemeDTO.class);
 	private static IssueTypeSchemeManager MANAGER = ComponentAccessor.getComponent(IssueTypeSchemeManager.class);
@@ -125,6 +126,11 @@ public class IssueTypeSchemeDTO extends JiraConfigItem {
 				"getAssociatedIssueTypes",
 				"getAssociatedProjects",
 				"getFieldConfig");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return IssueTypeSchemeUtil.class;
 	}
 
 }

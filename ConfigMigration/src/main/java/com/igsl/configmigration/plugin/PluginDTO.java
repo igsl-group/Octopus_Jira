@@ -7,10 +7,11 @@ import com.atlassian.plugin.Plugin;
 import com.atlassian.plugin.PluginState;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class PluginDTO extends JiraConfigItem {
+public class PluginDTO extends JiraConfigDTO {
 
 	private String key;
 	private String name;
@@ -116,6 +117,11 @@ public class PluginDTO extends JiraConfigItem {
 
 	public void setBundledPlugin(boolean bundledPlugin) {
 		this.bundledPlugin = bundledPlugin;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return PluginUtil.class;
 	}
 
 }

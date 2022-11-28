@@ -7,10 +7,11 @@ import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.priority.Priority;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class CustomFieldSearcherDTO extends JiraConfigItem {
+public class CustomFieldSearcherDTO extends JiraConfigDTO {
 
 	private String completeKey;
 	
@@ -46,6 +47,11 @@ public class CustomFieldSearcherDTO extends JiraConfigItem {
 
 	public void setCompleteKey(String completeKey) {
 		this.completeKey = completeKey;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return CustomFieldSearcherUtil.class;
 	}
 
 }

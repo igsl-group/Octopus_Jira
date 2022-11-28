@@ -15,7 +15,7 @@ import com.atlassian.jira.icon.IconType;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
 
@@ -30,17 +30,12 @@ public class AvatarUtil extends JiraConfigUtil {
 		return "Avatar";
 	}
 	
-	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, AvatarDTO>>() {};
-	}
-
 	/**
 	 * params[0]: owner as String, optional
 	 */
 	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
@@ -93,7 +88,7 @@ public class AvatarUtil extends JiraConfigUtil {
 		if (params.length == 2) {
 			owner = (String) params[1];
 		}
-		Map<String, JiraConfigItem> all;
+		Map<String, JiraConfigDTO> all;
 		if (owner != null) {
 			all = readAllItems(owner);
 		} else {
@@ -109,7 +104,7 @@ public class AvatarUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		Avatar old = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -157,6 +152,11 @@ public class AvatarUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return AvatarDTO.class;
 	}
 
 }

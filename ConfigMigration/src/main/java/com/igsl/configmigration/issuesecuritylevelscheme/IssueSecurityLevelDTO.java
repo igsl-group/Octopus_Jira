@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class IssueSecurityLevelDTO extends JiraConfigItem {
+public class IssueSecurityLevelDTO extends JiraConfigDTO {
 
 	private Long id;
 	private String description;
@@ -72,6 +73,11 @@ public class IssueSecurityLevelDTO extends JiraConfigItem {
 
 	public void setSchemeId(Long schemeId) {
 		this.schemeId = schemeId;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return IssueSecurityLevelUtil.class;
 	}
 
 }

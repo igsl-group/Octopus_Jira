@@ -13,7 +13,7 @@ import com.atlassian.jira.issue.fields.option.OptionSetManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
 
@@ -28,18 +28,13 @@ public class OptionSetUtil extends JiraConfigUtil {
 		return "Option Set";
 	}
 	
-	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, OptionSetDTO>>() {};
-	}
-	
 	/**
 	 * params[0]: FieldConfig
 	 */
 	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
 		FieldConfig fieldConfig = (FieldConfig) params[0];
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		OptionSet os = MANAGER.getOptionsForConfig(fieldConfig);
 		OptionSetDTO item = new OptionSetDTO();
 		item.setJiraObject(os);
@@ -59,7 +54,7 @@ public class OptionSetUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		OptionSet original = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -94,6 +89,11 @@ public class OptionSetUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return OptionSetDTO.class;
 	}
 
 }

@@ -32,9 +32,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  */
 @JsonDeserialize(using = JiraConfigItemDeserializer.class)
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
-public abstract class JiraConfigItem {
+public abstract class JiraConfigDTO {
 
-	private static final Logger LOGGER = Logger.getLogger(JiraConfigItem.class);
+	private static final Logger LOGGER = Logger.getLogger(JiraConfigDTO.class);
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
 	// Methods not to be included in getMap(), i.e. display
@@ -56,7 +56,9 @@ public abstract class JiraConfigItem {
 	public static final String DIFFERENCE_INDEX = DIFFERENCE_DELIMITER + "#";
 	public static final String DIFFERENCE_KEYS = DIFFERENCE_DELIMITER + "@";
 	
-	public static final List<String> getDifferences(String title, JiraConfigItem o1, JiraConfigItem o2) {
+	public abstract Class<? extends JiraConfigUtil> getUtilClass();
+	
+	public static final List<String> getDifferences(String title, JiraConfigDTO o1, JiraConfigDTO o2) {
 		List<String> result = new ArrayList<>();
 		if (o1 != null && 
 			o2 != null && 
@@ -157,10 +159,10 @@ public abstract class JiraConfigItem {
 				if (((Long) o1).compareTo((Long) o2) != 0) {
 					result.add(title);
 				}
-			} else if (	JiraConfigItem.class.isAssignableFrom(cls1) && 
-						JiraConfigItem.class.isAssignableFrom(cls2)) {
+			} else if (	JiraConfigDTO.class.isAssignableFrom(cls1) && 
+						JiraConfigDTO.class.isAssignableFrom(cls2)) {
 				LOGGER.debug("Compare: " + title + " as JiraConfigItem");
-				result.addAll(getDifferences(title, (JiraConfigItem) o1, (JiraConfigItem) o2));
+				result.addAll(getDifferences(title, (JiraConfigDTO) o1, (JiraConfigDTO) o2));
 			} else if (	cls1.isArray() && 
 						cls2.isArray()) {
 				LOGGER.debug("Compare: " + title + " as array");
@@ -203,7 +205,7 @@ public abstract class JiraConfigItem {
 	
 	@JsonIgnore
 	public final Map<String, String> getMap() {
-		return JiraConfigItem.getMap("", this);
+		return JiraConfigDTO.getMap("", this);
 	}
 	
 	public static final Map<String, String> getMap(String title, Collection<?> o) {
@@ -254,7 +256,7 @@ public abstract class JiraConfigItem {
 		return result;
 	}
 	
-	public static final Map<String, String> getMap(String title, JiraConfigItem o) {
+	public static final Map<String, String> getMap(String title, JiraConfigDTO o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
 			for (Method method : o.getClass().getMethods()) {
@@ -291,9 +293,9 @@ public abstract class JiraConfigItem {
 			} else if (Long.class.isAssignableFrom(cls1)) {
 				LOGGER.debug("getMap: " + title + " as long");
 				result.put(title, Long.toString((Long) o1));
-			} else if (JiraConfigItem.class.isAssignableFrom(cls1)) {
+			} else if (JiraConfigDTO.class.isAssignableFrom(cls1)) {
 				LOGGER.debug("getMap: " + title + " as JiraConfigItem");
-				result.putAll(getMap(title, (JiraConfigItem) o1));
+				result.putAll(getMap(title, (JiraConfigDTO) o1));
 			} else if (cls1.isArray()) {
 				LOGGER.debug("getMap: " + title + " as array");
 				result.putAll(getMap(title, (Object[]) o1));

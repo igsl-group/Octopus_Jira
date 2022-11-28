@@ -11,10 +11,11 @@ import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class OptionSetDTO extends JiraConfigItem {
+public class OptionSetDTO extends JiraConfigDTO {
 
 	private List<String> optionIds;
 	private List<OptionDTO> options;
@@ -70,6 +71,11 @@ public class OptionSetDTO extends JiraConfigItem {
 				"getOptionIds",
 				"getOptions",
 				"getFieldConfig");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return OptionSetUtil.class;
 	}
 
 }

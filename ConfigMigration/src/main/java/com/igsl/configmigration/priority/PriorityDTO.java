@@ -6,10 +6,11 @@ import java.util.List;
 import com.atlassian.jira.issue.priority.Priority;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class PriorityDTO extends JiraConfigItem {
+public class PriorityDTO extends JiraConfigDTO {
 
 	private String id;
 	private String description;
@@ -98,6 +99,11 @@ public class PriorityDTO extends JiraConfigItem {
 
 	public void setIconUrl(String iconUrl) {
 		this.iconUrl = iconUrl;
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return PriorityUtil.class;
 	}
 
 }

@@ -6,11 +6,12 @@ import java.util.List;
 import com.atlassian.jira.issue.status.Status;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class StatusDTO extends JiraConfigItem {
+public class StatusDTO extends JiraConfigDTO {
 
 	protected String id;
 	protected String name;
@@ -75,6 +76,11 @@ public class StatusDTO extends JiraConfigItem {
 				"getName",
 				"getDescription",
 				"getStatusCategoryConfigItem");
+	}
+
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return StatusUtil.class;
 	}
 
 }

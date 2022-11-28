@@ -27,10 +27,10 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.ConfigUtil;
-import com.igsl.configmigration.JiraConfigItem;
+import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.annotation.ConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
@@ -56,11 +56,6 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		return "Custom Field";
 	}
 	
-	@Override
-	public TypeReference<?> getTypeReference() {
-		return new TypeReference<Map<String, CustomFieldDTO>>() {};
-	}
-	
 	private static boolean isLocked(CustomField cf) {
 		if (cf != null) {
 			ManagedConfigurationItem item = CONFIG_ITEM_SERVICE.getManagedCustomField(cf);
@@ -71,8 +66,8 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigItem> readAllItems(Object... params) throws Exception {
-		Map<String, JiraConfigItem> result = new TreeMap<>();
+	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (!isLocked(cf)) {
 				CustomFieldDTO item = new CustomFieldDTO();
@@ -111,7 +106,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		}
 	}
 	
-	public Object merge(JiraConfigItem oldItem, JiraConfigItem newItem) throws Exception {
+	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		CustomField original = null;
 		if (oldItem != null) {
 			if (oldItem.getJiraObject() != null) {
@@ -182,6 +177,11 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				throw ex;
 			}
 		}
+	}
+
+	@Override
+	public Class<? extends JiraConfigDTO> getDTOClass() {
+		return CustomFieldDTO.class;
 	}
 
 }
