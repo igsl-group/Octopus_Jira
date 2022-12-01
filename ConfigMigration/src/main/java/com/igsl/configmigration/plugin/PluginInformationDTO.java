@@ -94,4 +94,9 @@ public class PluginInformationDTO extends JiraConfigDTO {
 		return null;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return PluginInformation.class;
+	}
+
 }

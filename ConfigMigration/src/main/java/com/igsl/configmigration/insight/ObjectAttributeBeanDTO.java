@@ -87,4 +87,9 @@ public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 		return null;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return ObjectAttributeBean.class;
+	}
+
 }

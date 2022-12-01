@@ -1,6 +1,7 @@
 package com.igsl.configmigration.plugin;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.atlassian.plugin.Plugin;
@@ -35,14 +36,6 @@ public class PluginDTO extends JiraConfigDTO {
 		this.bundledPlugin = obj.isBundledPlugin();
 	}
 
-	/**
-	 * Plugin bytes too massive for display
-	 */
-	@Override
-	public List<String> getMapIgnoredMethods() {
-		return Arrays.asList("getPluginArtifact");
-	}
-	
 	@Override
 	public String getUniqueKey() {
 		return this.getName();
@@ -122,6 +115,11 @@ public class PluginDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return PluginUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Plugin.class;
 	}
 
 }

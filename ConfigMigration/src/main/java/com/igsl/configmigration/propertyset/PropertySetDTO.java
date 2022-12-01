@@ -11,6 +11,9 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.module.propertyset.PropertySet;
 
+/**
+ * PropertySet wrapper
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PropertySetDTO extends JiraConfigDTO {
 
@@ -54,6 +57,11 @@ public class PropertySetDTO extends JiraConfigDTO {
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return PropertySet.class;
 	}
 
 }

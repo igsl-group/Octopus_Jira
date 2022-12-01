@@ -51,7 +51,7 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		List<ObjectBean> objects = IQL_FACADE.findObjects("Name like \"\"");
 		for (ObjectBean ob : objects) {
@@ -61,16 +61,32 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		}
 		return result;
 	}
-
+	
 	/**
-	 * params[0]: name (String, required)
-	 * params[1]: schema ID (Integer, optional)
+	 * #0: Schema ID
 	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String name = (String) params[0];
-		String iql = "Name LIKE \"" + ((name != null)? name : "") + "\"";
-		Integer schemaId = (Integer) params[1];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Integer schemaId = (Integer) params[0];
+		List<ObjectBean> objects = IQL_FACADE.findObjects(schemaId, "Name like \"\"");
+		Integer idAsInt = Integer.parseInt(id);
+		for (ObjectBean ob : objects) {
+			if (ob.getId().equals(idAsInt)) {
+				ObjectBeanDTO item = new ObjectBeanDTO();
+				item.setJiraObject(ob);
+				return item;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * #0: Schema ID
+	 */
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		Integer schemaId = (Integer) params[0];
+		String iql = "Name LIKE \"" + ((uniqueKey != null)? uniqueKey : "") + "\"";
 		List<ObjectBean> results;
 		if (schemaId != null) {
 			results = IQL_FACADE.findObjects(schemaId, iql);
@@ -78,23 +94,20 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 			results = IQL_FACADE.findObjects(iql);
 		}
 		if (results.size() == 1) {
-			return results.get(0);
-		}		
+			ObjectBeanDTO dto = new ObjectBeanDTO();
+			dto.setJiraObject(results.get(0), schemaId);
+			return dto;
+		}
 		return null;
 	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		ObjectBean original = null;
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		ObjectBeanDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (ObjectBean) oldItem.getJiraObject();
-			} else {
-				original = (ObjectBean) findObject(oldItem.getUniqueKey());
-			}
+			original = (ObjectBeanDTO) oldItem;
 		} else {
-			original = (ObjectBean) findObject(newItem.getUniqueKey());
-		}
-		
+			original = (ObjectBeanDTO) findByDTO(newItem);
+		}		
 		// Schema?
 		
 		// Object
@@ -102,19 +115,6 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		// Attributes
 		
 		return null;
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
 	}
 
 	@Override

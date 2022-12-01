@@ -32,7 +32,7 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
 			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
@@ -42,53 +42,51 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: name
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Long idAsLong = Long.parseLong(id);
+		IssueSecurityLevel s = LEVEL_MANAGER.getSecurityLevel(idAsLong);
+		if (s != null) {
+			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
+			item.setJiraObject(s);
+			return item;
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
-			if (s.getName().equals(identifier)) {
-				return s;
+			if (s.getName().equals(uniqueKey)) {
+	 			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
+				item.setJiraObject(s);
+				return item;
 			}
 		}
 		return null;
 	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		IssueSecurityLevel original = null;
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		IssueSecurityLevelDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (IssueSecurityLevel) oldItem.getJiraObject();
-			} else {
-				original = (IssueSecurityLevel) findObject(oldItem.getUniqueKey());
-			}
+			original = (IssueSecurityLevelDTO) oldItem;
 		} else {
-			original = (IssueSecurityLevel) findObject(newItem.getUniqueKey());
+			original = (IssueSecurityLevelDTO) findByDTO(newItem);
 		}
 		IssueSecurityLevelDTO src = (IssueSecurityLevelDTO) newItem;
 		if (original != null) {
 			// Update
 			IssueSecurityLevelImpl item = new IssueSecurityLevelImpl(
 					original.getId(), src.getName(), src.getDescription(), src.getSchemeId());
-			return LEVEL_MANAGER.updateIssueSecurityLevel(item);
+			LEVEL_MANAGER.updateIssueSecurityLevel(item);
+			return findByInternalId(Long.toString(original.getId()));
 		} else {
 			// Create
-			return LEVEL_MANAGER.createIssueSecurityLevel(src.getSchemeId(), src.getName(), src.getDescription());
-		}
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
+			IssueSecurityLevel createdJira = LEVEL_MANAGER.createIssueSecurityLevel(
+					src.getSchemeId(), src.getName(), src.getDescription());
+			IssueSecurityLevelDTO created = new IssueSecurityLevelDTO();
+			created.setJiraObject(createdJira);
+			return created;
 		}
 	}
 

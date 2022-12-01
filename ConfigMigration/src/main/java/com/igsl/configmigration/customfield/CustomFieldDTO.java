@@ -15,6 +15,7 @@ import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.options.OptionsDTO;
@@ -52,10 +53,10 @@ public class CustomFieldDTO extends JiraConfigDTO {
 			item.setJiraObject(scheme);
 			this.configurationSchemes.add(item);
 		}
-		this.customFieldSearcher = new CustomFieldSearcherDTO();
-		this.customFieldSearcher.setJiraObject(obj.getCustomFieldSearcher());
 		this.customFieldType = new CustomFieldTypeDTO();
 		this.customFieldType.setJiraObject(obj.getCustomFieldType());
+		this.customFieldSearcher = new CustomFieldSearcherDTO();
+		this.customFieldSearcher.setJiraObject(obj.getCustomFieldSearcher(), this.customFieldType);
 		this.defaultSortOrder = obj.getDefaultSortOrder();
 		this.description = obj.getDescription();
 		this.fieldName = obj.getFieldName();
@@ -67,9 +68,11 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		// TODO Can there be more than 1 scheme? What about no scheme?
 		FieldConfigScheme scheme = (FieldConfigScheme) this.configurationSchemes.get(0).getJiraObject();
 		FieldConfig fieldConfig = scheme.getOneAndOnlyConfig();
+		FieldConfigDTO fieldConfigDTO = new FieldConfigDTO();
+		fieldConfigDTO.setJiraObject(fieldConfig);
 		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null));
 		this.defaultValueOperations = new DefaultValueOperationsDTO();
-		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfig);
+		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfigDTO);
 	}
 
 	@Override
@@ -197,6 +200,11 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return CustomFieldUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return CustomField.class;
 	}
 
 }

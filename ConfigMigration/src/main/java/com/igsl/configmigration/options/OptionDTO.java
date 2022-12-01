@@ -95,8 +95,13 @@ public class OptionDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
+		// Referenced from OptionsDTO only
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Option.class;
 	}
 
 }

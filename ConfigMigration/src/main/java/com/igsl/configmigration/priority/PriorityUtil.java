@@ -26,7 +26,7 @@ public class PriorityUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new HashMap<>();
 		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
 			PriorityDTO item = new PriorityDTO();
@@ -36,54 +36,50 @@ public class PriorityUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: name
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Priority p = PRIORITY_MANAGER.getPriority(id);
+		if (p != null) {
+			PriorityDTO dto = new PriorityDTO();
+			dto.setJiraObject(p);
+			return dto;
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
-			if (p.getName().equals(identifier)) {
-				return p;
+			if (p.getName().equals(uniqueKey)) {
+				PriorityDTO dto = new PriorityDTO();
+				dto.setJiraObject(p);
+				return dto;
 			}
 		}
 		return null;
 	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		Priority original = null;
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		PriorityDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (Priority) oldItem.getJiraObject();
-			} else {
-				original = (Priority) findObject(oldItem.getUniqueKey());
-			}
+			original = (PriorityDTO) oldItem;
 		} else {
-			original = (Priority) findObject(newItem.getUniqueKey());
+			original = (PriorityDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		PriorityDTO src = (PriorityDTO) newItem;
 		if (original != null) {
+			Priority p = (Priority) original.getJiraObject();
 			// Update
 			PRIORITY_MANAGER.editPriority(
-					original, src.getName(), src.getDescription(), src.getIconUrl(), src.getStatusColor());
-			return original;
+					p, src.getName(), src.getDescription(), src.getIconUrl(), src.getStatusColor());
+			return findByInternalId(p.getId());
 		} else {
 			// Create
-			return PRIORITY_MANAGER.createPriority(
+			Priority p = PRIORITY_MANAGER.createPriority(
 					src.getName(), src.getDescription(), src.getIconUrl(), src.getStatusColor());
-		}
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
+			PriorityDTO dto = new PriorityDTO();
+			dto.setJiraObject(p);
+			return dto;
 		}
 	}
 

@@ -24,9 +24,8 @@ public class FieldConfigDTO extends JiraConfigDTO {
 		this.name = o.getName();
 		this.description = o.getDescription();
 		this.fieldId = o.getFieldId();
-		o.getConfigItems();
-		o.getConfigurableField();
-		// TODO
+		//o.getConfigItems();
+		//o.getConfigurableField();
 	}
 
 	@Override
@@ -81,8 +80,12 @@ public class FieldConfigDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return FieldConfigUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return FieldConfig.class;
 	}
 
 }

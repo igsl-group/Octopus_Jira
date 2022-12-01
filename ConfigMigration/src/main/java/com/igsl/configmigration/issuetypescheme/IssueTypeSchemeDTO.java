@@ -133,4 +133,9 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 		return IssueTypeSchemeUtil.class;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return FieldConfigScheme.class;
+	}
+
 }

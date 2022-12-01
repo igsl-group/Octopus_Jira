@@ -14,8 +14,8 @@ import com.atlassian.jira.scheme.Scheme;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
@@ -30,7 +30,7 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (IssueSecurityLevelScheme s : SCHEME_MANAGER.getIssueSecurityLevelSchemes()) {
 			IssueSecurityLevelSchemeDTO item = new IssueSecurityLevelSchemeDTO();
@@ -40,50 +40,61 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: name
-	 */
+
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Long idAsLong = Long.parseLong(id);
+		IssueSecurityLevelScheme s = SCHEME_MANAGER.getIssueSecurityLevelScheme(idAsLong);
+		if (s != null) {
+			IssueSecurityLevelSchemeDTO item = new IssueSecurityLevelSchemeDTO();
+			item.setJiraObject(s);
+			return item;
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (IssueSecurityLevelScheme s : SCHEME_MANAGER.getIssueSecurityLevelSchemes()) {
-			if (s.getName().equals(identifier)) {
-				return s;
+			if (s.getName().equals(uniqueKey)) {
+				IssueSecurityLevelSchemeDTO item = new IssueSecurityLevelSchemeDTO();
+				item.setJiraObject(s);
+				return item;
 			}
 		}
 		return null;
 	}
 	
 	@SuppressWarnings("deprecation")
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		IssueSecurityLevelScheme original = null;
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		final IssueSecurityLevelUtil LEVEL_UTIL = 
+				(IssueSecurityLevelUtil) JiraConfigTypeRegistry.getConfigUtil(IssueSecurityLevelUtil.class);
+		IssueSecurityLevelSchemeDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (IssueSecurityLevelScheme) oldItem.getJiraObject();
-			} else {
-				original = (IssueSecurityLevelScheme) findObject(oldItem.getUniqueKey());
-			}
+			original = (IssueSecurityLevelSchemeDTO) oldItem;
 		} else {
-			original = (IssueSecurityLevelScheme) findObject(newItem.getUniqueKey());
+			original = (IssueSecurityLevelSchemeDTO) findByDTO(newItem);
 		}
 		IssueSecurityLevelSchemeDTO src = (IssueSecurityLevelSchemeDTO) newItem;
-		Scheme result = null;
+		IssueSecurityLevelSchemeDTO result = null;
+		Scheme scheme = null;
 		if (original != null) {
 			// Update
-			Scheme s = new Scheme(original.getId(), src.getName(), src.getDescription(), null);
+			Scheme s = new Scheme(original.getId(), src.getName(), src.getDescription(), null);	
+			// TODO last parameter, what is it
 			SCHEME_MANAGER.updateScheme(s);
-			result = s;
+			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(original.getId()));
 		} else {
 			// Create
-			result = SCHEME_MANAGER.createSchemeObject(src.getName(), src.getDescription());
+			scheme = SCHEME_MANAGER.createSchemeObject(src.getName(), src.getDescription());
+			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(scheme.getId()));
 		}
 		Long defaultLevel = null;
 		if (result != null) {
 			// Merge levels
-			IssueSecurityLevelUtil util = new IssueSecurityLevelUtil();
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
 				item.setSchemeId(result.getId());
-				IssueSecurityLevel level = (IssueSecurityLevel) util.merge(null, item);
+				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) LEVEL_UTIL.merge(null, item);
 				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
 					defaultLevel = level.getId();
 				}
@@ -91,24 +102,11 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		}
 		// Set default level, no choice but to use deprecated APIs
 		if (defaultLevel != null) {
-			GenericValue scheme = SCHEME_MANAGER.getScheme(result.getId());
-			scheme.set("defaultlevel", defaultLevel);
+			GenericValue gv = SCHEME_MANAGER.getScheme(result.getId());
+			gv.set("defaultlevel", defaultLevel);
 			SCHEME_MANAGER.updateScheme(scheme);
 		}
 		return result;
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
 	}
 
 	@Override
@@ -120,5 +118,6 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	public boolean isPublic() {
 		return true;
 	}
+
 
 }

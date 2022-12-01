@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PluginUtil extends JiraConfigUtil {
@@ -35,7 +34,8 @@ public class PluginUtil extends JiraConfigUtil {
 			ComponentAccessor.getComponent(JiraPluginManager.class);
 	private static final PluginInfoProvider PLUGIN_INFO_PROVIDER = 
 			ComponentAccessor.getComponent(PluginInfoProvider.class);
-	private static final PluginAccessor PLUGIN_ACCESSOR = ComponentAccessor.getPluginAccessor();
+	private static final PluginAccessor PLUGIN_ACCESSOR = 
+			ComponentAccessor.getPluginAccessor();
 	private static final PluginMetadataManager PLUGIN_METADATA_MANAGER = 
 			ComponentAccessor.getComponent(PluginMetadataManager.class);
 	
@@ -53,11 +53,11 @@ public class PluginUtil extends JiraConfigUtil {
 	
 	@Override
 	public String getName() {
-		return "Plugin";
+		return "Plugin (Plugin data and license not included)";
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		PluginInfos infos = PLUGIN_INFO_PROVIDER.getUserPlugins();
 		Iterator<PluginInfo> it = infos.iterator();
@@ -83,21 +83,30 @@ public class PluginUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: name
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Plugin p = PLUGIN_MANAGER.getPlugin(id);
+		if (p != null) {
+			PluginDTO dto = new PluginDTO();
+			dto.setJiraObject(p);
+			return dto;
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (Plugin p : PLUGIN_MANAGER.getPlugins()) {
-			if (p.getName().equals(identifier)) {
-				return p;
+			if (p.getName().equals(uniqueKey)) {
+				PluginDTO dto = new PluginDTO();
+				dto.setJiraObject(p);
+				return dto;
 			}
 		}
 		return null;
 	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		PluginDTO src = (PluginDTO) newItem;
 		byte[] data = src.getPluginArtifact().getArtifactDataBytes();
 		Path tempFile = Files.createTempFile(src.getName(), ".jar");
@@ -106,25 +115,12 @@ public class PluginUtil extends JiraConfigUtil {
 			JarPluginArtifact artifact = new JarPluginArtifact(tempFile.toFile());
 			Set<String> r = PLUGIN_MANAGER.installPlugins(artifact);
 			LOGGER.debug("installPlugins: " + OM.writeValueAsString(r));
+			return findByUniqueKey(src.getName());
 		} finally {
 			Files.delete(tempFile);
 		}
-		return null;
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return PluginDTO.class;

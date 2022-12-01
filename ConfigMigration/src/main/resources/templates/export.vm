@@ -164,6 +164,7 @@
 			#if ($action.exportData)
 				download();
 			#end
+			refreshCount();
 		</script>
 		<textarea rows="10" cols="100">$!{action.debug}</textarea>
 	</body>

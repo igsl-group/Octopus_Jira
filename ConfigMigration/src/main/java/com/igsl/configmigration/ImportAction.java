@@ -132,7 +132,7 @@ public class ImportAction extends JiraWebActionSupport {
 			for (Map.Entry<String, SessionData> entry : imported.entrySet()) {
 				SessionData sd = this.sessionData.get(entry.getKey());
 				if (sd != null) {
-					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().readAllItems();
+					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().findAll();
 					for (Map.Entry<String, ImportData> item : sd.getImportData().entrySet()) {
 						String itemKey = item.getValue().getData().getUniqueKey();
 						this.debug += "Looking for " + itemKey + "\n";

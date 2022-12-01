@@ -103,4 +103,9 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		this.displayName = displayName;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return ApplicationUser.class;
+	}
+
 }

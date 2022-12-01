@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.general.GeneralDTO;
 
 /*
  * Class to represent a Jira configuration item to be exported/imported.
@@ -47,7 +48,9 @@ public abstract class JiraConfigDTO {
 			"getImplementation",
 			"getMap",
 			"getMapIgnoredMethods",
-			"getUtilClass"
+			"getUtilClass",
+			"getJiraClass",
+			"getSearchParameters"
 		);
 	
 	protected abstract List<String> getCompareMethods();
@@ -57,9 +60,27 @@ public abstract class JiraConfigDTO {
 	public static final String DIFFERENCE_INDEX = DIFFERENCE_DELIMITER + "#";
 	public static final String DIFFERENCE_KEYS = DIFFERENCE_DELIMITER + "@";
 	
+	/**
+	 * Return Jira object class that this DTO encapsulates.
+	 */
+	@JsonIgnore
+	public abstract Class<?> getJiraClass();
+	
+	/**
+	 * Return JiraConfigUtil class associated with this DTO.
+	 */
 	@JsonIgnore
 	public abstract Class<? extends JiraConfigUtil> getUtilClass();
 	
+	/**
+	 * Get differences between two JiraConfigDTO objects.
+	 * Recursively compares nested objects. 
+	 * 
+	 * @param title Name. If different, this value gets added to the return value.
+	 * @param o1
+	 * @param o2
+	 * @return List<String> containing the titles of the differences, same as those from getMap().
+	 */
 	public static final List<String> getDifferences(String title, JiraConfigDTO o1, JiraConfigDTO o2) {
 		List<String> result = new ArrayList<>();
 		if (o1 != null && 
@@ -205,6 +226,24 @@ public abstract class JiraConfigDTO {
 		return Collections.emptyList();
 	}
 	
+	/*
+	 * Get all object properties as a TreeMap.
+	 * Recurse into nested objects. 
+	 * 
+	 * Methods will be have method name as key.
+	 * e.g. Object.Method1
+	 * 
+	 * Nested objects will have key prefixed by parent object. 
+	 * e.g. Parent.Child
+	 * 
+	 * Arrays will include index as key.
+	 * e.g. Parent.Array.#
+	 * 
+	 * Maps will use key.
+	 * e.g. Parent.Map.Key
+	 * 
+	 * Collections will include index same as array. 
+	 */
 	@JsonIgnore
 	public final Map<String, String> getMap() {
 		return JiraConfigDTO.getMap("", this);
@@ -322,6 +361,21 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * To search certain DTOs, parameters from its parent DTO are required. 
+	 * This API is to retrieve them.
+	 * 
+	 * Subclasses with the need for parameters store them in fromJiraObject() and 
+	 * override this to return them.
+	 */
+	protected JiraConfigDTO[] searchParameters = new JiraConfigDTO[0];
+	public final JiraConfigDTO[] getSearchParameters() {
+		return searchParameters;
+	}	
+	public final void setSearchParameters(JiraConfigDTO[] searchParameters) {
+		this.searchParameters = searchParameters;
+	}
+	
 	@JsonIgnore
 	protected Object jiraObject;
 	public final Object getJiraObject() {
@@ -330,11 +384,21 @@ public abstract class JiraConfigDTO {
 	public final void setJiraObject(Object obj, Object... params) throws Exception {
 		this.jiraObject = obj;
 		if (obj != null) {
-			if (params != null) {
-				this.fromJiraObject(obj, params);
+			if (params != null && params.length != 0) {
+				this.searchParameters = new JiraConfigDTO[params.length];
+				for (int i = 0; i < params.length; i++) {
+					if (params[i] instanceof JiraConfigDTO) {
+						this.searchParameters[i] = (JiraConfigDTO) params[i];
+					} else {
+						GeneralDTO dto = new GeneralDTO();
+						dto.setJiraObject(params[i]);
+						this.searchParameters[i] = dto;
+					}
+				}
 			} else {
-				this.fromJiraObject(obj);
+				this.searchParameters = new JiraConfigDTO[0];
 			}
+			this.fromJiraObject(obj, params);
 		}
 	}
 	
@@ -347,6 +411,9 @@ public abstract class JiraConfigDTO {
 		this.selected = selected;
 	}
 
+	/**
+	 * This is included to be used for deserialization.
+	 */
 	public final String getImplementation() {
 		return this.getClass().getCanonicalName();
 	}

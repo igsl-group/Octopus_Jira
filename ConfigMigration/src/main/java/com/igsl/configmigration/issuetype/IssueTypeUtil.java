@@ -1,5 +1,6 @@
 package com.igsl.configmigration.issuetype;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -28,7 +30,7 @@ public class IssueTypeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (IssueType it : ISSUE_MANAGER.getIssueTypes()) {
 			IssueTypeDTO item = new IssueTypeDTO();
@@ -38,58 +40,57 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: name
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		IssueType it = ISSUE_MANAGER.getIssueType(id);
+		if (it != null) {
+			IssueTypeDTO item = new IssueTypeDTO();
+			item.setJiraObject(it);
+			return item;
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (IssueType it : ISSUE_MANAGER.getIssueTypes()) {
-			if (it.getName().equals(identifier)) {
-				return it;
+			if (it.getName().equals(uniqueKey)) {
+				IssueTypeDTO item = new IssueTypeDTO();
+				item.setJiraObject(it);
+				return item;
 			}
 		}
 		return null;
 	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		IssueType original = null;
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		IssueTypeDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (IssueType) oldItem.getJiraObject();
-			} else {
-				original = (IssueType) findObject(oldItem.getUniqueKey());
-			}
+			original = (IssueTypeDTO) oldItem;
 		} else {
-			original = (IssueType) findObject(newItem.getUniqueKey());
+			original = (IssueTypeDTO) findByDTO(newItem);
+		}
+		IssueType originalJira = null;
+		if (original != null) {
+			originalJira = (IssueType) original.getJiraObject();
 		}
 		IssueTypeDTO src = (IssueTypeDTO) newItem;
 		// Avatar
 		AvatarUtil avatarUtil = new AvatarUtil();
-		Avatar av = (Avatar) avatarUtil.merge(null, src.getAvatarConfigItem());
+		AvatarDTO av = (AvatarDTO) avatarUtil.merge(null, src.getAvatarConfigItem());
 		if (original != null) {
 			// Update
-			ISSUE_MANAGER.updateIssueType(original, src.getName(), src.getDescription(), av.getId());
+			ISSUE_MANAGER.updateIssueType(originalJira, src.getName(), src.getDescription(), av.getId());
 			return original;
 		} else {
 			// Create
-			return ISSUE_MANAGER.createIssueType(src.getName(), src.getDescription(), av.getId());
+			IssueType createdJira = ISSUE_MANAGER.createIssueType(src.getName(), src.getDescription(), av.getId());
+			IssueTypeDTO created = new IssueTypeDTO();
+			created.setJiraObject(createdJira);
+			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return IssueTypeDTO.class;

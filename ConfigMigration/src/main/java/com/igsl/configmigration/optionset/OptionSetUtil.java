@@ -1,6 +1,7 @@
 package com.igsl.configmigration.optionset;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -8,14 +9,18 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
+import com.atlassian.jira.issue.fields.config.FieldConfigImpl;
 import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.atlassian.jira.issue.fields.option.OptionSetManager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionSetUtil extends JiraConfigUtil {
@@ -29,68 +34,66 @@ public class OptionSetUtil extends JiraConfigUtil {
 	}
 	
 	/**
-	 * params[0]: FieldConfig
+	 * #0: FieldConfig
 	 */
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
-		FieldConfig fieldConfig = (FieldConfig) params[0];
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		OptionSet os = MANAGER.getOptionsForConfig(fieldConfig);
-		OptionSetDTO item = new OptionSetDTO();
-		item.setJiraObject(os);
-		item.setFieldConfig(fieldConfig);
-		result.put(item.getUniqueKey(), item);
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
+		JiraConfigDTO dto = findByInternalId(null, params);
+		Map<String, JiraConfigDTO> result = new HashMap<>();
+		result.put(dto.getUniqueKey(), dto);
 		return result;
 	}
 
 	/**
-	 * params[0]: FieldConfig
+	 * #0: FieldConfig
 	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		FieldConfig fc = (FieldConfig) params[0];
-		OptionSet os = MANAGER.getOptionsForConfig(fc);
-		return os;
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		FieldConfig fieldConfig = (FieldConfig) params[0];
+		FieldConfigDTO fieldConfigDTO = new FieldConfigDTO();
+		fieldConfigDTO.setJiraObject(fieldConfig);
+		OptionSet os = MANAGER.getOptionsForConfig(fieldConfig);
+		OptionSetDTO item = new OptionSetDTO();
+		item.setJiraObject(os, fieldConfig);
+		return item;
 	}
-	
+
+	/**
+	 * #0: FieldConfig
+	 */
 	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		OptionSet original = null;
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		return findByInternalId(null, params);
+	}
+
+	@Override
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		final FieldConfigUtil FIELD_CONFIG_UTIL = 
+				(FieldConfigUtil) JiraConfigTypeRegistry.getConfigUtil(FieldConfigUtil.class);
+		OptionSetDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (OptionSet) oldItem.getJiraObject();
-			} else {
-				original = (OptionSet) findObject(oldItem.getUniqueKey());
-			}
+			original = (OptionSetDTO) oldItem;
 		} else {
-			original = (OptionSet) findObject(newItem.getUniqueKey());
+			original = (OptionSetDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getSearchParameters());
 		}
 		OptionSetDTO src = (OptionSetDTO) newItem;
 		Collection<String> optionIds = src.getOptionIds();
-		FieldConfig fieldConfig = src.getFieldConfig();
 		if (original != null) {
 			// Update
+			FieldConfig fieldConfig = (FieldConfig) original.getFieldConfig().getJiraObject();
 			MANAGER.updateOptionSet(fieldConfig, optionIds);
 			return original;
 		} else {
 			// Create
-			return MANAGER.createOptionSet(fieldConfig, optionIds);
+			FieldConfigDTO fieldConfig = (FieldConfigDTO) FIELD_CONFIG_UTIL.merge(null, src.getFieldConfig());
+			FieldConfig fc = (FieldConfig) fieldConfig.getJiraObject();
+			OptionSet createdJira = MANAGER.createOptionSet(fc, optionIds);
+			OptionSetDTO created = new OptionSetDTO();
+			created.setJiraObject(createdJira, fc);
+			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return OptionSetDTO.class;

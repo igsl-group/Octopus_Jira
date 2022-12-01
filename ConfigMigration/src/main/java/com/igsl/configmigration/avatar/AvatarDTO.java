@@ -118,4 +118,9 @@ public class AvatarDTO extends JiraConfigDTO {
 				"getImageData");
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return Avatar.class;
+	}
+
 }

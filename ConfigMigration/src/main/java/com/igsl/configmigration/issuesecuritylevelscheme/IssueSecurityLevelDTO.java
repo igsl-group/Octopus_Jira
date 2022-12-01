@@ -80,4 +80,9 @@ public class IssueSecurityLevelDTO extends JiraConfigDTO {
 		return IssueSecurityLevelUtil.class;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return IssueSecurityLevel.class;
+	}
+
 }

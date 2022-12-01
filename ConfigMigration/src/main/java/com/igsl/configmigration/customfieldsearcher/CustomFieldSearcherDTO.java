@@ -4,12 +4,18 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
-import com.atlassian.jira.issue.priority.Priority;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
+/**
+ * CustomFieldSearcher wrapper.
+ * This object type should be read-only; there is no way to add new searcher except via plugin.
+ * 
+ * So many details and nested objects are not needed. 
+ * Just keep enough fields to find it in server. 
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldSearcherDTO extends JiraConfigDTO {
 
@@ -52,6 +58,11 @@ public class CustomFieldSearcherDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return CustomFieldSearcherUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return CustomFieldSearcher.class;
 	}
 
 }

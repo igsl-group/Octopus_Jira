@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ResolutionUtil extends JiraConfigUtil {
@@ -22,11 +21,11 @@ public class ResolutionUtil extends JiraConfigUtil {
 	
 	@Override
 	public String getName() {
-		return "Resolution";
+		return "Resolution (sequence not included)";
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
 			ResolutionDTO item = new ResolutionDTO();
@@ -35,56 +34,53 @@ public class ResolutionUtil extends JiraConfigUtil {
 		}
 		return result;
 	}
-
-	/**
-	 * params[0]: name
-	 */
+	
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
-			if (r.getName().equals(identifier)) {
-				return r;
+			if (r.getId().equals(id)) {
+				ResolutionDTO dto = new ResolutionDTO();
+				dto.setJiraObject(r);
+				return dto;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String searchTerm, Object... params) throws Exception {
+		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
+			if (r.getName().equals(searchTerm)) {
+				ResolutionDTO dto = new ResolutionDTO();
+				dto.setJiraObject(r);
+				return dto;
 			}
 		}
 		return null;
 	}
 	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		Resolution original = null;
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		ResolutionDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (Resolution) oldItem.getJiraObject();
-			} else {
-				original = (Resolution) findObject(oldItem.getUniqueKey());
-			}
+			original = (ResolutionDTO) oldItem;
 		} else {
-			original = (Resolution) findObject(newItem.getUniqueKey());
+			original = (ResolutionDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		ResolutionDTO src = (ResolutionDTO) newItem;
 		if (original != null) {
 			// Update
-			RESOLUTION_MANAGER.editResolution(original, src.getName(), src.getDescription());
-			return original;
+			Resolution res = (Resolution) original.getJiraObject();
+			RESOLUTION_MANAGER.editResolution(res, src.getName(), src.getDescription());
+			return findByInternalId(res.getId());
 		} else {
 			// Create
-			return RESOLUTION_MANAGER.createResolution(src.getName(), src.getDescription());
+			Resolution createdJira = RESOLUTION_MANAGER.createResolution(src.getName(), src.getDescription());
+			ResolutionDTO created = new ResolutionDTO();
+			created.setJiraObject(createdJira);
+			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return ResolutionDTO.class;

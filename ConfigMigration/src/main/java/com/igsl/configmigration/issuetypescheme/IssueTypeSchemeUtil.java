@@ -14,16 +14,19 @@ import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
+import com.igsl.configmigration.optionset.OptionSetDTO;
 import com.igsl.configmigration.optionset.OptionSetUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueTypeSchemeUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(IssueTypeSchemeUtil.class);
-	private static IssueTypeSchemeManager MANAGER = ComponentAccessor.getComponent(IssueTypeSchemeManager.class);
-	private static OptionSetUtil OPTION_SET_UTIL = new OptionSetUtil();
+	private static final IssueTypeSchemeManager MANAGER = 
+			ComponentAccessor.getComponent(IssueTypeSchemeManager.class);
 	
 	@Override
 	public String getName() {
@@ -31,7 +34,7 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (FieldConfigScheme scheme : MANAGER.getAllSchemes()) {
 			IssueTypeSchemeDTO item = new IssueTypeSchemeDTO();
@@ -41,60 +44,62 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: identifier
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		assert params.length == 1 && String.class.isAssignableFrom(params[0].getClass());
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Long idAsLong = Long.parseLong(id);
 		for (FieldConfigScheme scheme : MANAGER.getAllSchemes()) {
-			if (scheme.getName().equals(identifier)) {
-				return scheme;
+			if (scheme.getId().equals(idAsLong)) {
+				IssueTypeSchemeDTO item = new IssueTypeSchemeDTO();
+				item.setJiraObject(scheme);
+				return item;
 			}
 		}
 		return null;
 	}
-	
+
 	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		for (FieldConfigScheme scheme : MANAGER.getAllSchemes()) {
+			if (scheme.getName().equals(uniqueKey)) {
+				IssueTypeSchemeDTO item = new IssueTypeSchemeDTO();
+				item.setJiraObject(scheme);
+				return item;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		final OptionSetUtil OPTION_SET_UTIL = 
+				(OptionSetUtil) JiraConfigTypeRegistry.getConfigUtil(OptionSetUtil.class);
 		IssueTypeSchemeDTO original = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (IssueTypeSchemeDTO) oldItem.getJiraObject();
-			} else {
-				original = (IssueTypeSchemeDTO) findObject(oldItem.getUniqueKey());
-			}
+			original = (IssueTypeSchemeDTO) oldItem;
 		} else {
-			original = (IssueTypeSchemeDTO) findObject(newItem.getUniqueKey());
+			original = (IssueTypeSchemeDTO) findByDTO(newItem);
 		}
 		IssueTypeSchemeDTO src = (IssueTypeSchemeDTO) newItem;
 		if (original != null) {
-			OptionSet optionSet = (OptionSet) OPTION_SET_UTIL.findObject(original.getFieldConfig());
+			OptionSetDTO optionSetDTO = 
+					(OptionSetDTO) OPTION_SET_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
+			OptionSet optionSet = (OptionSet) optionSetDTO.getJiraObject();
 			FieldConfigScheme.Builder b = new FieldConfigScheme.Builder((FieldConfigScheme) src.getJiraObject());
 			MANAGER.update(b.toFieldConfigScheme(), optionSet.getOptionIds());
 			return null;
 		} else {
-			OptionSet optionSet = (OptionSet) OPTION_SET_UTIL.findObject(src.getFieldConfig());
+			OptionSetDTO optionSetDTO = 
+					(OptionSetDTO) OPTION_SET_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
+			OptionSet optionSet = (OptionSet) optionSetDTO.getJiraObject();
 			List<String> optionIds = new ArrayList<>();
 			optionIds.addAll(optionSet.getOptionIds());
-			return MANAGER.create(src.getName(), src.getDescription(), optionIds);
+			FieldConfigScheme createdJira = MANAGER.create(src.getName(), src.getDescription(), optionIds);
+			FieldConfigSchemeDTO created = new FieldConfigSchemeDTO();
+			created.setJiraObject(createdJira);
+			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return IssueTypeSchemeDTO.class;

@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
+/**
+ * Priority wrapper
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PriorityDTO extends JiraConfigDTO {
 
@@ -104,6 +107,11 @@ public class PriorityDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return PriorityUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Priority.class;
 	}
 
 }

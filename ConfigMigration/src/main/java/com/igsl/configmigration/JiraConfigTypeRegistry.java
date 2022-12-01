@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,9 @@ import java.util.zip.ZipInputStream;
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.group.GroupUtil;
 import com.igsl.configmigration.insight.ObjectBeanUtil;
 import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
@@ -33,34 +36,47 @@ import com.igsl.configmigration.status.StatusUtil;
 @SuppressWarnings("unchecked")
 public class JiraConfigTypeRegistry {
 
+	private static ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+	
 	/**
 	 * This list is to mandate the order of the utils during export and import.
+	 * Any Util class not listed here will be sorted to the bottom of the list in ascending alphabetical order.
 	 */
-	private static List<String> UTIL_ORDER = Arrays.asList(
-			StatusUtil.class.getCanonicalName(),
-			IssueTypeUtil.class.getCanonicalName(),
-			PriorityUtil.class.getCanonicalName(),
-			ResolutionUtil.class.getCanonicalName(),
-			ObjectSchemaBeanUtil.class.getCanonicalName(),
-			ObjectBeanUtil.class.getCanonicalName(),
-			IssueSecurityLevelSchemeUtil.class.getCanonicalName(),
-			PluginUtil.class.getCanonicalName(),
-			CustomFieldUtil.class.getCanonicalName(),
-			IssueTypeSchemeUtil.class.getCanonicalName()
+	private static List<Class<? extends JiraConfigUtil>> UTIL_ORDER = Arrays.asList(
+			GroupUtil.class,
+			StatusUtil.class,
+			IssueTypeUtil.class,
+			PriorityUtil.class,
+			ResolutionUtil.class,
+			ObjectSchemaBeanUtil.class,
+			ObjectBeanUtil.class,
+			IssueSecurityLevelSchemeUtil.class,
+			PluginUtil.class,
+			CustomFieldUtil.class,
+			IssueTypeSchemeUtil.class
 			);
+	private static List<String> orderedList = new ArrayList<>();
+	private static List<String> unorderedList = new ArrayList<>();
+	
+	private static int getOrder(String s) {
+		if (orderedList.contains(s)) {
+			return orderedList.indexOf(s);
+		}
+		if (unorderedList.contains(s)) {
+			return orderedList.size() + unorderedList.indexOf(s);
+		}
+		return Integer.MAX_VALUE;
+	}
 	
 	private static class UtilComparator implements Comparator<String> {
 		@Override
 		public int compare(String o1, String o2) {
-			int i1 = -1;
-			int i2 = -1;
-			if (UTIL_ORDER.contains(o1)) {
-				i1 = UTIL_ORDER.indexOf(o1);
-			}
-			if (UTIL_ORDER.contains(o2)) {
-				i2 = UTIL_ORDER.indexOf(o2);
-			}
-			return Integer.compare(i1, i2);
+			Logger logger = Logger.getLogger(LOGGER_NAME);
+			int i1 = getOrder(o1);
+			int i2 = getOrder(o2);
+			int r = Integer.compare(i1, i2);
+			logger.debug("Compare [" + o1 + "] " + i1 + " vs [" + o2 + "] " + i2 + " = " + r);
+			return r;
 		}
 	}
 	
@@ -68,50 +84,112 @@ public class JiraConfigTypeRegistry {
 	
 	private static final String CLASS_SUFFIX = ".class";
 	
-	// Used to store class names
+	// Full list of DTO class names
 	private static List<String> ITEM_NAMES = new ArrayList<>();
+	
+	// Full list of Util class names
 	private static List<String> UTIL_NAMES = new ArrayList<>();
 	
 	// Maps canonical name to Class for deserialization
-	private static Map<String, Class<? extends JiraConfigDTO>> ITEM_LIST = new LinkedHashMap<>();
-	private static Map<String, Class<? extends JiraConfigUtil>> UTIL_LIST = new TreeMap<>(new UtilComparator());
+	private static Map<String, Class<? extends JiraConfigDTO>> DTO_MAP = new LinkedHashMap<>();
+	private static Map<String, Class<? extends JiraConfigUtil>> UTIL_MAP = new HashMap<>();
 	
-	// Stores list of Util instances
-	private static Map<String, JiraConfigUtil> UTIL_INSTANCE_LIST = new LinkedHashMap<>();
+	// Stores list of Util instances, key is Util class name
+	// Order of key is maintained by UTIL_ORDER
+	private static Map<String, JiraConfigUtil> UTIL_INSTANCE_MAP = new TreeMap<>(new UtilComparator());
 
-	public static Map<String, Class<? extends JiraConfigDTO>> getConfigItemMap() {
-		return Collections.unmodifiableMap(ITEM_LIST);
-	}
+	// Stores list of DTO class names, key is corresponding Jira class name
+	private static Map<Class<?>, Class<? extends JiraConfigDTO>> DTO_INSTANCE_MAP = new HashMap<>(); 
 	
-	public static Map<String, Class<? extends JiraConfigUtil>> getConfigUtilMap() {
-		return Collections.unmodifiableMap(UTIL_LIST);
-	}
-	
-	public static Collection<JiraConfigUtil> getConfigUtilList() {
-		return getConfigUtilList(true);
-	}
-	public static Collection<JiraConfigUtil> getConfigUtilList(boolean publicOnly) {
-		if (publicOnly) {
-			Collection<JiraConfigUtil> result = new ArrayList<JiraConfigUtil>();
-			for (JiraConfigUtil util : UTIL_INSTANCE_LIST.values()) {
-				if (util.isPublic()) {
-					result.add(util);
-				}
+	/**
+	 * Get JiraConfigDTO class corresponding to a Jira class.
+	 * @param jiraClassName Jira class name, e.g. ApplicationUser.class.getCanonicalName().
+	 * @return JiraConfigDTO class, null if no match.
+	 */
+	public static Class<? extends JiraConfigDTO> getDTOClassName(Class<?> jiraClass) {
+		for (Map.Entry<Class<?>, Class<? extends JiraConfigDTO>> entry : DTO_INSTANCE_MAP.entrySet()) {
+			if (entry.getKey().isAssignableFrom(jiraClass)) {
+				return entry.getValue();
 			}
-			return Collections.unmodifiableCollection(result);
-		} else {
-			return Collections.unmodifiableCollection(UTIL_INSTANCE_LIST.values());
-		}
-	}
-	
-	public static JiraConfigUtil getConfigUtil(String className) {
-		if (UTIL_INSTANCE_LIST.containsKey(className)) {
-			return UTIL_INSTANCE_LIST.get(className);
 		}
 		return null;
 	}
-
-	// Caller should check if item is array, Collection or Map first, if so, handle each item separately.
+	
+	public static Map<Class<?>, Class<? extends JiraConfigDTO>> getConfigDTOMap() {
+		return Collections.unmodifiableMap(DTO_INSTANCE_MAP);
+	}
+	
+	/**
+	 * Get Util class name to DTO class.
+	 * @return
+	 */
+	public static Map<String, Class<? extends JiraConfigDTO>> getUtilToDTOMap() {
+		return Collections.unmodifiableMap(DTO_MAP);
+	}
+	
+	/**
+	 * Get Util class name to Util class.
+	 * @return
+	 */
+	public static Map<String, Class<? extends JiraConfigUtil>> getConfigUtilMap() {
+		return Collections.unmodifiableMap(UTIL_MAP);
+	}
+	
+	/**
+	 * Get public Util instance list.
+	 * @return
+	 */
+	public static Collection<JiraConfigUtil> getConfigUtilList() {
+		return getConfigUtilList(true);
+	}
+	
+	/**
+	 * Get Util instance list.
+	 * @param publicOnly Get public Util only.
+	 * @return Collection of JiraConfigUtil instances.
+	 */
+	public static Collection<JiraConfigUtil> getConfigUtilList(boolean publicOnly) {
+		Logger logger = Logger.getLogger(LOGGER_NAME);
+		Collection<JiraConfigUtil> result = new ArrayList<JiraConfigUtil>();
+		for (Map.Entry<String, JiraConfigUtil> entry : UTIL_INSTANCE_MAP.entrySet()) {
+			logger.debug("Processing Key: " + entry.getKey());
+			if (publicOnly) {
+				if (entry.getValue().isPublic()) {
+					result.add(entry.getValue());
+				}
+			} else {
+				result.add(entry.getValue());
+			}
+		}
+		return Collections.unmodifiableCollection(result);
+	}
+	
+	/**
+	 * Get JiraConfigUtil based on Util class name.
+	 * @param className
+	 * @return
+	 */
+	public static JiraConfigUtil getConfigUtil(String className) {
+		if (UTIL_INSTANCE_MAP.containsKey(className)) {
+			return UTIL_INSTANCE_MAP.get(className);
+		}
+		return null;
+	}
+	public static JiraConfigUtil getConfigUtil(Class<? extends JiraConfigUtil> utilClass) {
+		if (utilClass != null) {
+			return getConfigUtil(utilClass.getCanonicalName());
+		}
+		return null;
+	}
+	
+	/**
+	 * Get JiraConfigUtil class for provided object (if it is JiraConfigDTO). 
+	 * Caller should check if item is array, Collection or Map first, if so, handle each item separately.
+	 * Note that not all JiraConfigDTO has a JiraConfigUtil, some are only referenced by other DTOs. 
+	 * 
+	 * @param item
+	 * @return JiraConfigUtil instance for provided JiraConfigDTO object. Null if no match is found.
+	 */
 	public static JiraConfigUtil checkConfigUtil(Object item) {
 		if (item != null && item instanceof JiraConfigDTO) {
 			JiraConfigDTO dto = (JiraConfigDTO) item;
@@ -122,6 +200,10 @@ public class JiraConfigTypeRegistry {
 	
 	static {
 		Logger logger = Logger.getLogger(LOGGER_NAME);
+		// Convert class objects into canonical names
+		for (Class<? extends JiraConfigUtil> cls : UTIL_ORDER) {
+			orderedList.add(cls.getCanonicalName());
+		}
 		// Get JiraConfigItme and JiraConfigUtil class list from JAR file
 		try {
 			ProtectionDomain pd = ExportAction.class.getProtectionDomain();
@@ -141,6 +223,7 @@ public class JiraConfigTypeRegistry {
 								break;
 							}
 							String entryName = entry.getName();
+							logger.debug("Registry checking entry: " + entryName);
 							if (entryName.toLowerCase().endsWith(CLASS_SUFFIX)) {
 								String className = entryName
 										.substring(0, entryName.length() - CLASS_SUFFIX.length())
@@ -150,13 +233,19 @@ public class JiraConfigTypeRegistry {
 									if (configItemClass.isAssignableFrom(cls) && 
 										!className.equals(JiraConfigDTO.class.getCanonicalName())) {
 										ITEM_NAMES.add(cls.getCanonicalName());
+										logger.debug("Registry added DTO: " + cls);
 									} else if (
 										utilClass.isAssignableFrom(cls) && 
 										!className.equals(JiraConfigUtil.class.getCanonicalName())) {
 										UTIL_NAMES.add(cls.getCanonicalName());
+										logger.debug("Registry added Util: " + cls);
 									}
 								} catch (Throwable ex) {
 									// Ignore
+									logger.debug(
+											"Registry error: " + 
+											ex.getClass().getCanonicalName() + ": " + 
+											ex.getMessage());
 								}
 							}
 						}
@@ -171,29 +260,42 @@ public class JiraConfigTypeRegistry {
 		for (String s : ITEM_NAMES) {
 			try {
 				Class<?> cls = cloader.loadClass(s);
-				ITEM_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigDTO>) cls); 
+				DTO_MAP.put(cls.getCanonicalName(), (Class<? extends JiraConfigDTO>) cls); 
+				JiraConfigDTO dto = (JiraConfigDTO) cls.newInstance();
+				DTO_INSTANCE_MAP.put(dto.getJiraClass(), (Class<? extends JiraConfigDTO>) cls);
 			} catch (Throwable t) {
 				logger.error("Failed to load JiraConfigItem for " + s, t);
 			}
 		}
+		// Determine util order before adding items to UTIL_MAP 
+		for (String s : UTIL_NAMES) {
+			if (!orderedList.contains(s)) {
+				unorderedList.add(s);
+			}
+		}
+		Collections.sort(unorderedList);
+		try {
+			logger.debug("orderedList: " + OM.writeValueAsString(orderedList));
+			logger.debug("unorderedList: " + OM.writeValueAsString(unorderedList));
+		} catch (Exception ex) {
+			logger.error("OM error", ex);
+		}
 		for (String s : UTIL_NAMES) {
 			try {
 				Class<?> cls = cloader.loadClass(s);
-				UTIL_LIST.put(cls.getCanonicalName(), (Class<? extends JiraConfigUtil>) cls); 
+				UTIL_MAP.put(s, (Class<? extends JiraConfigUtil>) cls); 
+				UTIL_INSTANCE_MAP.put(s, (JiraConfigUtil) cls.newInstance());
 			} catch (Throwable t) {
 				logger.error("Failed to load JiraConfigUtil for " + s, t);
 			}
 		}
-		for (Class<? extends JiraConfigUtil> cls : UTIL_LIST.values()) {
-			try {
-				UTIL_INSTANCE_LIST.put(
-						cls.getCanonicalName(), 
-						(JiraConfigUtil) cls.newInstance());
-			} catch (Throwable ex) {
-				logger.error(
-						"Failed to instantiate JiraConfigUtil instance for " + cls, 
-						ex);
-			}
+		try {
+			logger.debug("UtilMap: " + OM.writeValueAsString(UTIL_MAP));
+			logger.debug("InstanceMap: " + OM.writeValueAsString(UTIL_INSTANCE_MAP));
+			logger.debug("Public list: " + OM.writeValueAsString(getConfigUtilList()));
+			logger.debug("All list: " + OM.writeValueAsString(getConfigUtilList(false)));
+		} catch (Exception ex) {
+			logger.error("OM error", ex);
 		}
 	}
 }

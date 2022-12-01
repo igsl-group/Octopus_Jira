@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionSetDTO extends JiraConfigDTO {
@@ -21,10 +22,14 @@ public class OptionSetDTO extends JiraConfigDTO {
 	private List<OptionDTO> options;
 
 	@JsonIgnore
-	private FieldConfig fieldConfig;
+	private FieldConfigDTO fieldConfig;
 	
+	/**
+	 * #0: FieldConfigDTO
+	 */
 	@Override
 	public void fromJiraObject(Object o, Object... params) throws Exception {
+		this.fieldConfig = (FieldConfigDTO) params[0];
 		OptionSet obj = (OptionSet) o;
 		this.optionIds = new ArrayList<String>();
 		for (String s : obj.getOptionIds()) {
@@ -57,11 +62,11 @@ public class OptionSetDTO extends JiraConfigDTO {
 		this.optionIds = optionIds;
 	}
 
-	public FieldConfig getFieldConfig() {
+	public FieldConfigDTO getFieldConfig() {
 		return fieldConfig;
 	}
 
-	public void setFieldConfig(FieldConfig fieldConfig) {
+	public void setFieldConfig(FieldConfigDTO fieldConfig) {
 		this.fieldConfig = fieldConfig;
 	}
 
@@ -76,6 +81,11 @@ public class OptionSetDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return OptionSetUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return OptionSet.class;
 	}
 
 }

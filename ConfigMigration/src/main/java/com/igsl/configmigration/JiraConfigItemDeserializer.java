@@ -32,7 +32,7 @@ public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigDTO> {
 			ValueNode vn = (ValueNode) impl;
 			String implementation = vn.asText();
 			LOGGER.debug("Implementation: [" + implementation + "]");
-			Map<String, Class<? extends JiraConfigDTO>> map = JiraConfigTypeRegistry.getConfigItemMap();
+			Map<String, Class<? extends JiraConfigDTO>> map = JiraConfigTypeRegistry.getUtilToDTOMap();
 			if (map.containsKey(implementation)) {
 				Class<? extends JiraConfigDTO> cls = map.get(implementation);
 				LOGGER.debug("cls: " + cls.getCanonicalName());

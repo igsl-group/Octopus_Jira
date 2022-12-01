@@ -2,6 +2,7 @@ package com.igsl.configmigration.avatar;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -31,10 +32,10 @@ public class AvatarUtil extends JiraConfigUtil {
 	}
 	
 	/**
-	 * params[0]: owner as String, optional
+	 * #0: owner as String, optional
 	 */
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
@@ -53,8 +54,9 @@ public class AvatarUtil extends JiraConfigUtil {
 			result.put(item.getUniqueKey(), item); 
  		}
 		// Find among custom avatars of owner
-		if (params.length == 1 && String.class.isAssignableFrom(params[0].getClass())) {
-			String avatarOwner = (String) params[0];			
+		String avatarOwner = null;
+		if (params.length == 1) {
+			avatarOwner = (String) params[0];
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
 				item.setJiraObject(av);
@@ -75,49 +77,43 @@ public class AvatarUtil extends JiraConfigUtil {
 	}
 
 	/**
-	 * params[0]: AvatarConfigItem.getUniqueKey()
-	 * params[1]: owner as String, optional
+	 * #0: owner as String, optional
 	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String uniqueKey = null;
-		if (params.length >= 1) {
-			uniqueKey = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Map<String, JiraConfigDTO> all = findAll(params);
+		for (JiraConfigDTO item : all.values()) {
+			if (item.getInternalId().equals(id)) {
+				return item;
+			}
 		}
-		String owner = null;
-		if (params.length == 2) {
-			owner = (String) params[1];
-		}
-		Map<String, JiraConfigDTO> all;
-		if (owner != null) {
-			all = readAllItems(owner);
-		} else {
-			all = readAllItems();
-		}
-		LOGGER.debug("Avatar list: " + OM.writeValueAsString(all));
-		LOGGER.debug("Finding uniqueKey: " + uniqueKey);
+		return null;
+	}
+
+	/**
+	 * #0: owner as String, optional
+	 */
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		Map<String, JiraConfigDTO> all = findAll(params);
 		if (all.containsKey(uniqueKey)) {
-			LOGGER.debug("Found: " + all.get(uniqueKey).getJiraObject());
-			return all.get(uniqueKey).getJiraObject();
+			return all.get(uniqueKey);
 		}
 		return null;
 	}
 	
 	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		Avatar old = null;
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		AvatarDTO old = null;
 		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				old = (Avatar) oldItem.getJiraObject();
-			} else {
-				old = (Avatar) findObject(oldItem.getUniqueKey());
-			}
+			old = (AvatarDTO) oldItem;
 		} else {
-			old = (Avatar) findObject(newItem.getUniqueKey());
+			old = (AvatarDTO) findByDTO(newItem);
 		}
 		AvatarDTO src = (AvatarDTO) newItem;
 		if (old != null) {
 			// Keep using old one
+			// TODO Delete and recreate?
 			return old;
 		} else {
 			// Create
@@ -134,26 +130,15 @@ public class AvatarUtil extends JiraConfigUtil {
 				owner = new IconOwningObjectId("admin");	// TODO
 			}
 			LOGGER.debug("Avatar owner: " + owner);
-			Avatar created = MANAGER.create(
+			Avatar createdJira = MANAGER.create(
 						src.getFileName(), src.getContentType(), src.getIconTypeObject(), owner, bais, null);
-			LOGGER.debug("Avatar created from data: " + created);
+			LOGGER.debug("Avatar created from data: " + createdJira);
+			AvatarDTO created = new AvatarDTO();
+			created.setJiraObject(createdJira);
 			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return AvatarDTO.class;

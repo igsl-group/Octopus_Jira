@@ -25,14 +25,14 @@ public class GroupUtil extends JiraConfigUtil {
 	
 	@Override
 	public String getName() {
-		return "User Group";
+		return "User Group (members not included)";
 	}
 	
 	/**
 	 * No params
 	 */
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Group grp : SERVICE.findGroups("")) {
 			GroupDTO item = new GroupDTO();
@@ -42,26 +42,50 @@ public class GroupUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: User name as String
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String uniqueKey = String.valueOf(params[0]);
-		return MANAGER.getGroup(uniqueKey);
-	}
-	
-	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		// TODO
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Group grp = MANAGER.getGroup(id);
+		if (grp != null) {
+			GroupDTO item = new GroupDTO();
+			item.setJiraObject(grp);
+			return item;
+		}
 		return null;
 	}
-	
+
 	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		// TODO
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		for (Group grp : SERVICE.findGroups("")) {
+			if (grp.getName().equals(uniqueKey)) {
+				GroupDTO item = new GroupDTO();
+				item.setJiraObject(grp);
+				return item;
+			}
+		}
+		return null;
 	}
 
+	@Override
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		GroupDTO original;
+		if (oldItem != null) {
+			original = (GroupDTO) oldItem;
+		} else {
+			original = (GroupDTO) findByDTO(newItem);
+		}
+		GroupDTO src = (GroupDTO) newItem;
+		if (original != null) {
+			// Do nothing... group is just a name, and members are not stored in groups.
+			return original;
+		} else {
+			// Create group
+			Group createdJira = MANAGER.createGroup(src.getName());
+			GroupDTO created = new GroupDTO();
+			created.setJiraObject(createdJira);
+			return created;
+		}
+	}
+	
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return GroupDTO.class;

@@ -56,8 +56,13 @@ public class LabelDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
+		// Referenced from other DTOs only
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Label.class;
 	}
 
 }

@@ -103,4 +103,9 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 		return IssueSecurityLevelSchemeUtil.class;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return IssueSecurityLevelScheme.class;
+	}
+
 }

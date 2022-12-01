@@ -106,10 +106,10 @@ public class ExportAction extends JiraWebActionSupport {
 			// TODO Load all sections
 			for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 				SessionData data = sessionData.get(entry.getKey());
-				data.getExportData().putAll(data.getUtil().readAllItems());
+				data.getExportData().putAll(data.getUtil().findAll());
 			}
 		}
-
+		
 		// Save selection
 		for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 			SessionData data = sessionData.get(entry.getKey());
@@ -133,11 +133,11 @@ public class ExportAction extends JiraWebActionSupport {
 			// Search all objects
 			if (section != null && !section.isEmpty()) {
 				SessionData data = sessionData.get(section);
-				data.getExportData().putAll(data.getUtil().readAllItems());
+				data.getExportData().putAll(data.getUtil().findAll());
 			} else {
 				for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 					SessionData data = sessionData.get(entry.getKey());
-					data.getExportData().putAll(data.getUtil().readAllItems());
+					data.getExportData().putAll(data.getUtil().findAll());
 				}
 			}
 		} else if (FORM_ACTION_CLEAR.equals(action)) {
@@ -169,8 +169,14 @@ public class ExportAction extends JiraWebActionSupport {
 				}
 			}
 			if (export.size() != 0) {
+				LOGGER.debug("Start of serialization");
 				exportData = OM.writeValueAsString(export);
-				this.debug += "Export: " + exportData + "\n";
+				LOGGER.debug("Data serialized");
+				// TODO 
+				// exportData can be too large and make the whole web action fail
+				// Alternative way to download needed
+				
+//				this.debug += "Export: " + exportData + "\n";
 //				Map<String, SessionData> test = OM.readValue(exportData, new TypeReference<Map<String, SessionData>>() {});
 //				this.debug += "Deserialize Test: " + OM.writeValueAsString(test) + "\n";
 			} else {

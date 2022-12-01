@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -21,6 +22,8 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(PluginArtifactDTO.class);
 	
+	@JsonIgnore
+	private long artifactSize;
 	private String artifactData;
 	private String name;
 	private ReferenceMode referenceMode;
@@ -34,6 +37,7 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 			while ((c = in.read()) != -1) {
 				out.write(c);
 			}
+			artifactSize = out.toByteArray().length;
 			artifactData = Base64.getEncoder().encodeToString(out.toByteArray());
 		}
 		this.name = obj.getName();
@@ -55,6 +59,13 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 		return this.getName();
 	}
 
+	@Override
+	public List<String> getMapIgnoredMethods() {
+		return Arrays.asList(
+				"getArtifactData",
+				"getArtifactDataBytes");
+	}
+	
 	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
@@ -89,8 +100,16 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return PluginArtifact.class;
+	}
+
+	public long getArtifactSize() {
+		return artifactSize;
 	}
 
 }

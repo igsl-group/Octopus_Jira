@@ -2,7 +2,9 @@ package com.igsl.configmigration.applicationuser;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
@@ -34,11 +36,8 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		return "Application User";
 	}
 	
-	/**
-	 * No params
-	 */
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
 			ApplicationUserDTO item = new ApplicationUserDTO();
@@ -48,24 +47,27 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: User name as String
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String uniqueKey = String.valueOf(params[0]);
-		return MANAGER.getUserByKey(uniqueKey);
-	}
-	
-	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		// TODO
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Long idAsLong = Long.parseLong(id);
+		Optional<ApplicationUser> user = MANAGER.getUserById(idAsLong);
+		if (user != null && user.isPresent()) {
+			ApplicationUserDTO dto = new ApplicationUserDTO();
+			dto.setJiraObject(user.get());
+			return dto;
+		}
 		return null;
 	}
-	
+
 	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		// TODO
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		ApplicationUser user = MANAGER.getUserByKey(uniqueKey);
+		if (user != null) {
+			ApplicationUserDTO dto = new ApplicationUserDTO();
+			dto.setJiraObject(user);
+			return dto;
+		}
+		return null;
 	}
 
 	@Override
@@ -77,6 +79,11 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 	public boolean isPublic() {
 		// TODO Users not supported for now
 		return false;
+	}
+
+	@Override
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		throw new Exception("Not implemented");
 	}
 
 }

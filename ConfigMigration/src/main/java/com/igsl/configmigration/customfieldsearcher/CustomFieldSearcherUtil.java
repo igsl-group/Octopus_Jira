@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldSearcherUtil extends JiraConfigUtil {
@@ -28,12 +28,14 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	}
 	
 	/**
-	 * params[0]: CustomFieldType<?, ?>
+	 * #0: CustomFieldTypeDTO
 	 */
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor((CustomFieldType<?, ?>) params[0])) {
+		CustomFieldTypeDTO customFieldTypeDTO = (CustomFieldTypeDTO) params[0];
+		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) customFieldTypeDTO.getJiraObject();
+		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
 			CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
 			item.setJiraObject(s);
 			result.put(item.getUniqueKey(), item);
@@ -42,40 +44,34 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	}
 
 	/**
-	 * params[0]: CustomFieldType<?, ?>
-	 * params[1]: Descriptor key
+	 * #0: CustomFieldTypeDTO
 	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		CustomFieldType<?, ?> type = (CustomFieldType<?, ?>) params[0];
-		String identifier = (String) params[1];
-		LOGGER.debug("CustomFieldType: " + type);
-		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(type)) {
-			LOGGER.debug(s.getDescriptor().getCompleteKey() + " vs " + identifier);
-			if (s.getDescriptor().getCompleteKey().equals(identifier)) {
-				return s;
-			}
-		}
-		return null;
-	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		return null;
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("N/A");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		return findByUniqueKey(id, params);
 	}
 
+	/**
+	 * #0: CustomFieldTypeDTO
+	 */
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		CustomFieldTypeDTO customFieldTypeDTO = (CustomFieldTypeDTO) params[0];
+		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) customFieldTypeDTO.getJiraObject();
+		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
+			if (s.getDescriptor().getCompleteKey().equals(uniqueKey)) {
+				CustomFieldSearcherDTO dto = new CustomFieldSearcherDTO();
+				dto.setJiraObject(s, customFieldTypeDTO);
+				return dto;
+			}
+		}
+		return null;
+	}
+
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		throw new Exception("CustomFieldSearcher is read only");
+	}
+	
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return CustomFieldSearcherDTO.class;

@@ -1,4 +1,4 @@
-package com.igsl.configmigration.statuscategory;
+package com.igsl.configmigration.status;
 
 import java.util.Arrays;
 import java.util.List;
@@ -9,6 +9,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
+/**
+ * StatusCategory wrapper.
+ * 
+ * There should be no way to add new StatusCategory, so this can be read only.
+ * Only referenced from Status.
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusCategoryDTO extends JiraConfigDTO {
 
@@ -111,8 +117,12 @@ public class StatusCategoryDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return StatusCategory.class;
 	}
 
 }

@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
+/**
+ * Resolution wrapper
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ResolutionDTO extends JiraConfigDTO {
 
@@ -79,6 +82,11 @@ public class ResolutionDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return ResolutionUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Resolution.class;
 	}
 
 }

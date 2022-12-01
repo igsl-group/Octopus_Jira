@@ -8,8 +8,10 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
+/**
+ * Status wrapper.
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusDTO extends JiraConfigDTO {
 
@@ -81,6 +83,11 @@ public class StatusDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return StatusUtil.class;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Status.class;
 	}
 
 }

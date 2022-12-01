@@ -48,4 +48,9 @@ public class GroupDTO extends JiraConfigDTO {
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return GroupUtil.class;
 	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Group.class;
+	}
 }

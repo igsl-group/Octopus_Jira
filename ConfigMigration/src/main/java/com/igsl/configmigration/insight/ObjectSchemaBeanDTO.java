@@ -93,4 +93,9 @@ public class ObjectSchemaBeanDTO extends JiraConfigDTO {
 		return ObjectSchemaBeanUtil.class;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return ObjectSchemaBean.class;
+	}
+
 }

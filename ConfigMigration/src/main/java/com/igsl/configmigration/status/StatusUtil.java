@@ -1,5 +1,6 @@
 package com.igsl.configmigration.status;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,8 +15,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.statuscategory.StatusCategoryDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusUtil extends JiraConfigUtil {
@@ -30,7 +29,7 @@ public class StatusUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Status it : MANAGER.getStatuses()) {
 			StatusDTO item = new StatusDTO();
@@ -40,26 +39,38 @@ public class StatusUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	/**
-	 * params[0]: Status name
-	 */
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		return MANAGER.getStatus((String) params[0]);
-	}
-	
-	@Override
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		Status original = null;
-		if (oldItem != null) {
-			if (oldItem.getJiraObject() != null) {
-				original = (Status) oldItem.getJiraObject();
-			} else {
-				original = (Status) findObject(oldItem.getUniqueKey());
-			}
-		} else {
-			original = (Status) findObject(newItem.getUniqueKey());
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		Status s = MANAGER.getStatus(id);
+		if (s != null) {
+			StatusDTO item = new StatusDTO();
+			item.setJiraObject(s);
+			return item;
 		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
+		for (Status it : MANAGER.getStatuses()) {
+			if (uniqueKey.equals(it.getName())) {
+				StatusDTO item = new StatusDTO();
+				item.setJiraObject(it);
+				return item;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		StatusDTO original = null;
+		if (oldItem != null) {
+			original = (StatusDTO) oldItem;
+		} else {
+			original = (StatusDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getSearchParameters());
+		}
+		Status originalJira = (original != null)? (Status) original.getJiraObject(): null;
 		StatusDTO src = (StatusDTO) newItem;
 		String name = src.getName();
 		String description = src.getDescription();
@@ -68,27 +79,17 @@ public class StatusUtil extends JiraConfigUtil {
 		final String DUMMY_ICON_URL = ".";
 		if (original != null) {
 			// Update
-			MANAGER.editStatus(original, name, description, DUMMY_ICON_URL, cat);
-			return original;
+			MANAGER.editStatus(originalJira, name, description, DUMMY_ICON_URL, cat);
+			return findByInternalId(originalJira.getId());
 		} else {
 			// Create
-			return MANAGER.createStatus(name, description, DUMMY_ICON_URL, cat);
+			Status createdJira = MANAGER.createStatus(name, description, DUMMY_ICON_URL, cat);
+			StatusDTO created = new StatusDTO();
+			created.setJiraObject(createdJira);
+			return created;
 		}
 	}
 	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("Updated");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
-	}
-
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return StatusDTO.class;

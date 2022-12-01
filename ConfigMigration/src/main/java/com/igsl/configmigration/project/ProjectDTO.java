@@ -9,6 +9,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
+/**
+ * Project wrapper
+ */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectDTO extends JiraConfigDTO {
 
@@ -69,6 +72,11 @@ public class ProjectDTO extends JiraConfigDTO {
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Project.class;
 	}
 
 }

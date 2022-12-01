@@ -53,8 +53,13 @@ public class OptionsDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
+		// Referenced from CustomFieldDTO only
 		return null;
+	}
+
+	@Override
+	public Class<?> getJiraClass() {
+		return Options.class;
 	}
 
 }

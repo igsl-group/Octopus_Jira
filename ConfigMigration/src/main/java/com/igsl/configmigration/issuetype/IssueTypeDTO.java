@@ -95,4 +95,9 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		return IssueTypeUtil.class;
 	}
 
+	@Override
+	public Class<?> getJiraClass() {
+		return IssueType.class;
+	}
+
 }

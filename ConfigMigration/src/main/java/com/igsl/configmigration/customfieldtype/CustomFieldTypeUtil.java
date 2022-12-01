@@ -12,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldTypeUtil extends JiraConfigUtil {
@@ -26,7 +25,7 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> readAllItems(Object... params) throws Exception {
+	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
 			CustomFieldTypeDTO item = new CustomFieldTypeDTO();
@@ -35,38 +34,28 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 		}
 		return result;
 	}
-
-	/**
-	 * params[0]: name
-	 */
+	
 	@Override
-	public Object findObject(Object... params) throws Exception {
-		String identifier = (String) params[0];
+	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
+		return findByUniqueKey(id);
+	}
+
+	@Override
+	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
-			if (p.getKey().equals(identifier)) {
-				return p;
+			if (p.getKey().equals(uniqueKey)) {
+				CustomFieldTypeDTO dto = new CustomFieldTypeDTO();
+				dto.setJiraObject(p);
+				return dto;
 			}
 		}
 		return null;
-	}
-	
-	public Object merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		return null;
-	}
-	
-	@Override
-	public void merge(Map<String, ImportData> items) throws Exception {
-		for (ImportData data : items.values()) {
-			try {
-				merge(data.getServer(), data.getData());
-				data.setImportResult("N/A");
-			} catch (Exception ex) {
-				data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
-				throw ex;
-			}
-		}
 	}
 
+	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		throw new Exception("CustomFieldType is only added via plugins");
+	}
+	
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return CustomFieldTypeDTO.class;
