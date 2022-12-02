@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.customfields.option.Options;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -27,6 +28,28 @@ public class OptionsDTO extends JiraConfigDTO {
 		}
 	}
 
+	private static List<OptionDTO> getAllOptionsHelper(OptionDTO option) {
+		List<OptionDTO> result = new ArrayList<>();
+		if (option != null) {
+			result.add(option);
+			if (option.getChildOptions() != null) {
+				for (OptionDTO child : option.getChildOptions()) {
+					result.addAll(getAllOptionsHelper(child));
+				}
+			}
+		}
+		return result;
+	}
+	
+	@JsonIgnore
+	public List<OptionDTO> getAllOptions() {
+		List<OptionDTO> result = new ArrayList<>();
+		for (OptionDTO dto : this.rootOptions) {
+			result.addAll(getAllOptionsHelper(dto));			
+		}
+		return result;
+	}
+	
 	@Override
 	public String getUniqueKey() {
 		return Integer.toString(this.hashCode());

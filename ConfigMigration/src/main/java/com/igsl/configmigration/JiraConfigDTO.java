@@ -378,26 +378,49 @@ public abstract class JiraConfigDTO {
 	
 	@JsonIgnore
 	protected Object jiraObject;
-	public final Object getJiraObject() {
+	/**
+	 * For deserialized JiraConfigDTO, this will return null.
+	 * 
+	 * To locate existing object on server, call the associated JiraConfigUtil's findXXX() methods, then call 
+	 * its .getJiraObject() method.
+	 * 
+	 * Otherwise you need knowledge of the type of JiraConfigDTO to access its data fields, and use 
+	 * associated JiraConfigUtil's merge() method to create it. 
+	 * 
+	 * Jira's API does not have a usable class to create in-memory instance for everything. 
+	 * e.g. ApplicationUser cannot be created directly, it is always loaded through a UserManager instance.
+	 * 
+	 * Hence the API is designed this way. 
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
+	public final Object getJiraObject() throws Exception {
 		return jiraObject;
 	}
+	/**
+	 * Stores Jira object and/or search parameters. 
+	 * @param obj Jira object. Can be null.
+	 * @param params Search parameters. Can be null.
+	 * @throws Exception
+	 */
 	public final void setJiraObject(Object obj, Object... params) throws Exception {
-		this.jiraObject = obj;
-		if (obj != null) {
-			if (params != null && params.length != 0) {
-				this.searchParameters = new JiraConfigDTO[params.length];
-				for (int i = 0; i < params.length; i++) {
-					if (params[i] instanceof JiraConfigDTO) {
-						this.searchParameters[i] = (JiraConfigDTO) params[i];
-					} else {
-						GeneralDTO dto = new GeneralDTO();
-						dto.setJiraObject(params[i]);
-						this.searchParameters[i] = dto;
-					}
+		if (params != null && params.length != 0) {
+			this.searchParameters = new JiraConfigDTO[params.length];
+			for (int i = 0; i < params.length; i++) {
+				if (params[i] instanceof JiraConfigDTO) {
+					this.searchParameters[i] = (JiraConfigDTO) params[i];
+				} else {
+					GeneralDTO dto = new GeneralDTO();
+					dto.setJiraObject(params[i]);
+					this.searchParameters[i] = dto;
 				}
-			} else {
-				this.searchParameters = new JiraConfigDTO[0];
 			}
+		} else {
+			this.searchParameters = new JiraConfigDTO[0];
+		}
+		if (obj != null) {
+			this.jiraObject = obj;
 			this.fromJiraObject(obj, params);
 		}
 	}

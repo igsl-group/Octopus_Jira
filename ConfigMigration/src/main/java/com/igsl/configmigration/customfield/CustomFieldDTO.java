@@ -30,6 +30,7 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	private String description;
 	private String fieldName;
 	private String id;
+	private Long idAsLong;
 	private String name;
 	private CustomFieldSearcherDTO customFieldSearcher;
 	private List<FieldConfigSchemeDTO> configurationSchemes;
@@ -61,6 +62,7 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		this.description = obj.getDescription();
 		this.fieldName = obj.getFieldName();
 		this.id = obj.getId();
+		this.idAsLong = obj.getIdAsLong();
 		this.name = obj.getName();
 		this.propertySet = new PropertySetDTO();
 		this.propertySet.setJiraObject(obj.getPropertySet());
@@ -205,6 +207,14 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	@Override
 	public Class<?> getJiraClass() {
 		return CustomField.class;
+	}
+
+	public Long getIdAsLong() {
+		return idAsLong;
+	}
+
+	public void setIdAsLong(Long idAsLong) {
+		this.idAsLong = idAsLong;
 	}
 
 }

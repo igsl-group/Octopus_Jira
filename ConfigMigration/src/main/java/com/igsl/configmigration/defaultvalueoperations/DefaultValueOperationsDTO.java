@@ -3,7 +3,7 @@ package com.igsl.configmigration.defaultvalueoperations;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,112 +18,105 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.general.GeneralDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class DefaultValueOperationsDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultValueOperationsDTO.class);
 	private static final String NULL_KEY_REPLACEMENT = "[NULL_KEY]";
-	
-	private Object defaultValue;
-	private List<String> valueClass = new ArrayList<>();
-	
-	@JsonIgnore
-	public Object getRawValue() {
-		return getRawValue(this.defaultValue);
+
+	public enum ValueType {
+		OBJECT,
+		LIST,
+		MAP,
+		ARRAY
 	}
-	@SuppressWarnings("unchecked")
-	private static Object getRawValue(Object value) {
-		Object result = null;
-		// Reverse of parseValue
+	
+	private ValueType valueType;
+	// Class of defaultValue, or individual item in case of array, map and collection
+	private Class<?> valueClass;
+	private JiraConfigDTO defaultValue;
+	private List<JiraConfigDTO> defaultListValue;
+	private Map<Object, JiraConfigDTO> defaultMapValue;
+	
+	private JiraConfigDTO parseValueHelper(Object o) throws Exception {
+		if (o != null) {
+			Class<?> cls = o.getClass();
+			Class<? extends JiraConfigDTO> dtoClass = JiraConfigTypeRegistry.getDTOClass(cls);
+			JiraConfigDTO dto;
+			if (dtoClass != null) {
+				dto = dtoClass.newInstance();
+			} else {
+				dto = new GeneralDTO();
+			}
+			dto.setJiraObject(o);
+			return dto;
+		} 
+		return null;
+	}
+	
+	// Recursively turn objects into JiraConfigDTO so they serialize and deserialize properly
+	private void parseValue(Object value) throws Exception {
 		if (value != null) {
-			Class<?> cls = value.getClass();
-			if (Map.class.isAssignableFrom(cls)) {
-				Map<Object, Object> target = new LinkedHashMap<>();
-				Map<Object, Object> src = (Map<Object, Object>) value;
-				for (Map.Entry<Object, Object> entry : src.entrySet()) {
-					Object key = entry.getKey();
-					// Replace dummy key for null
-					if (NULL_KEY_REPLACEMENT.equals(String.valueOf(key))) {
-						key = null;
+			Class<?> valueClass = value.getClass();
+			if (valueClass.isArray()) {
+				this.defaultListValue = new ArrayList<>();
+				Object[] src = (Object[]) value;
+				for (Object item : src) {
+					JiraConfigDTO dto = parseValueHelper(item);
+					this.defaultListValue.add(dto);
+					if (dto != null) {
+						this.valueClass = dto.getClass();
 					}
-					Object v = getRawValue(entry.getValue());				
-					target.put(key, v);
 				}
-				result = target;
-			} else if (Collection.class.isAssignableFrom(cls)) {
-				Collection<Object> target = new ArrayList<>();
-				Collection<Object> src = (Collection<Object>) value;
-				for (Object entry : src) {
-					Object v = getRawValue(entry);
-					target.add(v);
+				this.valueType = ValueType.ARRAY;
+			} else if (Map.class.isAssignableFrom(valueClass)) {
+				this.defaultMapValue = new HashMap<>();
+				Map<?, ?> src = (Map<?, ?>) value;
+				for (Map.Entry<?, ?> entry : src.entrySet()) {
+					Object key;
+					if (entry.getKey() != null) {
+						key = entry.getKey();
+					} else {
+						key = NULL_KEY_REPLACEMENT;
+					}
+					JiraConfigDTO val = parseValueHelper(entry.getValue());
+					this.defaultMapValue.put(key, val);
+					if (val != null) {
+						this.valueClass = val.getClass();
+					}
 				}
-				result = target;
-			} else if (cls.isArray()) {
-				List<Object> target = new ArrayList<>();
-				Object[] src = (Object[]) value;
-				for (Object entry : src) {
-					Object v = getRawValue(entry);
-					target.add(v);
-				}				
-				result = target.toArray(new Object[0]);
-			} else if (JiraConfigDTO.class.isAssignableFrom(cls)) {
-				result = ((JiraConfigDTO) value).getJiraObject();
+				this.valueType = ValueType.MAP;
+			} else if (Collection.class.isAssignableFrom(valueClass)) {
+				this.defaultListValue = new ArrayList<>();
+				Collection<?> src = (Collection<?>) value;
+				for (Object item : src) {
+					JiraConfigDTO val = parseValueHelper(item);
+					this.defaultListValue.add(val);
+					if (val != null) {
+						this.valueClass = val.getClass();
+					}
+				}
+				this.valueType = ValueType.LIST;
+			} else if (JiraConfigDTO.class.isAssignableFrom(valueClass)) {
+				this.defaultValue = (JiraConfigDTO) value;		
+				if (this.defaultValue != null) {
+					this.valueClass = this.defaultValue.getClass();
+				}
+				this.valueType = ValueType.OBJECT;
 			} else {
-				result = value;
+				this.defaultValue = parseValueHelper(value);
+				if (this.defaultValue != null) {
+					this.valueClass = this.defaultValue.getClass();
+				}
+				this.valueType = ValueType.OBJECT;
 			}
+		} else {
+			this.defaultValue = null;
+			this.valueClass = null;
+			this.valueType = ValueType.OBJECT;
 		}
-		return result;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static Object parseValue(Object value, List<String> classList) throws Exception {
-		Object result = null;
-		if (value != null) {
-			Class<?> cls = value.getClass();
-			classList.add(cls.getCanonicalName());
-			if (Map.class.isAssignableFrom(cls)) {
-				Map<Object, Object> target = new LinkedHashMap<>();
-				Map<Object, Object> src = (Map<Object, Object>) value;
-				for (Map.Entry<Object, Object> entry : src.entrySet()) {
-					// Replace null key with dummy, JSON map does not allow null key
-					Object key = (entry.getKey() != null)? entry.getKey() : NULL_KEY_REPLACEMENT;
-					Object v = parseValue(entry.getValue(), classList);					
-					target.put(key, v);
-				}
-				result = target;
-			} else if (Collection.class.isAssignableFrom(cls)) {
-				Collection<Object> target = new ArrayList<>();
-				Collection<Object> src = (Collection<Object>) value;
-				for (Object entry : src) {
-					Object v = parseValue(entry, classList);
-					target.add(v);
-				}
-				result = target;
-			} else if (cls.isArray()) {
-				List<Object> target = new ArrayList<>();
-				Object[] src = (Object[]) value;
-				for (Object entry : src) {
-					Object v = parseValue(entry, classList);
-					target.add(v);
-				}				
-				result = target.toArray(new Object[0]);
-			} else {
-				Class<? extends JiraConfigDTO> dtoClass = 
-						JiraConfigTypeRegistry.getDTOClassName(cls);
-				if (dtoClass != null) {
-					JiraConfigDTO dto = dtoClass.newInstance();
-					dto.setJiraObject(value);
-					classList.add(dtoClass.getCanonicalName());
-					result = dto;
-				} else {
-					// Store as plain object
-					classList.add(value.getClass().getCanonicalName());
-					result = value;
-				}
-			}
-		}
-		return result;
 	}
 	
 	/**
@@ -133,11 +126,11 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	public void fromJiraObject(Object o, Object... params) throws Exception {
 		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
 		FieldConfigDTO fieldConfigDTO = (FieldConfigDTO) params[0];
-		// TODO 
+		// TODO
 		// Need to find how "current date" is stored
 		// For now current date/datetime will be convereted to a fixed value
-		Object def = obj.getDefaultValue((FieldConfig) fieldConfigDTO.getJiraObject());
-		this.defaultValue = parseValue(def, this.valueClass);
+		Object defVal = obj.getDefaultValue((FieldConfig) fieldConfigDTO.getJiraObject());
+		parseValue(defVal);
 	}
 
 	@Override
@@ -162,14 +155,6 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 				"getRawValue");
 	}
 
-	public Object getDefaultValue() {
-		return defaultValue;
-	}
-
-	public void setDefaultValue(Object defaultValue) {
-		this.defaultValue = defaultValue;
-	}
-
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
@@ -179,8 +164,45 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	public Class<?> getJiraClass() {
 		return DefaultValueOperations.class;
 	}
-	
-	public List<String> getValueClass() {
+
+	public JiraConfigDTO getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(JiraConfigDTO defaultValue) {
+		this.defaultValue = defaultValue;
+	}
+
+	public ValueType getValueType() {
+		return valueType;
+	}
+
+	public void setValueType(ValueType valueType) {
+		this.valueType = valueType;
+	}
+
+	public List<JiraConfigDTO> getDefaultListValue() {
+		return defaultListValue;
+	}
+
+	public void setDefaultListValue(List<JiraConfigDTO> defaultListValue) {
+		this.defaultListValue = defaultListValue;
+	}
+
+	public Map<Object, JiraConfigDTO> getDefaultMapValue() {
+		return defaultMapValue;
+	}
+
+	public void setDefaultMapValue(Map<Object, JiraConfigDTO> defaultMapValue) {
+		this.defaultMapValue = defaultMapValue;
+	}
+
+	public Class<?> getValueClass() {
 		return valueClass;
 	}
+
+	public void setValueClass(Class<?> valueClass) {
+		this.valueClass = valueClass;
+	}
+
 }

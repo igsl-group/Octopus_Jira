@@ -2,6 +2,7 @@ package com.igsl.configmigration.customfield;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,15 +29,19 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO.ValueType;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.options.OptionDTO;
+import com.igsl.configmigration.options.OptionUtil;
+import com.igsl.configmigration.options.OptionsDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldUtil extends JiraConfigUtil {
@@ -102,11 +107,13 @@ public class CustomFieldUtil extends JiraConfigUtil {
 
 	private void createOptionTree(FieldConfig config, OptionDTO opt, Long parentId) {
 		Option created = null;
+		LOGGER.debug("Creating option: " + opt.getSequence() + " = " + opt.getValue() + " (" + opt.getValue().getClass() + ") parent: " + parentId);
 		if (parentId != null) {
 			created = OPTIONS_MANAGER.createOption(config, parentId, opt.getSequence(), opt.getValue());
 		} else {
 			created = OPTIONS_MANAGER.createOption(config, null, opt.getSequence(), opt.getValue());
 		}
+		LOGGER.debug("Created option: " + created.getOptionId());
 		if (created != null && opt.getChildOptions() != null) {
 			for (OptionDTO child : opt.getChildOptions()) {
 				createOptionTree(config, child, created.getOptionId());
@@ -121,6 +128,8 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				(CustomFieldSearcherUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldSearcherUtil.class);
 		final IssueTypeUtil ISSUE_TYPE_UTIL = 
 				(IssueTypeUtil) JiraConfigTypeRegistry.getConfigUtil(IssueTypeUtil.class);
+		final OptionUtil OPTION_UTIL = 
+				(OptionUtil) JiraConfigTypeRegistry.getConfigUtil(OptionUtil.class);
 		CustomFieldDTO original = null;
 		if (oldItem != null) {
 			original = (CustomFieldDTO) oldItem;
@@ -150,10 +159,12 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		if (original != null) {
 			// Update
 			CUSTOM_FIELD_MANAGER.updateCustomField(
-					Long.parseLong(original.getId()), 
+					original.getIdAsLong(),
 					src.getName(), 
 					src.getDescription(), 
 					(CustomFieldSearcher) fieldSearcher.getJiraObject());
+			// TODO Options
+			// TODO Default value
 			return findByDTO(original);
 		} else {
 			// Create
@@ -166,16 +177,23 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					issueTypes);
 			FieldConfigScheme scheme = createdJira.getConfigurationSchemes().get(0);
 			FieldConfig config = scheme.getOneAndOnlyConfig();
+			FieldConfigDTO configDTO = new FieldConfigDTO();
+			configDTO.setJiraObject(config);
 			// Options
 			if (src.getOptions() != null && src.getOptions().getRootOptions() != null) {
 				for (OptionDTO opt : src.getOptions().getRootOptions()) {
-					createOptionTree(config, opt, null);
+					// Update option's FieldConfig
+					opt.setJiraObject(null, configDTO);
+					OPTION_UTIL.merge(null, opt);
 				}
 			}
 			// Default value
 			DefaultValueOperationsDTO def = src.getDefaultValueOperations();
 			if (def != null) {
-				Object defaultValue = def.getRawValue();
+				LOGGER.debug("Source default: " + OM.writeValueAsString(def));
+				Object defaultValue = null;
+				
+				LOGGER.debug("defaultValue: " + defaultValue);
 				createdJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
 			}
 			CustomFieldDTO created = new CustomFieldDTO();
@@ -184,7 +202,59 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		}
 	}
 	
-		@Override
+	private static Object getRawValueHelper(List<OptionDTO> options, Object o) {
+		// We have OptionDTO
+		if (o instanceof OptionDTO) {
+			// Map to existing options
+			OptionDTO search = (OptionDTO) o;
+			for (OptionDTO item : options) {
+				// Compare the two OptionDTO
+				List<String> differences = JiraConfigDTO.getDifferences(null, search, item);
+				if (differences.size() == 0) {
+					// Match found
+					return item;
+				}
+			}
+			// No match
+			return null;
+		} else if (o instanceof GeneralDTO) {
+			return ((GeneralDTO) o).getValue(); 
+		} else {
+			// We have basic types like Timestamp, String, etc.
+			return o;
+		}
+		// TODO What else?
+	}
+	
+	public static Object getRawValue(List<OptionDTO> options, DefaultValueOperationsDTO dto) {
+		switch (dto.getValueType()) {
+		case ARRAY:
+			List<Object> array = new ArrayList<>();
+			for (Object o : dto.getDefaultListValue()) {
+				array.add(getRawValueHelper(options, o));
+			}
+			return array.toArray(new Object[0]);
+		case LIST:
+			List<Object> list = new ArrayList<>();
+			for (Object o : dto.getDefaultListValue()) {
+				list.add(getRawValueHelper(options, o));
+			}
+			return list;
+		case MAP:
+			Map<Object, Object> map = new HashMap<>();
+			for (Map.Entry<Object, JiraConfigDTO> entry : dto.getDefaultMapValue().entrySet()) {
+				Object key = entry.getKey();
+				Object value = entry.getValue();
+				map.put(key, getRawValueHelper(options, value));
+			}
+			return map;
+		case OBJECT:
+			return getRawValueHelper(options, dto.getDefaultValue());
+		}
+		return null;
+	}
+	
+	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
 		return CustomFieldDTO.class;
 	}

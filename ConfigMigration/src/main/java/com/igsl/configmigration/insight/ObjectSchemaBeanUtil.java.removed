@@ -7,12 +7,10 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectSchemaFacade;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaBean;
 
@@ -21,14 +19,31 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(ObjectSchemaBeanUtil.class);
 	private static ObjectSchemaFacade OBJECT_SCHEMA_FACADE;
-			
+	private static final String OBJECT_SCHEMA_FACADE_CLASS_NAME = 
+			"com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectSchemaFacade";
+	
 	static {
-		Logger logger = Logger.getLogger("com.igsl.configmigration.insight.InsightUtil");
+		Logger logger = Logger.getLogger("com.igsl.configmigration.insight.ObjectSchemaBeanUtil");
+		Class<?> cls1 = null;
+		Class<?> cls2 = null;
+		try {
+			cls1 = ComponentAccessor.getPluginAccessor().getClassLoader()
+					.loadClass(OBJECT_SCHEMA_FACADE_CLASS_NAME);
+		} catch (Exception ex) {
+			logger.error("Failed to initialize InsightUtil", ex);
+		}
+		try {
+			logger.debug("Insight class from plugin accessor cloader: " + cls1);
+			cls2 = ObjectSchemaBeanUtil.class.getClassLoader()
+					.loadClass(OBJECT_SCHEMA_FACADE_CLASS_NAME);
+			logger.debug("Insight class from class cloader: " + cls2);
+		} catch (Exception ex) {
+			logger.error("Failed to initialize InsightUtil", ex);
+		}
 		try {
 			OBJECT_SCHEMA_FACADE = 
 					(ObjectSchemaFacade) ComponentAccessor.getOSGiComponentInstanceOfType(
-					ComponentAccessor.getPluginAccessor().getClassLoader()
-					.loadClass("com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectSchemaFacade"));
+					cls2);
 			logger.debug("OBJECT_FACADE: " + OBJECT_SCHEMA_FACADE);
 		} catch (Exception ex) {
 			logger.error("Failed to initialize InsightUtil", ex);

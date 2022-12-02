@@ -10,7 +10,8 @@ import com.igsl.configmigration.JiraConfigUtil;
 
 /**
  * Wrapper for Object.
- * Used to represent anything as a JiraConfigDTO for ease of deserialization.
+ * Used to represent anything (except collection, map, and JiraConfigDTO) 
+ * as a JiraConfigDTO for ease of deserialization.
  */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class GeneralDTO extends JiraConfigDTO {
@@ -24,7 +25,8 @@ public class GeneralDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<?> getJiraClass() {
-		return Object.class;
+		// Do not associate with anything
+		return null;
 	}
 
 	@Override
@@ -39,13 +41,11 @@ public class GeneralDTO extends JiraConfigDTO {
 
 	@Override
 	public String getInternalId() {
-		// TODO Auto-generated method stub
 		return Integer.toString(value.hashCode());
 	}
 
 	@Override
 	protected void fromJiraObject(Object obj, Object... params) throws Exception {
-		// TODO Check if any DTO is available?
 		this.value = obj;
 	}
 

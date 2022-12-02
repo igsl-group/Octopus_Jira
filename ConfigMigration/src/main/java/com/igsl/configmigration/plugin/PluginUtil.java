@@ -128,7 +128,7 @@ public class PluginUtil extends JiraConfigUtil {
 
 	@Override
 	public boolean isPublic() {
-		return true;
+		return false;
 	}
 
 }

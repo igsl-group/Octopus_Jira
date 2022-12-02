@@ -23,8 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
 import com.igsl.configmigration.group.GroupUtil;
-import com.igsl.configmigration.insight.ObjectBeanUtil;
-import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
@@ -42,14 +40,12 @@ public class JiraConfigTypeRegistry {
 	 * This list is to mandate the order of the utils during export and import.
 	 * Any Util class not listed here will be sorted to the bottom of the list in ascending alphabetical order.
 	 */
-	private static List<Class<? extends JiraConfigUtil>> UTIL_ORDER = Arrays.asList(
+	private static List<Class<? extends Object>> UTIL_ORDER = Arrays.asList(
 			GroupUtil.class,
 			StatusUtil.class,
 			IssueTypeUtil.class,
 			PriorityUtil.class,
 			ResolutionUtil.class,
-			ObjectSchemaBeanUtil.class,
-			ObjectBeanUtil.class,
 			IssueSecurityLevelSchemeUtil.class,
 			PluginUtil.class,
 			CustomFieldUtil.class,
@@ -106,10 +102,12 @@ public class JiraConfigTypeRegistry {
 	 * @param jiraClassName Jira class name, e.g. ApplicationUser.class.getCanonicalName().
 	 * @return JiraConfigDTO class, null if no match.
 	 */
-	public static Class<? extends JiraConfigDTO> getDTOClassName(Class<?> jiraClass) {
-		for (Map.Entry<Class<?>, Class<? extends JiraConfigDTO>> entry : DTO_INSTANCE_MAP.entrySet()) {
-			if (entry.getKey().isAssignableFrom(jiraClass)) {
-				return entry.getValue();
+	public static Class<? extends JiraConfigDTO> getDTOClass(Class<?> jiraClass) {
+		if (jiraClass != null) {
+			for (Map.Entry<Class<?>, Class<? extends JiraConfigDTO>> entry : DTO_INSTANCE_MAP.entrySet()) {
+				if (entry.getKey().isAssignableFrom(jiraClass)) {
+					return entry.getValue();
+				}
 			}
 		}
 		return null;
@@ -201,7 +199,7 @@ public class JiraConfigTypeRegistry {
 	static {
 		Logger logger = Logger.getLogger(LOGGER_NAME);
 		// Convert class objects into canonical names
-		for (Class<? extends JiraConfigUtil> cls : UTIL_ORDER) {
+		for (Class<? extends Object> cls : UTIL_ORDER) {
 			orderedList.add(cls.getCanonicalName());
 		}
 		// Get JiraConfigItme and JiraConfigUtil class list from JAR file
@@ -262,7 +260,9 @@ public class JiraConfigTypeRegistry {
 				Class<?> cls = cloader.loadClass(s);
 				DTO_MAP.put(cls.getCanonicalName(), (Class<? extends JiraConfigDTO>) cls); 
 				JiraConfigDTO dto = (JiraConfigDTO) cls.newInstance();
-				DTO_INSTANCE_MAP.put(dto.getJiraClass(), (Class<? extends JiraConfigDTO>) cls);
+				if (dto.getJiraClass() != null) {
+					DTO_INSTANCE_MAP.put(dto.getJiraClass(), (Class<? extends JiraConfigDTO>) cls);
+				}
 			} catch (Throwable t) {
 				logger.error("Failed to load JiraConfigItem for " + s, t);
 			}

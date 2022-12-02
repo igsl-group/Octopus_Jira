@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -24,7 +23,7 @@ public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigDTO> {
 	}
 
 	@Override
-	public JiraConfigDTO deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+	public JiraConfigDTO deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
 		TreeNode node = p.readValueAsTree();		
 		TreeNode impl = node.get(IMPLMEMENTATION);
 		if (impl != null && impl.isValueNode()) {

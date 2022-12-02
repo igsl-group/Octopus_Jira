@@ -12,8 +12,10 @@ import com.atlassian.jira.issue.managers.CustomFieldSearcherManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
+import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldSearcherUtil extends JiraConfigUtil {
@@ -56,7 +58,10 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	 */
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		CustomFieldTypeDTO customFieldTypeDTO = (CustomFieldTypeDTO) params[0];
+		CustomFieldTypeUtil customFieldTypeUtil = 
+				(CustomFieldTypeUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldTypeUtil.class);
+		CustomFieldTypeDTO customFieldTypeDTO = 
+				(CustomFieldTypeDTO) customFieldTypeUtil.findByDTO((CustomFieldTypeDTO) params[0]);		
 		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) customFieldTypeDTO.getJiraObject();
 		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
 			if (s.getDescriptor().getCompleteKey().equals(uniqueKey)) {
