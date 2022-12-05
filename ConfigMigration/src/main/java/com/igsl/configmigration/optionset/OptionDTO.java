@@ -19,7 +19,7 @@ public class OptionDTO extends JiraConfigDTO {
 	private String name;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		Option obj = (Option) o;
 		this.description = obj.getDescription();
 		this.childOptions = new ArrayList<>();

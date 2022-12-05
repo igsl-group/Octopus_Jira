@@ -68,7 +68,7 @@ public class StatusUtil extends JiraConfigUtil {
 		if (oldItem != null) {
 			original = (StatusDTO) oldItem;
 		} else {
-			original = (StatusDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getSearchParameters());
+			original = (StatusDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
 		}
 		Status originalJira = (original != null)? (Status) original.getJiraObject(): null;
 		StatusDTO src = (StatusDTO) newItem;

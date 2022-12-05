@@ -18,7 +18,7 @@ public class FieldConfigDTO extends JiraConfigDTO {
 	private String fieldId;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		FieldConfig o = (FieldConfig) obj;
 		this.id = o.getId();
 		this.name = o.getName();

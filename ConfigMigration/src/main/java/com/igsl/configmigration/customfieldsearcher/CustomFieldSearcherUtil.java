@@ -35,8 +35,7 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		CustomFieldTypeDTO customFieldTypeDTO = (CustomFieldTypeDTO) params[0];
-		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) customFieldTypeDTO.getJiraObject();
+		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
 		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
 			CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
 			item.setJiraObject(s);
@@ -58,15 +57,11 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	 */
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		CustomFieldTypeUtil customFieldTypeUtil = 
-				(CustomFieldTypeUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldTypeUtil.class);
-		CustomFieldTypeDTO customFieldTypeDTO = 
-				(CustomFieldTypeDTO) customFieldTypeUtil.findByDTO((CustomFieldTypeDTO) params[0]);		
-		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) customFieldTypeDTO.getJiraObject();
+		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
 		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
 			if (s.getDescriptor().getCompleteKey().equals(uniqueKey)) {
 				CustomFieldSearcherDTO dto = new CustomFieldSearcherDTO();
-				dto.setJiraObject(s, customFieldTypeDTO);
+				dto.setJiraObject(s, customFieldType);
 				return dto;
 			}
 		}

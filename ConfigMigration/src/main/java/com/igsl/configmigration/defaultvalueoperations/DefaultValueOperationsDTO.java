@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.DefaultValueOperations;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,7 +25,7 @@ import com.igsl.configmigration.general.GeneralDTO;
 public class DefaultValueOperationsDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(DefaultValueOperationsDTO.class);
-	private static final String NULL_KEY_REPLACEMENT = "[NULL_KEY]";
+	public static final String NULL_KEY_REPLACEMENT = "[NULL_KEY]";
 
 	public enum ValueType {
 		OBJECT,
@@ -40,7 +41,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	private List<JiraConfigDTO> defaultListValue;
 	private Map<Object, JiraConfigDTO> defaultMapValue;
 	
-	private JiraConfigDTO parseValueHelper(Object o) throws Exception {
+	private JiraConfigDTO parseValueHelper(Object o, FieldConfig fieldConfig) throws Exception {
 		if (o != null) {
 			Class<?> cls = o.getClass();
 			Class<? extends JiraConfigDTO> dtoClass = JiraConfigTypeRegistry.getDTOClass(cls);
@@ -50,21 +51,29 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 			} else {
 				dto = new GeneralDTO();
 			}
-			dto.setJiraObject(o);
+			// Special handling for Option
+			Long parentId = null;
+			if (Option.class.isAssignableFrom(cls)) {
+				Option opt = (Option) o;
+				if (opt.getParentOption() != null) {
+					parentId = opt.getParentOption().getOptionId();
+				}
+			}
+			dto.setJiraObject(o, fieldConfig, parentId);
 			return dto;
 		} 
 		return null;
 	}
 	
 	// Recursively turn objects into JiraConfigDTO so they serialize and deserialize properly
-	private void parseValue(Object value) throws Exception {
+	private void parseValue(Object value, FieldConfig fieldConfig) throws Exception {
 		if (value != null) {
 			Class<?> valueClass = value.getClass();
 			if (valueClass.isArray()) {
 				this.defaultListValue = new ArrayList<>();
 				Object[] src = (Object[]) value;
 				for (Object item : src) {
-					JiraConfigDTO dto = parseValueHelper(item);
+					JiraConfigDTO dto = parseValueHelper(item, fieldConfig);
 					this.defaultListValue.add(dto);
 					if (dto != null) {
 						this.valueClass = dto.getClass();
@@ -81,7 +90,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 					} else {
 						key = NULL_KEY_REPLACEMENT;
 					}
-					JiraConfigDTO val = parseValueHelper(entry.getValue());
+					JiraConfigDTO val = parseValueHelper(entry.getValue(), fieldConfig);
 					this.defaultMapValue.put(key, val);
 					if (val != null) {
 						this.valueClass = val.getClass();
@@ -92,7 +101,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 				this.defaultListValue = new ArrayList<>();
 				Collection<?> src = (Collection<?>) value;
 				for (Object item : src) {
-					JiraConfigDTO val = parseValueHelper(item);
+					JiraConfigDTO val = parseValueHelper(item, fieldConfig);
 					this.defaultListValue.add(val);
 					if (val != null) {
 						this.valueClass = val.getClass();
@@ -106,7 +115,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 				}
 				this.valueType = ValueType.OBJECT;
 			} else {
-				this.defaultValue = parseValueHelper(value);
+				this.defaultValue = parseValueHelper(value, fieldConfig);
 				if (this.defaultValue != null) {
 					this.valueClass = this.defaultValue.getClass();
 				}
@@ -123,14 +132,19 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	 * #0: FieldConfig
 	 */
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	protected int getObjectParameterCount() {
+		return 1;
+	}
+	
+	@Override
+	public void fromJiraObject(Object o) throws Exception {
 		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
-		FieldConfigDTO fieldConfigDTO = (FieldConfigDTO) params[0];
+		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
 		// TODO
 		// Need to find how "current date" is stored
 		// For now current date/datetime will be convereted to a fixed value
-		Object defVal = obj.getDefaultValue((FieldConfig) fieldConfigDTO.getJiraObject());
-		parseValue(defVal);
+		Object defVal = obj.getDefaultValue(fieldConfig);
+		parseValue(defVal, fieldConfig);
 	}
 
 	@Override

@@ -9,8 +9,11 @@ import com.atlassian.jira.issue.customfields.manager.OptionsManager;
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
+import com.igsl.configmigration.general.GeneralDTO;
 
 public class OptionUtil extends JiraConfigUtil {
 
@@ -55,21 +58,28 @@ public class OptionUtil extends JiraConfigUtil {
 			MANAGER.deleteOptionAndChildren((Option) oldItem.getJiraObject());
 		}
 		OptionDTO tar = (OptionDTO) newItem;
-		FieldConfigDTO fieldConfigDTO = (FieldConfigDTO) newItem.getSearchParameters()[0];
-		FieldConfig fieldConfig = (FieldConfig) fieldConfigDTO.getJiraObject();
-		if (tar.getParentId() != null) {
-			created = MANAGER.createOption(fieldConfig, tar.getParentId(), tar.getSequence(), tar.getValue());
+		LOGGER.debug("OptionDTO newItem: " + OM.writeValueAsString(tar));
+		FieldConfig fieldConfig = (FieldConfig) tar.getObjectParameters()[0];
+		Long parentId = (Long) tar.getObjectParameters()[1];
+		tar.setParentId(parentId);
+		LOGGER.debug("OptionUtil fieldConfig: " + fieldConfig);
+		LOGGER.debug("OptionUtil getParentId(): " + tar.getParentId());
+		LOGGER.debug("OptionUtil getSequence(): " + tar.getSequence());
+		LOGGER.debug("OptionUtil getValue(): " + tar.getValue());
+		if (parentId != null) {
+			created = MANAGER.createOption(fieldConfig, parentId, tar.getSequence(), tar.getValue());
 		} else {
 			created = MANAGER.createOption(fieldConfig, null, tar.getSequence(), tar.getValue());
 		}
-		tar.setOptionId(created.getOptionId());
+		LOGGER.debug("OptionUtil created OptionID: " + created.getOptionId());
 		if (created != null && tar.getChildOptions() != null) {
 			for (OptionDTO child : tar.getChildOptions()) {
-				child.setParentId(tar.getOptionId());
-				OptionDTO createdChil = (OptionDTO) merge(null, child);
-				child.setOptionId(createdChil.getOptionId());
+				child.setJiraObject(null, fieldConfig, created.getOptionId());
+				child.setParentId(created.getOptionId());
+				OptionDTO createdChild = (OptionDTO) merge(null, child);
 			}
 		}
+		tar.setJiraObject(created, fieldConfig, parentId);
 		return tar;
 	}
 

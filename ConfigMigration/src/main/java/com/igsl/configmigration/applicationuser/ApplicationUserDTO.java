@@ -25,7 +25,7 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 	}
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		ApplicationUser o = (ApplicationUser) obj;
 		this.id = o.getId();
 		this.key = o.getKey();

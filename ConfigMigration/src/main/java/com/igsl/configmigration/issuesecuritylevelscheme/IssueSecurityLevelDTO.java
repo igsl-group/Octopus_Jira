@@ -18,7 +18,7 @@ public class IssueSecurityLevelDTO extends JiraConfigDTO {
 	private Long schemeId;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		IssueSecurityLevel obj = (IssueSecurityLevel) o;
 		this.id = obj.getId();
 		this.description = obj.getDescription();

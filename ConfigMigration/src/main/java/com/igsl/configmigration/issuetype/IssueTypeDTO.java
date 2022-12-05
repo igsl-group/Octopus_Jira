@@ -25,7 +25,7 @@ public class IssueTypeDTO extends JiraConfigDTO {
 	private String id;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		IssueType obj = (IssueType) o;
 		this.avatarConfigItem = new AvatarDTO();
 		Avatar av;

@@ -20,7 +20,7 @@ public class ProjectDTO extends JiraConfigDTO {
 	protected String name;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		Project o = (Project) obj;
 		this.id = o.getId();
 		this.key = o.getKey();

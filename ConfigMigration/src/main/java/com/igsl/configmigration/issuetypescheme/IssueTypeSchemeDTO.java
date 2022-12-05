@@ -33,7 +33,7 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 	private FieldConfigDTO fieldConfig;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		FieldConfigScheme obj = (FieldConfigScheme) o;
 		this.associatedIssueTypes = new ArrayList<>();
 		// getAssociatedIssueTypeObjects() always return nothing. 

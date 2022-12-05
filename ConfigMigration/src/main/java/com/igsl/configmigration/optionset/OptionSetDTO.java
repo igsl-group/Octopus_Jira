@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionSetDTO extends JiraConfigDTO {
@@ -22,14 +21,19 @@ public class OptionSetDTO extends JiraConfigDTO {
 	private List<OptionDTO> options;
 
 	@JsonIgnore
-	private FieldConfigDTO fieldConfig;
+	private FieldConfig fieldConfig;
 	
 	/**
 	 * #0: FieldConfigDTO
 	 */
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
-		this.fieldConfig = (FieldConfigDTO) params[0];
+	protected int getObjectParameterCount() {
+		return 1;
+	}
+	
+	@Override
+	public void fromJiraObject(Object o) throws Exception {
+		this.fieldConfig = (FieldConfig) objectParameters[0];
 		OptionSet obj = (OptionSet) o;
 		this.optionIds = new ArrayList<String>();
 		for (String s : obj.getOptionIds()) {
@@ -62,11 +66,11 @@ public class OptionSetDTO extends JiraConfigDTO {
 		this.optionIds = optionIds;
 	}
 
-	public FieldConfigDTO getFieldConfig() {
+	public FieldConfig getFieldConfig() {
 		return fieldConfig;
 	}
 
-	public void setFieldConfig(FieldConfigDTO fieldConfig) {
+	public void setFieldConfig(FieldConfig fieldConfig) {
 		this.fieldConfig = fieldConfig;
 	}
 

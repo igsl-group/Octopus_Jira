@@ -16,7 +16,7 @@ public class LabelDTO extends JiraConfigDTO {
 	private String label;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		Label o = (Label) obj;
 		this.id = o.getId();
 		this.label = o.getLabel();

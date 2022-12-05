@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.issue.customfields.option.Option;
+import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -14,6 +17,8 @@ import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionDTO extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(OptionDTO.class);
+	
 	private Long parentId;
 	private Long optionId;
 	private String value;
@@ -22,13 +27,18 @@ public class OptionDTO extends JiraConfigDTO {
 	private Long sequence;
 
 	/**
-	 * #0: FieldConfigDTO
+	 * #0: FieldConfig
 	 * #1: Parent ID as Long
 	 */
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
-		FieldConfigDTO fieldConfig = (FieldConfigDTO) params[0];
-		this.parentId = (Long) params[1];
+	protected int getObjectParameterCount() {
+		return 2;
+	}
+	
+	@Override
+	public void fromJiraObject(Object o) throws Exception {
+		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
+		this.parentId = (Long) objectParameters[1];
 		Option obj = (Option) o;
 		this.optionId = obj.getOptionId();
 		this.value = obj.getValue();

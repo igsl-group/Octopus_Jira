@@ -21,7 +21,7 @@ public class StatusDTO extends JiraConfigDTO {
 	protected StatusCategoryDTO statusCategoryConfigItem;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		Status o = (Status) obj;
 		id = o.getId();
 		name = o.getName();

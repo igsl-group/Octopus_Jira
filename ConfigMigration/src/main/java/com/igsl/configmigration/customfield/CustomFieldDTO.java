@@ -15,7 +15,6 @@ import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.options.OptionsDTO;
@@ -39,7 +38,7 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	private DefaultValueOperationsDTO defaultValueOperations;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		CustomField obj = (CustomField) o;
 		this.associatedIssueTypes = new ArrayList<>();
 		for (IssueType it : obj.getAssociatedIssueTypes()) {
@@ -70,11 +69,9 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		// TODO Can there be more than 1 scheme? What about no scheme?
 		FieldConfigScheme scheme = (FieldConfigScheme) this.configurationSchemes.get(0).getJiraObject();
 		FieldConfig fieldConfig = scheme.getOneAndOnlyConfig();
-		FieldConfigDTO fieldConfigDTO = new FieldConfigDTO();
-		fieldConfigDTO.setJiraObject(fieldConfig);
-		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null));
+		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null), fieldConfig);
 		this.defaultValueOperations = new DefaultValueOperationsDTO();
-		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfigDTO);
+		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfig);
 	}
 
 	@Override

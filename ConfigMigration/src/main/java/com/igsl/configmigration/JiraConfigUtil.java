@@ -73,7 +73,7 @@ public abstract class JiraConfigUtil {
 	 * @throws Exception
 	 */
 	public final JiraConfigDTO findByDTO(JiraConfigDTO src) throws Exception {
-		return findByUniqueKey(src.getUniqueKey(), src.getSearchParameters());
+		return findByUniqueKey(src.getUniqueKey(), src.getObjectParameters());
 	}
 	
 	/**

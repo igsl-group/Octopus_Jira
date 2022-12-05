@@ -23,7 +23,7 @@ public class PriorityDTO extends JiraConfigDTO {
 	private String iconUrl;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		Priority obj = (Priority) o;
 		this.id = obj.getId();
 		this.description = obj.getDescription();

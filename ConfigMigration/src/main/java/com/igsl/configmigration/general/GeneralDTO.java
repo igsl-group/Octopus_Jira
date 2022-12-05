@@ -45,7 +45,7 @@ public class GeneralDTO extends JiraConfigDTO {
 	}
 
 	@Override
-	protected void fromJiraObject(Object obj, Object... params) throws Exception {
+	protected void fromJiraObject(Object obj) throws Exception {
 		this.value = obj;
 	}
 

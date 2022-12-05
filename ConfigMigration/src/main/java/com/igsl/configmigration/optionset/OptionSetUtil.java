@@ -74,22 +74,21 @@ public class OptionSetUtil extends JiraConfigUtil {
 		if (oldItem != null) {
 			original = (OptionSetDTO) oldItem;
 		} else {
-			original = (OptionSetDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getSearchParameters());
+			original = (OptionSetDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
 		}
 		OptionSetDTO src = (OptionSetDTO) newItem;
 		Collection<String> optionIds = src.getOptionIds();
 		if (original != null) {
 			// Update
-			FieldConfig fieldConfig = (FieldConfig) original.getFieldConfig().getJiraObject();
+			FieldConfig fieldConfig = (FieldConfig) original.getFieldConfig();
 			MANAGER.updateOptionSet(fieldConfig, optionIds);
 			return original;
 		} else {
 			// Create
-			FieldConfigDTO fieldConfig = (FieldConfigDTO) FIELD_CONFIG_UTIL.merge(null, src.getFieldConfig());
-			FieldConfig fc = (FieldConfig) fieldConfig.getJiraObject();
-			OptionSet createdJira = MANAGER.createOptionSet(fc, optionIds);
+			FieldConfig fieldConfig = (FieldConfig) src.getFieldConfig();
+			OptionSet createdJira = MANAGER.createOptionSet(fieldConfig, optionIds);
 			OptionSetDTO created = new OptionSetDTO();
-			created.setJiraObject(createdJira, fc);
+			created.setJiraObject(createdJira, fieldConfig);
 			return created;
 		}
 	}

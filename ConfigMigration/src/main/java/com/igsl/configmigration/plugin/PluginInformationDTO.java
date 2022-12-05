@@ -20,7 +20,7 @@ public class PluginInformationDTO extends JiraConfigDTO {
 	private String version;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		PluginInformation obj = (PluginInformation) o;
 		this.description = obj.getDescription();
 		this.parameters = obj.getParameters();

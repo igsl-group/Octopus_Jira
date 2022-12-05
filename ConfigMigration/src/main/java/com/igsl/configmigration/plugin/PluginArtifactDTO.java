@@ -29,7 +29,7 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 	private ReferenceMode referenceMode;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		PluginArtifact obj = (PluginArtifact) o;
 		try (	BufferedInputStream in = new BufferedInputStream(obj.getInputStream());  
 				ByteArrayOutputStream out = new ByteArrayOutputStream()) {

@@ -15,7 +15,7 @@ public class GroupDTO extends JiraConfigDTO {
 	private String name;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		Group o = (Group) obj;
 		this.name = o.getName();
 	}

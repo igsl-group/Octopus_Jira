@@ -32,7 +32,7 @@ public class AvatarDTO extends JiraConfigDTO {
 	}
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		Avatar o = (Avatar) obj;
 		this.contentType = o.getContentType();
 		this.fileName = o.getFileName();

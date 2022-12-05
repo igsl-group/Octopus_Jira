@@ -6,24 +6,35 @@ import java.util.List;
 
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.customfields.option.Options;
+import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionsDTO extends JiraConfigDTO {
 
 	private List<OptionDTO> rootOptions;
 	
+	/**
+	 * #0: FieldConfigDTO
+	 */
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	protected int getObjectParameterCount() {
+		return 1;
+	}
+	
+	@Override
+	public void fromJiraObject(Object o) throws Exception {
+		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
 		Options obj = (Options) o;
 		this.rootOptions = new ArrayList<>();
 		for (Option opt : obj.getRootOptions()) {
 			OptionDTO item = new OptionDTO();
-			item.setJiraObject(opt);
+			item.setJiraObject(opt, fieldConfig, null);
 			this.rootOptions.add(item);
 		}
 	}
@@ -44,8 +55,10 @@ public class OptionsDTO extends JiraConfigDTO {
 	@JsonIgnore
 	public List<OptionDTO> getAllOptions() {
 		List<OptionDTO> result = new ArrayList<>();
-		for (OptionDTO dto : this.rootOptions) {
-			result.addAll(getAllOptionsHelper(dto));			
+		if (this.rootOptions != null) {
+			for (OptionDTO dto : this.rootOptions) {
+				result.addAll(getAllOptionsHelper(dto));			
+			}
 		}
 		return result;
 	}

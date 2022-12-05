@@ -23,7 +23,7 @@ public class PluginDTO extends JiraConfigDTO {
 	private boolean bundledPlugin;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		Plugin obj = (Plugin) o;
 		this.key = obj.getKey();
 		this.name = obj.getName();

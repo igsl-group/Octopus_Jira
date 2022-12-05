@@ -50,7 +50,7 @@ public abstract class JiraConfigDTO {
 			"getMapIgnoredMethods",
 			"getUtilClass",
 			"getJiraClass",
-			"getSearchParameters"
+			"getObjectParameters"
 		);
 	
 	protected abstract List<String> getCompareMethods();
@@ -362,18 +362,18 @@ public abstract class JiraConfigDTO {
 	}
 	
 	/**
-	 * To search certain DTOs, parameters from its parent DTO are required. 
-	 * This API is to retrieve them.
-	 * 
-	 * Subclasses with the need for parameters store them in fromJiraObject() and 
-	 * override this to return them.
+	 * Override this if implementation requires additional parameters. 
+	 * @return No. of parameters.
 	 */
-	protected JiraConfigDTO[] searchParameters = new JiraConfigDTO[0];
-	public final JiraConfigDTO[] getSearchParameters() {
-		return searchParameters;
-	}	
-	public final void setSearchParameters(JiraConfigDTO[] searchParameters) {
-		this.searchParameters = searchParameters;
+	@JsonIgnore
+	protected int getObjectParameterCount() {
+		return 0;
+	}
+	
+	@JsonIgnore
+	protected Object[] objectParameters;
+	public final Object[] getObjectParameters() {
+		return objectParameters;
 	}
 	
 	@JsonIgnore
@@ -399,29 +399,27 @@ public abstract class JiraConfigDTO {
 		return jiraObject;
 	}
 	/**
-	 * Stores Jira object and/or search parameters. 
+	 * Stores Jira object and search parameters. 
 	 * @param obj Jira object. Can be null.
 	 * @param params Search parameters. Can be null.
 	 * @throws Exception
 	 */
 	public final void setJiraObject(Object obj, Object... params) throws Exception {
-		if (params != null && params.length != 0) {
-			this.searchParameters = new JiraConfigDTO[params.length];
+		int expectedCount = this.getObjectParameterCount();
+		if (expectedCount != 0) {
+			if (params == null || params.length != expectedCount) {
+				throw new Exception("Parameter count does not match expectation: " + expectedCount);
+			}
+			objectParameters = new Object[params.length];
 			for (int i = 0; i < params.length; i++) {
-				if (params[i] instanceof JiraConfigDTO) {
-					this.searchParameters[i] = (JiraConfigDTO) params[i];
-				} else {
-					GeneralDTO dto = new GeneralDTO();
-					dto.setJiraObject(params[i]);
-					this.searchParameters[i] = dto;
-				}
+				objectParameters[i] = params[i];
 			}
 		} else {
-			this.searchParameters = new JiraConfigDTO[0];
+			objectParameters = new Object[0];
 		}
 		if (obj != null) {
 			this.jiraObject = obj;
-			this.fromJiraObject(obj, params);
+			this.fromJiraObject(obj);
 		}
 	}
 	
@@ -454,10 +452,11 @@ public abstract class JiraConfigDTO {
 	public abstract String getInternalId();
 	
 	/**
-	 * Stores data from provided object into map.
+	 * Stores data from provided object.
 	 * JiraConfigUtil should call setJiraObject() instead of this method.
+	 * Additional parameters needed can be found in parameters member. The count will match getParameterCount().
+	 * 
 	 * @param obj Jira object.
-	 * @param params Implementation specific data.
 	 */
-	protected abstract void fromJiraObject(Object obj, Object... params) throws Exception;
+	protected abstract void fromJiraObject(Object obj) throws Exception;
 }

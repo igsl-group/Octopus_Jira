@@ -20,7 +20,7 @@ public class PropertySetDTO extends JiraConfigDTO {
 	private Map<String, Object> properties;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		PropertySet obj = (PropertySet) o;
 		this.properties = new HashMap<>();
 		for (Object item : obj.getKeys()) {

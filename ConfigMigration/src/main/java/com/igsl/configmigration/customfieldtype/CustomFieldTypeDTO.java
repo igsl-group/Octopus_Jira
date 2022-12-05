@@ -17,7 +17,7 @@ public class CustomFieldTypeDTO extends JiraConfigDTO {
 	private String description;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		CustomFieldType<?, ?> obj = (CustomFieldType<?, ?>) o;
 		// obj.getConfigurationItemTypes();
 		this.description = obj.getDescription();

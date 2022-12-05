@@ -27,7 +27,7 @@ public class StatusCategoryDTO extends JiraConfigDTO {
 	protected String translatedName;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		StatusCategory o = (StatusCategory) obj;
 		this.aliases = o.getAliases();
 		this.colorName = o.getColorName();

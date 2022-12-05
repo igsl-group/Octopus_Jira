@@ -21,7 +21,7 @@ public class ResolutionDTO extends JiraConfigDTO {
 	private Long sequence;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		Resolution obj = (Resolution) o;
 		this.id = obj.getId();
 		this.description = obj.getDescription();

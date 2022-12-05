@@ -32,7 +32,7 @@ public class FieldConfigSchemeDTO extends JiraConfigDTO {
 	private Map<String, FieldConfigDTO> configs;
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		FieldConfigScheme obj = (FieldConfigScheme) o;
 		this.associatedIssueTypes = new ArrayList<>();
 		for (IssueType it : obj.getAssociatedIssueTypes()) {

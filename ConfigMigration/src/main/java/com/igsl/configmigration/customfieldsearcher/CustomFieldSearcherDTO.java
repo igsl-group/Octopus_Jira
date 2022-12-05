@@ -20,9 +20,17 @@ import com.igsl.configmigration.JiraConfigUtil;
 public class CustomFieldSearcherDTO extends JiraConfigDTO {
 
 	private String completeKey;
+
+	/**
+	 * #0: CustomFieldType
+	 */
+	@Override
+	protected int getObjectParameterCount() {
+		return 1;
+	}
 	
 	@Override
-	public void fromJiraObject(Object o, Object... params) throws Exception {
+	public void fromJiraObject(Object o) throws Exception {
 		CustomFieldSearcher obj = (CustomFieldSearcher) o;
 		// obj.getCustomFieldSearcherClauseHandler();
 		this.completeKey = obj.getDescriptor().getCompleteKey();
