@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 import com.igsl.configmigration.group.GroupUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
@@ -49,6 +50,7 @@ public class JiraConfigTypeRegistry {
 			IssueSecurityLevelSchemeUtil.class,
 			PluginUtil.class,
 			CustomFieldUtil.class,
+			FieldScreenUtil.class,
 			IssueTypeSchemeUtil.class
 			);
 	private static List<String> orderedList = new ArrayList<>();

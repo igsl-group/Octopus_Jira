@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
+import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
+import com.atlassian.jira.issue.status.Status;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -15,30 +17,38 @@ import com.igsl.configmigration.JiraConfigUtil;
  * Status wrapper.
  */
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class FieldScreenDTO extends JiraConfigDTO {
+public class FieldScreenTabDTO extends JiraConfigDTO {
 	
-	private String description;
 	private Long id;
 	private String name;
-	private List<FieldScreenTabDTO> tabs;
+	private int position;
+	private List<FieldScreenLayoutItemDTO> fieldScreenLayoutItems;
+	
+	/**
+	 * #0: FieldScreen
+	 */
+	@Override
+	protected int getObjectParameterCount() {
+		return 1;
+	}
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
-		FieldScreen o = (FieldScreen) obj;
-		this.description = o.getDescription();
+		FieldScreenTab o = (FieldScreenTab) obj;
 		this.id = o.getId();
 		this.name = o.getName();
-		this.tabs = new ArrayList<>();
-		for (FieldScreenTab item : o.getTabs()) {
-			FieldScreenTabDTO dto = new FieldScreenTabDTO();
-			dto.setJiraObject(item, o);
-			tabs.add(dto);
+		this.position = o.getPosition();
+		this.fieldScreenLayoutItems = new ArrayList<>();
+		for (FieldScreenLayoutItem item : o.getFieldScreenLayoutItems()) {
+			FieldScreenLayoutItemDTO dto = new FieldScreenLayoutItemDTO();
+			dto.setJiraObject(item, this);
+			fieldScreenLayoutItems.add(dto);
 		}
 	}
 
 	@Override
 	public String getUniqueKey() {
-		return this.getName();
+		return Long.toString(this.getId());
 	}
 
 	@Override
@@ -50,26 +60,18 @@ public class FieldScreenDTO extends JiraConfigDTO {
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
 				"getName",
-				"getDescription",
-				"getTabs");
+				"getPosition",
+				"getFieldScreenLayoutItems");
 	}
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return FieldScreenUtil.class;
+		return FieldScreenTabUtil.class;
 	}
 
 	@Override
 	public Class<?> getJiraClass() {
-		return FieldScreen.class;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
+		return FieldScreenTab.class;
 	}
 
 	public Long getId() {
@@ -88,12 +90,20 @@ public class FieldScreenDTO extends JiraConfigDTO {
 		this.name = name;
 	}
 
-	public List<FieldScreenTabDTO> getTabs() {
-		return tabs;
+	public int getPosition() {
+		return position;
 	}
 
-	public void setTabs(List<FieldScreenTabDTO> tabs) {
-		this.tabs = tabs;
+	public void setPosition(int position) {
+		this.position = position;
+	}
+
+	public List<FieldScreenLayoutItemDTO> getFieldScreenLayoutItems() {
+		return fieldScreenLayoutItems;
+	}
+
+	public void setFieldScreenLayoutItems(List<FieldScreenLayoutItemDTO> fieldScreenLayoutItems) {
+		this.fieldScreenLayoutItems = fieldScreenLayoutItems;
 	}
 
 }
