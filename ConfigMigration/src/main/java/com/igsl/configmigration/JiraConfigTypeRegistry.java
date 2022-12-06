@@ -154,7 +154,7 @@ public class JiraConfigTypeRegistry {
 		for (Map.Entry<String, JiraConfigUtil> entry : UTIL_INSTANCE_MAP.entrySet()) {
 			logger.debug("Processing Key: " + entry.getKey());
 			if (publicOnly) {
-				if (entry.getValue().isPublic()) {
+				if (entry.getValue().isVisible()) {
 					result.add(entry.getValue());
 				}
 			} else {

@@ -15,7 +15,7 @@ public class FieldConfigUtil extends JiraConfigUtil {
 			ComponentAccessor.getComponent(FieldConfigManager.class);
 	
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		return false;
 	}
 

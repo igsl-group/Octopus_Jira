@@ -96,7 +96,7 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		// Referenced by IssueSecurityLevelSchemeDTO only
 		return false;
 	}

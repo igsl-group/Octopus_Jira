@@ -68,7 +68,7 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		// TODO Users not supported for now
 		return false;
 	}

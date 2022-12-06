@@ -99,7 +99,7 @@ public class OptionSetUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		// Referenced only
 		return false;
 	}

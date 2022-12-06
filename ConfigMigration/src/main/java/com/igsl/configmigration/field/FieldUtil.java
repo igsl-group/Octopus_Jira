@@ -37,6 +37,8 @@ public class FieldUtil extends JiraConfigUtil {
 			dto.setJiraObject(f);
 			result.put(f.getId(), dto);
 		}
+		// TODO The no. of fields found here is way larger than those offered on UI.
+		// What is Jira's filter criteria?
 		return result;
 	}
 
@@ -87,8 +89,8 @@ public class FieldUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
-		return true;
+	public boolean isVisible() {
+		return false;
 	}
 
 }

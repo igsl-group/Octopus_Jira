@@ -101,7 +101,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		return false;
 	}
 

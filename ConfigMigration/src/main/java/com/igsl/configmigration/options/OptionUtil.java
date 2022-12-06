@@ -21,7 +21,7 @@ public class OptionUtil extends JiraConfigUtil {
 	private static final OptionsManager MANAGER = ComponentAccessor.getOptionsManager();
 	
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		return false;
 	}
 

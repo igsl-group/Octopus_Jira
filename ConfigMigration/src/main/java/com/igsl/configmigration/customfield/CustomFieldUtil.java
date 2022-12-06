@@ -265,7 +265,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
+	public boolean isVisible() {
 		return true;
 	}
 

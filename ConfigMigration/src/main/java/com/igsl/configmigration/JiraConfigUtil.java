@@ -20,7 +20,7 @@ public abstract class JiraConfigUtil {
 	 * Return false if the associated JiraConfigDTO is only referenced via other JiraConfigDTOs.
 	 */
 	@JsonIgnore
-	public abstract boolean isPublic();
+	public abstract boolean isVisible();
 	
 	/**
 	 * Return implementation name. This is used to identify the JiraConfigUtil to be used.
