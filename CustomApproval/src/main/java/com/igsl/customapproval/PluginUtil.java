@@ -1,5 +1,10 @@
 package com.igsl.customapproval;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.atlassian.crowd.embedded.api.Group;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.StatusManager;
@@ -76,5 +81,39 @@ public class PluginUtil {
 			return cf;
 		}
 		return null;
+	}
+	
+	public static Map<String, CustomField> getGroupFieldList() {
+		Map<String, CustomField> result = new TreeMap<>();
+		CustomFieldType<?, ?> groupPicker = CUSTOM_FIELD_MANAGER.getCustomFieldType(CUSTOM_FIELD_GROUP_PICKER);
+		CustomFieldType<?, ?> groupPickerMulti = CUSTOM_FIELD_MANAGER.getCustomFieldType(CUSTOM_FIELD_GROUP_PICKER_MULTI);
+		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
+			if (groupPicker.equals(cf.getCustomFieldType()) || 
+				groupPickerMulti.equals(cf.getCustomFieldType())) {
+				result.put(cf.getName(), cf);
+			}
+		}
+		return result;
+	}
+	
+	public static Map<String, CustomField> getUserFieldList() {
+		Map<String, CustomField> result = new TreeMap<>();
+		CustomFieldType<?, ?> userPicker = CUSTOM_FIELD_MANAGER.getCustomFieldType(CUSTOM_FIELD_USER_PICKER);
+		CustomFieldType<?, ?> userPickerMulti = CUSTOM_FIELD_MANAGER.getCustomFieldType(CUSTOM_FIELD_USER_PICKER_MULTI);
+		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
+			if (userPicker.equals(cf.getCustomFieldType()) || 
+				userPickerMulti.equals(cf.getCustomFieldType())) {
+				result.put(cf.getName(), cf);
+			}
+		}
+		return result;
+	}
+	
+	public static Map<Long, Status> getStatusList() {
+		Map<Long, Status> result = new TreeMap<>();
+		for (Status s : STATUS_MANAGER.getStatuses()) {
+			result.put(s.getSequence(), s);
+		}
+		return result;
 	}
 }

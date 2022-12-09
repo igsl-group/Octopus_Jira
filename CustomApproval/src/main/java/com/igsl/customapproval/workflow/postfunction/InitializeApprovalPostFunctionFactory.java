@@ -11,6 +11,7 @@ import com.atlassian.jira.plugin.workflow.UpdateIssueFieldFunctionPluginFactory;
 import com.atlassian.jira.user.UserKeyService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igsl.customapproval.PluginUtil;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.FunctionDescriptor;
 
@@ -18,6 +19,11 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 
 	private static final Logger LOGGER = Logger.getLogger(InitializeApprovalPostFunctionFactory.class);
 	private static final ObjectMapper OM = new ObjectMapper(); 
+	
+	// Velocity parameters
+	public static final String VELOCITY_USER_FIELD_LIST = "userFieldList";
+	public static final String VELOCITY_GROUP_FIELD_LIST = "groupFieldList";
+	public static final String VELOCITY_STATUS_LIST = "statusList";
 	
 	// Form data in Velocity template
 	public static final String PARAM_APPROVAL_NAME = "approvalName";
@@ -54,17 +60,20 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		this.userKeyService = userKeyService;
 	}
 
-	@SuppressWarnings("rawtypes")
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	protected void getVelocityParamsForInput(Map velocityParams) {
-		// Set parameters for create action
-		// We don't need any
 		LOGGER.debug("getVelocityParamsForInput");
+		// Set data for pickers
+		velocityParams.put(VELOCITY_USER_FIELD_LIST, PluginUtil.getUserFieldList());
+		velocityParams.put(VELOCITY_GROUP_FIELD_LIST, PluginUtil.getGroupFieldList());
+		velocityParams.put(VELOCITY_STATUS_LIST, PluginUtil.getStatusList());
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
     protected void getVelocityParamsForEdit(Map velocityParams, AbstractDescriptor descriptor) {
+		getVelocityParamsForInput(velocityParams);
 		// The settings is stored in FunctionDescriptor.getArgs().
 		// Transfer them to velocityParams for display
 		if (descriptor instanceof FunctionDescriptor) {

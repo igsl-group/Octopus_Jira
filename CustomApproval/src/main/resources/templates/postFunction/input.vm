@@ -2,21 +2,7 @@
 	To store element for row construction.
 	Controls disabled to avoid being included in form data.
 -->
-<style>
-	table.CustomApproval {
-		width: 100%;
-		table-layout: fixed;
-	}
-	
-	table.CustomApproval td {
-		vertical-align: bottom;
-	}
-	
-	table.CustomApproval td input, select {
-		width: 100%;
-	}
-</style>
-<table class="CustomApproval" id="template" style="display: none">
+<table id="template" style="display: none">
 	<tr id="">
 		<td>
 			<button 
@@ -27,11 +13,41 @@
 			</button>
 		</td>
 		<td><input disabled type="text" name="approvalName" value="$!{item.key}" /></td>
-		<td><input disabled type="text" name="approverUsersField" value="" /></td>
-		<td><input disabled type="text" name="approverGroupsField" value="" /></td>
-		<td><input disabled type="text" name="startingStatus" value="" /></td>
-		<td><input disabled type="text" name="approvedStatus" value="" /></td>
-		<td><input disabled type="text" name="rejectedStatus" value="" /></td>
+		<td>
+			<select disabled name="approverUsersField">
+				#foreach ($item in $userFieldList.values())
+					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
+				#end
+			</select>
+		</td>
+		<td>
+			<select disabled name="approverGroupsField">
+				#foreach ($item in $groupFieldList.values())
+					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
+				#end
+			</select>
+		</td>
+		<td>
+			<select disabled name="startingStatus">
+				#foreach ($item in $statusList.values())
+					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
+				#end
+			</select>
+		</td>
+		<td>
+			<select disabled name="approvedStatus">
+				#foreach ($item in $statusList.values())
+					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
+				#end
+			</select>
+		</td>
+		<td>
+			<select disabled name="rejectedStatus">
+				#foreach ($item in $statusList.values())
+					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
+				#end
+			</select>
+		</td>
 		<td><input disabled type="text" name="approveCount" value="" /></td>
 		<td><input disabled type="text" name="rejectCount" value="" /></td>
 		<td><select disabled name="allowChangeDecision">

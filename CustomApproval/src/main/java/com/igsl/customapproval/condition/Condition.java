@@ -49,9 +49,15 @@ public abstract class Condition extends AbstractWebCondition {
 		if (value != null) {
 			ApprovalData data = ApprovalData.parse(String.valueOf(value));
 			if (data != null) {
+				// Check if status matches
+				
 				// Check if user is approver
+				
+				// Check if user is delegates
+
+				// Check if allow changing decision
+				
 				return true;
-				// TODO Check if user is delegates
 			}
 		}
 		return false;

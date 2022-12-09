@@ -1,0 +1,12 @@
+table.CustomApproval {
+	width: 100%;
+	table-layout: fixed;
+}
+
+table.CustomApproval td {
+	vertical-align: bottom;
+}
+
+table.CustomApproval td input, select {
+	width: 100%;
+}

@@ -29,9 +29,9 @@
 		</transformation>
 
 		<resource type="download" name="CustomApproval.css"
-			location="/css/ConfigMigration.css" />
+			location="/css/CustomApproval.css" />
 		<resource type="download" name="CustomApproval.js"
-			location="/js/ConfigMigration.js" />
+			location="/js/CustomApproval.js" />
 
 		<!-- Request inclusion of jquery-ui library for select2, a dropdown with 
 			autocomplete -->
