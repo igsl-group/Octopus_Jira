@@ -1,0 +1,20 @@
+Features
+- User page to set delegation for self
+- Admin page to set delegation for all
+- Database to store delegation data? User property (no, too slow to query)?
+- Database to store approval data? Custom field?
+- Issue panel buttons for approval decisions
+- Custom condition to show issue panel buttons
+- Custom field to show approval data (needs to be text-based for JSM)
+
+== Links to workflow
+- Custom field to store approval data
+- Custom post function to set approval condition (start status, accept status, deny status, approver list)
+
+== API
+- REST API for JSM to use (show button, get approval data, approval)
+- API to query delegation
+
+- Need to support JSM
+- Use REST API (authentication?)
+- Support email approval

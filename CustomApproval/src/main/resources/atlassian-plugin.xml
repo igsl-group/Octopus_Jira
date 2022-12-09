@@ -1,0 +1,95 @@
+<atlassian-plugin key="${atlassian.plugin.key}"
+	name="${project.name}" plugins-version="2">
+
+	<!-- Do not reuse name attributes here. All of them are considered a module 
+		in this plugin -->
+
+	<plugin-info>
+		<description>${project.description}</description>
+		<version>${project.version}</version>
+		<vendor name="${project.organization.name}"
+			url="${project.organization.url}" />
+	</plugin-info>
+
+	<resource type="i18n" name="i18n" location="CustomApproval" />
+
+	<!-- Web resources like CSS and JS -->
+	<web-resource key="resources" name="Jira Resources">
+		<!-- Since Jira 5.0, edit screen no longer supports $webResourceManager.requireResource. 
+			We need to put resources in specific context instead. -->
+		<context>atl.general</context> <!-- General context -->
+		<context>atl.admin</context> <!-- Admin context, i.e. custom field configuration pages -->
+		<context>customerportal</context> <!-- Customer portal, i.e. service management pages -->
+		<context>servicedesk.general</context> <!-- Service Desk general -->
+		<context>servicedesk.admin</context> <!-- Sercice Desk admin -->
+
+		<!-- This will transform AJS.I18n.getText('xxx') in .js files -->
+		<transformation extension="js">
+			<transformer key="jsI18n" />
+		</transformation>
+
+		<resource type="download" name="CustomApproval.css"
+			location="/css/ConfigMigration.css" />
+		<resource type="download" name="CustomApproval.js"
+			location="/js/ConfigMigration.js" />
+
+		<!-- Request inclusion of jquery-ui library for select2, a dropdown with 
+			autocomplete -->
+		<dependency>com.atlassian.auiplugin:ajs</dependency>
+		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
+		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
+	</web-resource>
+
+	<!-- Add jira-config.properties to Jira home directory and set ops.bar.group.size.opsbar-operations=3 
+		so we can have 3 buttons -->
+
+	<!-- Section in operation bar at top of issue view -->
+	<web-section name="Approval" key="approval-button-section"
+		location="opsbar-operations" weight="1">	<!-- 20 is after the Assign button -->
+	</web-section>
+	<web-item name="Approve" i18n-name-key="approve"
+		key="approve-button" section="approval-button-section" weight="1">
+		<description key="approve.desc">Approve</description>
+		<label key="approve.label"></label>
+		<link linkId="approve-link">/approve</link>
+		<condition
+			class="com.igsl.customapproval.condition.ButtonCondition">
+		</condition>
+	</web-item>
+	<web-item name="Reject" i18n-name-key="reject"
+		key="reject-button" section="approval-button-section" weight="2">
+		<description key="reject.desc">Reject</description>
+		<label key="reject.label"></label>
+		<link linkId="reject-link">/reject</link>
+		<condition
+			class="com.igsl.customapproval.condition.ButtonCondition">
+		</condition>
+	</web-item>
+
+	<!-- Panel in issue view to display approval data -->
+	<web-panel name="Approval" key="approval.section"
+		location="atl.jira.view.issue.right.context" weight="1">
+		<label key="approval.section">Approval</label>
+		<context-provider
+			class="com.igsl.customapproval.ApprovalDataContextProvider" />
+		<resource name="view" type="velocity"
+			location="templates/approvalData.vm" />
+		<condition
+			class="com.igsl.customapproval.condition.PanelCondition">
+		</condition>
+	</web-panel>
+
+	<!-- Workflow post function -->
+	<workflow-function
+		key="initialize-post-function"
+		name="Initialize Approval Post Function [Custom Approval]"
+		class="com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunctionFactory">
+		<description
+			key="initialize-post-function-desc">Initialize custom approval</description>
+		<function-class>com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction</function-class>
+	    <resource type="velocity" name="view" location="templates/postFunction/view.vm"/>
+	    <resource type="velocity" name="input-parameters" location="templates/postFunction/input.vm"/>
+	    <resource type="velocity" name="edit-parameters" location="templates/postFunction/input.vm"/>
+	</workflow-function>
+
+</atlassian-plugin>

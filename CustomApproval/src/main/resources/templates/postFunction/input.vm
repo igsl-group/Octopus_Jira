@@ -1,0 +1,114 @@
+<!-- 
+	To store element for row construction.
+	Controls disabled to avoid being included in form data.
+-->
+<style>
+	table.CustomApproval {
+		width: 100%;
+		table-layout: fixed;
+	}
+	
+	table.CustomApproval td {
+		vertical-align: bottom;
+	}
+	
+	table.CustomApproval td input, select {
+		width: 100%;
+	}
+</style>
+<table class="CustomApproval" id="template" style="display: none">
+	<tr id="">
+		<td>
+			<button 
+				disabled
+				type="button"
+				onclick="removeRow($(this).parent().parent().attr('id'))">
+				<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span>
+			</button>
+		</td>
+		<td><input disabled type="text" name="approvalName" value="$!{item.key}" /></td>
+		<td><input disabled type="text" name="approverUsersField" value="" /></td>
+		<td><input disabled type="text" name="approverGroupsField" value="" /></td>
+		<td><input disabled type="text" name="startingStatus" value="" /></td>
+		<td><input disabled type="text" name="approvedStatus" value="" /></td>
+		<td><input disabled type="text" name="rejectedStatus" value="" /></td>
+		<td><input disabled type="text" name="approveCount" value="" /></td>
+		<td><input disabled type="text" name="rejectCount" value="" /></td>
+		<td><select disabled name="allowChangeDecision">
+				<option value="Allow">Allow</option>
+				<option value="Deny">Deny</option>
+		</select></td>
+	</tr>
+</table>
+
+<table class="CustomApproval">
+	<thead>
+		<tr>
+			<th rowspan="2" style="width:3%"/>
+			<th rowspan="2" style="width:12%">Approval Name</th>
+			<th style="width:25%" colspan="2">Approvers</th>
+			<th rowspan="2" style="width:10%">Starting Status</th>
+			<th style="width:20%" colspan="2">Target Status</th>
+			<th style="width:20%" colspan="2">Count</th>
+			<th rowspan="2" style="width:10%">Allow Change Decision</th>
+		</tr>
+		<tr>
+			<th>Users Field</th>
+			<th>Groups Field</th>
+			<th>Approved</th>
+			<th>Rejected</th>
+			<th>Approve</th>
+			<th>Reject</th>
+		</tr>
+	</thead>
+	<tbody id="rows">
+	</tbody>
+</table>
+<input type="button" value="Add Approval" onclick="addRow()" />
+	
+<script type="text/javascript">
+	var idx = 0;
+	function removeRow(id) {
+		$('#' + id).remove();
+	}
+	function addRow(data) {
+		idx++;
+		console.log("#" + idx + ": ");
+		console.log(data);
+		var newControlHTML = $('#template').find('tr').clone();
+		// Set ID
+		$(newControlHTML).attr('id', idx);
+		// Enable controls
+		newControlHTML.find('input, select, button').prop('disabled', false);
+		// Set data
+		if (data) {
+			var keys = Object.keys(data);
+			for (var i in keys) {
+				newControlHTML.find('[name="' + keys[i] + '"]').val(data[keys[i]]);
+			}
+		}
+		$('#rows').append(newControlHTML);
+	}
+	
+	// Set data
+	#set ($idx = 0)
+	#foreach ($item in $approvalName)
+		addRow({
+			'approvalName': '$approvalName.get($idx)',
+			'approverUsersField': '$approverUsersField.get($idx)',
+			'approverGroupsField': '$approverGroupsField.get($idx)',
+			'startingStatus': '$startingStatus.get($idx)',
+			'approvedStatus': '$approvedStatus.get($idx)',
+			'rejectedStatus': '$rejectedStatus.get($idx)',
+			'approveCount': '$approveCount.get($idx)',
+			'rejectCount': '$rejectCount.get($idx)',
+			'allowChangeDecision': '$allowChangeDecision.get($idx)'
+		});
+		#set ($idx = $idx + 1)
+	#end
+	
+	// Add initial row
+	if (idx == 0) {
+		addRow(null);
+	}
+</script>

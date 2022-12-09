@@ -18,7 +18,6 @@ import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.customfields.manager.OptionsManager;
-import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
@@ -34,14 +33,11 @@ import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
-import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO.ValueType;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.options.OptionDTO;
 import com.igsl.configmigration.options.OptionUtil;
-import com.igsl.configmigration.options.OptionsDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldUtil extends JiraConfigUtil {
