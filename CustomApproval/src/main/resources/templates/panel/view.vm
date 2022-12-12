@@ -1,1 +1,34 @@
-Panel content
+<!-- Don't know which context panel uses, so put CSS here directly -->
+<style type="text/css">
+	table.ApprovalHistory {
+		border-collapse: collapse;
+		width: 100%;
+	}
+</style>
+#if ($history)
+	#foreach ($entry in $history.entrySet())
+		<h5>$entry.key</h5>
+		#if ($entry.value.size() == 0)
+			<span>No approvals yet</span>
+		#else
+			<table class="ApprovalHistory">
+				<thead>
+					<tr>
+						<th>Approver</th>
+						<th>Decision</th>
+						<th>Date</th>
+					</tr>
+				</thead>
+				<tbody>
+					#foreach ($item in $entry.value)
+						<tr>
+							<td>${item.approver}</td>
+							<td>${item.approved}</td>
+							<td>${item.approvedDate}</td>
+						</tr>
+					#end
+				</tbody>
+			</table>
+		#end
+	#end
+#end

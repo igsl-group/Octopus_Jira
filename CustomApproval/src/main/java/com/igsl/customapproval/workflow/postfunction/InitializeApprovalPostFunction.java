@@ -38,37 +38,45 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 		MutableIssue issue = getIssue(transientVars);
 		
 		ApprovalDataBuilder builder = new ApprovalDataBuilder();
-		try {
-			Map<String, String[]> data = InitializeApprovalPostFunctionFactory.parseArguments(args);
-			for (int i = 0; i < data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME).length; i++) {
-				// Add approval
-				String approvalName = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME)[i];
-				String startingStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING)[i];
-				String approvedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED)[i];
-				String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
-				builder.addApproval(approvalName, startingStatus, approvedStatus, rejectedStatus);
-				// Approve count
-				String approveCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_COUNT)[i];
-				builder.setApproveCount(approvalName, Float.parseFloat(approveCount));
-				// Reject count
-				String rejectCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_COUNT)[i];
-				builder.setRejectCount(approvalName, Float.parseFloat(rejectCount));
-				// Allow change decision
-				String allowChangeDecision = data.get(InitializeApprovalPostFunctionFactory.PARAM_ALLOW_CHANGE_DECISION)[i];
-				builder.setAllowChangeDecision(approvalName, 
-						(InitializeApprovalPostFunctionFactory.VALUE_ALLOW.equals(allowChangeDecision))? true : false);
-				// Approvers
-				String userField = data.get(InitializeApprovalPostFunctionFactory.PARAM_USERS_FIELD)[i];
-				String groupField = data.get(InitializeApprovalPostFunctionFactory.PARAM_GROUPS_FIELD)[i];
-				if (userField != null && !userField.isEmpty()) {
-					builder.setApproverUserField(approvalName, userField);
+		if (args != null) {
+			try {
+				Map<String, String[]> data = InitializeApprovalPostFunctionFactory.parseArguments(args);
+				for (int i = 0; i < data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME).length; i++) {
+					// Add approval
+					String approvalName = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME)[i];
+					String startingStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING)[i];
+					String approvedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED)[i];
+					String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
+					builder.addApproval(approvalName, startingStatus, approvedStatus, rejectedStatus);
+					// Approve count
+					String approveCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_COUNT)[i];
+					builder.setApproveCount(approvalName, Float.parseFloat(approveCount));
+					// Reject count
+					String rejectCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_COUNT)[i];
+					builder.setRejectCount(approvalName, Float.parseFloat(rejectCount));
+					// Allow change decision
+					String allowChangeDecision = data.get(InitializeApprovalPostFunctionFactory.PARAM_ALLOW_CHANGE_DECISION)[i];
+					builder.setAllowChangeDecision(approvalName, 
+							(InitializeApprovalPostFunctionFactory.VALUE_ALLOW.equals(allowChangeDecision))? true : false);
+					// Approvers
+					String userField = null;
+					if (data.get(InitializeApprovalPostFunctionFactory.PARAM_USERS_FIELD) != null) {
+						userField = data.get(InitializeApprovalPostFunctionFactory.PARAM_USERS_FIELD)[i];
+					}
+					String groupField = null; 
+					if (data.get(InitializeApprovalPostFunctionFactory.PARAM_GROUPS_FIELD) != null) {
+						groupField = data.get(InitializeApprovalPostFunctionFactory.PARAM_GROUPS_FIELD)[i];
+					}
+					if (userField != null && !userField.isEmpty()) {
+						builder.setApproverUserField(approvalName, userField);
+					}
+					if (groupField != null && !groupField.isEmpty()) {
+						builder.setApproverGroupField(approvalName, groupField);
+					}
 				}
-				if (groupField != null && !groupField.isEmpty()) {
-					builder.setApproverGroupField(approvalName, groupField);
-				}
+			} catch (Exception ex) {
+				throw new WorkflowException("Failed to construct approval data", ex);
 			}
-		} catch (Exception ex) {
-			throw new WorkflowException("Failed to construct approval data", ex);
 		}
 		
 		// Update custom field

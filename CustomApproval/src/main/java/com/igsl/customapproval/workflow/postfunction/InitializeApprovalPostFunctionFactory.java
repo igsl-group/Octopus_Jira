@@ -129,20 +129,22 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 			String value = null;
 			Object o = params.get(s);
 			LOGGER.debug("getDescriptorParams <" + s + "> = <" + o + ">(" + ((o != null)?o.getClass():"N/A") + ")");
-			if (o instanceof String) {
-				try {
-					value = OM.writeValueAsString(new String[] {(String) o});
-				} catch (Exception ex) {
-					LOGGER.error("Failed to serialize " + s, ex);
+			if (o != null) {
+				if (o instanceof String) {
+					try {
+						value = OM.writeValueAsString(new String[] {(String) o});
+					} catch (Exception ex) {
+						LOGGER.error("Failed to serialize " + s, ex);
+					}
+				} else if (o instanceof String[]) {
+					try {
+						value = OM.writeValueAsString(o);
+					} catch (Exception ex) {
+						LOGGER.error("Failed to serialize " + s, ex);
+					}
+				} else {
+					throw new IllegalArgumentException("Unsupported data type " + ((o != null)?o.getClass():"N/A") + " for " + s);
 				}
-			} else if (o instanceof String[]) {
-				try {
-					value = OM.writeValueAsString(o);
-				} catch (Exception ex) {
-					LOGGER.error("Failed to serialize " + s, ex);
-				}
-			} else {
-				throw new IllegalArgumentException("Unsupported data type " + ((o != null)?o.getClass():"N/A") + " for " + s);
 			}
 			result.put(s, value);
 		}
@@ -164,13 +166,19 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		Map<String, String[]> result = new HashMap<>();
 		for (String key : PARAMETERS_LIST) {
 			Object o = m.get(key);
-			if (o instanceof String) {
-				String value = (String) o;
-				String[] list = OM.readValue(value, String[].class);
-				result.put(key, list);
-			} else {
-				throw new Exception("Parameter " + key + " is not a string");
+			String[] value = null;
+			if (o != null) {
+				if (o instanceof String) {
+					String v = (String) o;
+					if (v.length() != 0) {
+						String[] list = OM.readValue(v, String[].class);
+						value = list;
+					}
+				} else {
+					throw new Exception("Parameter " + key + " is not a string");
+				}
 			}
+			result.put(key, value);
 		}
 		// TODO integrity check?
 		return result;

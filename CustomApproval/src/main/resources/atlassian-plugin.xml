@@ -73,7 +73,7 @@
 		<context-provider
 			class="com.igsl.customapproval.ApprovalDataContextProvider" />
 		<resource name="view" type="velocity"
-			location="templates/approvalData.vm" />
+			location="templates/panel/view.vm" />
 		<condition
 			class="com.igsl.customapproval.condition.PanelCondition">
 		</condition>
@@ -85,7 +85,7 @@
 		name="Initialize Approval Post Function [Custom Approval]"
 		class="com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunctionFactory">
 		<description
-			key="initialize-post-function-desc">Initialize custom approval</description>
+			key="postFunc.desc">Initialize custom approval</description>
 		<function-class>com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction</function-class>
 	    <resource type="velocity" name="view" location="templates/postFunction/view.vm"/>
 	    <resource type="velocity" name="input-parameters" location="templates/postFunction/input.vm"/>
