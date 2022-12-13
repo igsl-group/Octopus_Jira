@@ -1,0 +1,16 @@
+<style type="text/css">
+	div.CustomApprovalError {
+		margin: auto;
+  		width: 80%;
+		padding: 10px;
+		align-content: center;
+		vertical-align: middle;
+	}
+</style>
+<div class="CustomApprovalError aui-message-context" role="status">
+	<h3>Approval Step $!{action.getApprovalName()} Failed</h3>
+	#foreach ($error in $action.getErrorMessages())
+		<div class="aui-message aui-message-error qf-message-error">$!{error}</div>
+	#end
+	<a href="${action.getIssueURL()}">Return to Issue</a>
+</div>

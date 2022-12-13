@@ -51,18 +51,26 @@
 		key="approve-button" section="approval-button-section" weight="1">
 		<description key="approve.desc">Approve</description>
 		<label key="approve.label"></label>
-		<link linkId="approve-link">/approve</link>
+		<link linkId="approve-link">
+			<![CDATA[
+			/secure/CustomApprovalApproveAction.jspa?id=${issue.id}
+			]]>
+		</link>
 		<condition
-			class="com.igsl.customapproval.condition.ButtonCondition">
+			class="com.igsl.customapproval.condition.ApproveButtonCondition">
 		</condition>
 	</web-item>
 	<web-item name="Reject" i18n-name-key="reject"
 		key="reject-button" section="approval-button-section" weight="2">
 		<description key="reject.desc">Reject</description>
 		<label key="reject.label"></label>
-		<link linkId="reject-link">/reject</link>
+		<link linkId="reject-link">
+			<![CDATA[
+				/secure/CustomApprovalRejectAction.jspa?id=${issue.id}
+			]]>
+		</link>
 		<condition
-			class="com.igsl.customapproval.condition.ButtonCondition">
+			class="com.igsl.customapproval.condition.RejectButtonCondition">
 		</condition>
 	</web-item>
 
@@ -71,7 +79,7 @@
 		location="atl.jira.view.issue.right.context" weight="1">
 		<label key="approval.section">Approval</label>
 		<context-provider
-			class="com.igsl.customapproval.ApprovalDataContextProvider" />
+			class="com.igsl.customapproval.panel.ApprovalDataContextProvider" />
 		<resource name="view" type="velocity"
 			location="templates/panel/view.vm" />
 		<condition
@@ -92,4 +100,28 @@
 	    <resource type="velocity" name="edit-parameters" location="templates/postFunction/input.vm"/>
 	</workflow-function>
 
+	<!-- Web Action for approve/reject buttons -->
+	<webwork1 key="ApproveAction"
+		name="Custom Approval Approve Action" class="java.lang.Object" roles-required="use">
+		<description>Approve Action</description>
+		<actions>
+			<action
+				name="com.igsl.customapproval.action.ApproveAction"
+				alias="CustomApprovalApproveAction">
+				<view name="error">templates/action/error.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	<webwork1 key="RejectAction"
+		name="Custom Approval Reject Action" class="java.lang.Object" roles-required="use">
+		<description>Reject Action</description>
+		<actions>
+			<action
+				name="com.igsl.customapproval.action.RejectAction"
+				alias="CustomApprovalRejectAction">
+				<view name="error">templates/action/error.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
 </atlassian-plugin>

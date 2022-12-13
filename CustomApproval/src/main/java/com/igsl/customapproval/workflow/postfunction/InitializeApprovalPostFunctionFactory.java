@@ -180,7 +180,6 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 			}
 			result.put(key, value);
 		}
-		// TODO integrity check?
 		return result;
 	}
 }

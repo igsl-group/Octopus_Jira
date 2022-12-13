@@ -1,10 +1,10 @@
 package com.igsl.customapproval.data;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Custom field content to store:
@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class ApprovalData {
 	
-	private static final ObjectMapper OM = new ObjectMapper();
+	private static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
 	/**
 	 * Key is name of an approval process.
@@ -23,9 +23,10 @@ public class ApprovalData {
 	private Map<String, ApprovalSettings> settings = new HashMap<>();
 	
 	/**
-	 * Key is name of an approval process.
+	 * Top level key is name of an approval process.
+	 * Value map key is user key.
 	 */
-	private Map<String, List<ApprovalHistory>> history = new HashMap<>();
+	private Map<String, Map<String, ApprovalHistory>> history = new HashMap<>();
 
 	public static ApprovalData parse(String s) {
 		try {
@@ -52,11 +53,11 @@ public class ApprovalData {
 		this.settings = settings;
 	}
 
-	public Map<String, List<ApprovalHistory>> getHistory() {
+	public Map<String, Map<String, ApprovalHistory>> getHistory() {
 		return history;
 	}
 
-	public void setHistory(Map<String, List<ApprovalHistory>> history) {
+	public void setHistory(Map<String, Map<String, ApprovalHistory>> history) {
 		this.history = history;
 	}
 	

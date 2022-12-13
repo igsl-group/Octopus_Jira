@@ -4,10 +4,25 @@
 		border-collapse: collapse;
 		width: 100%;
 	}
+	table.ApprovalHistory td, th {
+		text-align: left;
+	}
+	.ApprovalHistoryStrikeOut {
+		text-decoration: line-through;
+	}
 </style>
 #if ($history)
 	#foreach ($entry in $history.entrySet())
-		<h5>$entry.key</h5>
+		<h5>
+			<span>$entry.key</span>
+			#set ($setting = $settings.get($entry.key))
+			#if ($setting)
+				<span>(</span>
+				<span> Approve ${setting.approveCount}/${setting.approveCountTarget}</span>
+				<span> Reject ${setting.rejectCount}/${setting.rejectCountTarget}</span>
+				<span>)</span>
+			#end
+		</h5>
 		#if ($entry.value.size() == 0)
 			<span>No approvals yet</span>
 		#else
@@ -21,11 +36,29 @@
 				</thead>
 				<tbody>
 					#foreach ($item in $entry.value)
-						<tr>
-							<td>${item.approver}</td>
-							<td>${item.approved}</td>
-							<td>${item.approvedDate}</td>
-						</tr>
+						#if ($item.isValid())
+							<tr>
+								<td>
+									<span>${item.approverDisplayName}</span>
+									#if (${item.onBehalfOfDisplayName})
+										<span> on behalf of ${item.onBehalfOfDisplayName}</span>
+									#end
+								</td>
+								<td>${item.decision}</td>
+								<td>${item.approvedDateString}</td>
+							</tr>
+						#else
+							<tr>
+								<td class="ApprovalHistoryStrikeOut">
+									<span>${item.approverDisplayName}</span>
+									#if (${item.onBehalfOfDisplayName})
+										<span> on behalf of ${item.onBehalfOfDisplayName}</span>
+									#end
+								</td>
+								<td class="ApprovalHistoryStrikeOut">${item.decision}</td>
+								<td class="ApprovalHistoryStrikeOut">${item.approvedDateString}</td>
+							</tr>
+						#end
 					#end
 				</tbody>
 			</table>

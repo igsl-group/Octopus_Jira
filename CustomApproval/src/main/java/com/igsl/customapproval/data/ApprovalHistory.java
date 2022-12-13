@@ -5,7 +5,8 @@ import java.util.Date;
 public class ApprovalHistory {
 	
 	private String approver;
-	private Boolean approved;
+	private String onBehalfOf;
+	private boolean approved;
 	private Date approvedDate;
 	
 	public String getApprover() {
@@ -14,10 +15,10 @@ public class ApprovalHistory {
 	public void setApprover(String approver) {
 		this.approver = approver;
 	}
-	public Boolean getApproved() {
+	public boolean getApproved() {
 		return approved;
 	}
-	public void setApproved(Boolean approved) {
+	public void setApproved(boolean approved) {
 		this.approved = approved;
 	}
 	public Date getApprovedDate() {
@@ -26,5 +27,10 @@ public class ApprovalHistory {
 	public void setApprovedDate(Date approvedDate) {
 		this.approvedDate = approvedDate;
 	}
-	
+	public String getOnBehalfOf() {
+		return onBehalfOf;
+	}
+	public void setOnBehalfOf(String onBehalfOf) {
+		this.onBehalfOf = onBehalfOf;
+	}
 }

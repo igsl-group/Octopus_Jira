@@ -24,8 +24,6 @@ import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.issue.fields.config.FieldConfig;
-import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.plugin.event.events.PluginEnabledEvent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
@@ -44,9 +42,7 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	}
 	
 	/**
-	 * Get CustomField of specified type.
-	 * @param fieldName PluginConstants.FieldData enum
-	 * @return
+	 * Get CustomField of ApprovalData.
 	 */
 	public static CustomField findCustomField() {
 		CustomField result = null;
@@ -76,8 +72,6 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	private static CustomField createCustomField() {
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldType(); 
-		List<OptionData> options = null;
-		Object defaultValue = null;	// Can be modified by options containing default value(s)
 		// Find if field exists
 		CustomField result = findCustomField();
 		// Create if not
@@ -92,8 +86,6 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 					(CustomFieldSearcher) null, // Searcher not supported by custom field type
 					contexts, 
 					issueTypes);
-				FieldConfigScheme scheme = created.getConfigurationSchemes().get(0);
-				FieldConfig config = scheme.getOneAndOnlyConfig();
 				// Lock the custom field
 				ManagedConfigurationItemService configItemService = 
 						ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
@@ -125,7 +117,7 @@ public class PluginSetup implements InitializingBean, DisposableBean {
     public void onPluginEnabled(PluginEnabledEvent event) {
 		LOGGER.debug("PluginEvent enabled: " + event.getPlugin().getKey());
 		if (PluginUtil.PLUGIN_KEY.equals(event.getPlugin().getKey())) {
-			createCustomField();
+			PluginSetup.createCustomField();
 		}
 	}
 	

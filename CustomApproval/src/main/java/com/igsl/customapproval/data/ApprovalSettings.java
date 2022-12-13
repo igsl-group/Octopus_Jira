@@ -3,6 +3,10 @@ package com.igsl.customapproval.data;
 public class ApprovalSettings {	
 	
 	/**
+	 * Approval name
+	 */
+	private String approvalName;
+	/**
 	 * Approver user list from a custom field
 	 */
 	private String approverUserField;
@@ -93,5 +97,11 @@ public class ApprovalSettings {
 	}
 	public void setApproverGroupField(String approverGroupField) {
 		this.approverGroupField = approverGroupField;
+	}
+	public String getApprovalName() {
+		return approvalName;
+	}
+	public void setApprovalName(String approvalName) {
+		this.approvalName = approvalName;
 	}
 }

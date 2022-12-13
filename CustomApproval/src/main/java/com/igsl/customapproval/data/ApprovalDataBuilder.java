@@ -1,6 +1,7 @@
 package com.igsl.customapproval.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ public class ApprovalDataBuilder {
 		for (Map.Entry<String, ApprovalSettings> entry : data.getSettings().entrySet()) {
 			ApprovalSettings settings = new ApprovalSettings();
 			ApprovalSettings src = entry.getValue();
+			settings.setApprovalName(src.getApprovalName());
 			settings.setAllowChangeDecision(src.isAllowChangeDecision());
 			settings.setApproveCount(src.getApproveCount());
 			settings.setApproverGroupField(src.getApproverGroupField());
@@ -36,7 +38,7 @@ public class ApprovalDataBuilder {
 			settings.setRejectedStatus(src.getRejectedStatus());
 			settings.setStartingStatus(src.getStartingStatus());
 			this.data.getSettings().put(entry.getKey(), settings);
-			this.data.getHistory().put(entry.getKey(), new ArrayList<ApprovalHistory>());
+			this.data.getHistory().put(entry.getKey(), new HashMap<String, ApprovalHistory>());
 		}
 	}
 	
@@ -50,7 +52,9 @@ public class ApprovalDataBuilder {
 	 * @throws Exception If approval already exists or status is not valid
 	 */
 	public ApprovalDataBuilder addApproval(
-			String approvalName, String startingStatus, String approveStatus, String rejectStatus) throws Exception {
+			String approvalName, String startingStatus, 
+			String approveStatus, String rejectStatus
+			) throws Exception {
 		if (data.getSettings().containsKey(approvalName)) {
 			throw new Exception("Approval \"" + approvalName + "\" already exists");
 		} else {
@@ -64,11 +68,12 @@ public class ApprovalDataBuilder {
 				throw new Exception("Reject status \"" + rejectStatus + "\" is not valid");
 			}
 			ApprovalSettings settings = new ApprovalSettings();
+			settings.setApprovalName(approvalName);
 			settings.setStartingStatus(startingStatus);
 			settings.setApprovedStatus(approveStatus);
 			settings.setRejectedStatus(rejectStatus);
 			data.getSettings().put(approvalName, settings);
-			List<ApprovalHistory> list = new ArrayList<>();
+			Map<String, ApprovalHistory> list = new HashMap<>();
 			data.getHistory().put(approvalName, list);
 		}
 		return this;
@@ -85,11 +90,14 @@ public class ApprovalDataBuilder {
 		if (!data.getSettings().containsKey(approvalName)) {
 			throw new Exception("Approval \"" + approvalName + "\" does not exist");
 		} else {
-			if (PluginUtil.checkUserField(fieldName) != null) {
-				data.getSettings().get(approvalName).setApproverUserField(fieldName);
-				data.getSettings().get(approvalName).setApproverGroupField(null);
+			if (fieldName != null && !fieldName.isEmpty()) {
+				if (PluginUtil.checkUserField(fieldName) != null) {
+					data.getSettings().get(approvalName).setApproverUserField(fieldName);
+				} else {
+					throw new Exception("Custom field \"" + fieldName + "\" is not a user picker");
+				}
 			} else {
-				throw new Exception("Custom field \"" + fieldName + "\" is not a user picker");
+				data.getSettings().get(approvalName).setApproverUserField("");
 			}
 		}
 		return this;
@@ -106,11 +114,14 @@ public class ApprovalDataBuilder {
 		if (!data.getSettings().containsKey(approvalName)) {
 			throw new Exception("Approval \"" + approvalName + "\" does not exist");
 		} else {
-			if (PluginUtil.checkGroupField(fieldName) != null) {
-				data.getSettings().get(approvalName).setApproverGroupField(fieldName);	
-				data.getSettings().get(approvalName).setApproverUserField(null);
+			if (fieldName != null && !fieldName.isEmpty()) {
+				if (PluginUtil.checkGroupField(fieldName) != null) {
+					data.getSettings().get(approvalName).setApproverGroupField(fieldName);	
+				} else {
+					throw new Exception("Custom field \"" + fieldName + "\" is not a group picker");
+				}
 			} else {
-				throw new Exception("Custom field \"" + fieldName + "\" is not a group picker");
+				data.getSettings().get(approvalName).setApproverGroupField("");	
 			}
 		}
 		return this;

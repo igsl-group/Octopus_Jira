@@ -1,0 +1,6 @@
+<form action="CustomApprovalRejectAction.jspa" method="post">
+</form>
+<script type="text/javascript">
+	console.log('auto submit reject form');
+	document.forms[0].submit();
+</script>

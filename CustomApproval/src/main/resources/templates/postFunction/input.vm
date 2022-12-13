@@ -15,6 +15,7 @@
 		<td><input disabled type="text" name="approvalName" value="$!{item.key}" /></td>
 		<td>
 			<select disabled name="approverUsersField">
+				<option value="">N/A</option>
 				#foreach ($item in $userFieldList.values())
 					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 				#end
@@ -22,6 +23,7 @@
 		</td>
 		<td>
 			<select disabled name="approverGroupsField">
+				<option value="">N/A</option>
 				#foreach ($item in $groupFieldList.values())
 					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 				#end

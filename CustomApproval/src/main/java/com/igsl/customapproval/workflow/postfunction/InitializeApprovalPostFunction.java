@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.event.type.EventDispatchOption;
-import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
@@ -31,8 +30,6 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		// transientVars contains the issue object
 		// Post function configuration is in args
-		
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomField cf = PluginSetup.findCustomField();
 		ApplicationUser adminUser = PluginUtil.getAdminUser();
 		MutableIssue issue = getIssue(transientVars);
@@ -47,7 +44,9 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 					String startingStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING)[i];
 					String approvedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED)[i];
 					String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
-					builder.addApproval(approvalName, startingStatus, approvedStatus, rejectedStatus);
+					builder.addApproval(
+							approvalName, startingStatus, 
+							approvedStatus, rejectedStatus);
 					// Approve count
 					String approveCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_COUNT)[i];
 					builder.setApproveCount(approvalName, Float.parseFloat(approveCount));
@@ -67,12 +66,8 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 					if (data.get(InitializeApprovalPostFunctionFactory.PARAM_GROUPS_FIELD) != null) {
 						groupField = data.get(InitializeApprovalPostFunctionFactory.PARAM_GROUPS_FIELD)[i];
 					}
-					if (userField != null && !userField.isEmpty()) {
-						builder.setApproverUserField(approvalName, userField);
-					}
-					if (groupField != null && !groupField.isEmpty()) {
-						builder.setApproverGroupField(approvalName, groupField);
-					}
+					builder.setApproverUserField(approvalName, userField);
+					builder.setApproverGroupField(approvalName, groupField);
 				}
 			} catch (Exception ex) {
 				throw new WorkflowException("Failed to construct approval data", ex);
