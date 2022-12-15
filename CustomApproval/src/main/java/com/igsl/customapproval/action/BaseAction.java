@@ -1,6 +1,7 @@
 package com.igsl.customapproval.action;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -126,14 +127,19 @@ public abstract class BaseAction extends JiraWebActionSupport {
 			this.addErrorMessage("Approving user is not provided");
 			return false;
 		}
-		ApplicationUser onBehalfOf = null;
+		List<ApplicationUser> onBehalfOf = null;
+		List<String> onBehalfOfList = null;
 		// Validate if user is approver
 		if (!PluginUtil.isApprover(user.getKey(), this.approverList)) {
 			// Check is anyone's delegate
 			onBehalfOf = PluginUtil.isDelegate(user.getKey(), approverList);
-			if (onBehalfOf == null) {
+			if (onBehalfOf.size() == 0) {
 				this.addErrorMessage("User is not an approver");
 				return false;
+			}
+			onBehalfOfList = new ArrayList<>();
+			for (ApplicationUser u : onBehalfOf) {
+				onBehalfOfList.add(u.getKey());
 			}
 		}	
 		// Update ApprovalHistory
@@ -143,8 +149,8 @@ public abstract class BaseAction extends JiraWebActionSupport {
 			ApprovalHistory historyItem = historyList.get(user.getKey());
 			historyItem.setApprovedDate(new Date());
 			historyItem.setApproved(approve);
-			if (onBehalfOf != null) {
-				historyItem.setOnBehalfOf(onBehalfOf.getKey());
+			if (onBehalfOfList != null) {
+				historyItem.setOnBehalfOf(onBehalfOfList);
 			}
 		} else {
 			// Add new record
@@ -153,8 +159,8 @@ public abstract class BaseAction extends JiraWebActionSupport {
 			historyItem.setApprovedDate(new Date());
 			historyItem.setApproved(approve);
 			historyList.put(user.getKey(), historyItem);
-			if (onBehalfOf != null) {
-				historyItem.setOnBehalfOf(onBehalfOf.getKey());
+			if (onBehalfOfList != null) {
+				historyItem.setOnBehalfOf(onBehalfOfList);
 			}
 		}
 		// Save ApprovalData
@@ -235,6 +241,7 @@ public abstract class BaseAction extends JiraWebActionSupport {
 	 */
 	protected void redirectToIssue() throws IOException {
 		if (this.issue != null) {
+			// TODO URL has ?jql= at the end for search
 			getHttpResponse().sendRedirect(this.issueURL);
 		}
 	}

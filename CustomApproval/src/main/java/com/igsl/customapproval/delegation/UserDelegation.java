@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -13,11 +12,9 @@ import org.apache.log4j.Logger;
 import com.atlassian.crowd.embedded.api.Group;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.security.groups.GroupManager;
-import com.atlassian.jira.user.UserPropertyManager;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.igsl.customapproval.PluginUtil;
 import com.igsl.customapproval.data.DelegationSetting;
-import com.opensymphony.module.propertyset.PropertySet;
 
 public class UserDelegation extends JiraWebActionSupport {
 

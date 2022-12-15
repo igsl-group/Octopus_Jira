@@ -1,11 +1,12 @@
 package com.igsl.customapproval.data;
 
 import java.util.Date;
+import java.util.List;
 
 public class ApprovalHistory {
 	
 	private String approver;
-	private String onBehalfOf;
+	private List<String> onBehalfOf;
 	private boolean approved;
 	private Date approvedDate;
 	
@@ -27,10 +28,10 @@ public class ApprovalHistory {
 	public void setApprovedDate(Date approvedDate) {
 		this.approvedDate = approvedDate;
 	}
-	public String getOnBehalfOf() {
+	public List<String> getOnBehalfOf() {
 		return onBehalfOf;
 	}
-	public void setOnBehalfOf(String onBehalfOf) {
+	public void setOnBehalfOf(List<String> onBehalfOf) {
 		this.onBehalfOf = onBehalfOf;
 	}
 }

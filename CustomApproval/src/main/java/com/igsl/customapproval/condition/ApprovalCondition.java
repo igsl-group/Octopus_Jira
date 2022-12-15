@@ -71,7 +71,7 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 		}
 		boolean userIsApprover = PluginUtil.isApprover(user.getKey(), userList);
 		if (!userIsApprover) {
-			userIsApprover = (PluginUtil.isDelegate(user.getKey(), userList) != null);
+			userIsApprover = (PluginUtil.isDelegate(user.getKey(), userList).size() != 0);
 		}
 		if (!userIsApprover) {
 			LOGGER.debug("User is not approver");

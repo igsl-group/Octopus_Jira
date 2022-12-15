@@ -1,7 +1,9 @@
 package com.igsl.customapproval.panel;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -24,8 +26,8 @@ public class ApprovalPanelHistory {
 	
 	private String approver;
 	private String approverDisplayName;
-	private String onBehalfOf;
-	private String onBehalfOfDisplayName;
+	private List<String> onBehalfOf;
+	private List<String> onBehalfOfDisplayName;
 	private boolean approved;
 	private String decision;
 	private Date approvedDate;
@@ -45,11 +47,14 @@ public class ApprovalPanelHistory {
 			this.approverDisplayName = this.approver;
 		}
 		if (this.onBehalfOf != null) {
-			ApplicationUser onBehalfOfUser = PluginUtil.getUserByKey(this.onBehalfOf);
-			if (onBehalfOfUser != null) {
-				this.onBehalfOfDisplayName = onBehalfOfUser.getDisplayName();
-			} else {
-				this.onBehalfOfDisplayName = this.onBehalfOf;
+			this.onBehalfOfDisplayName = new ArrayList<>();
+			for (String key : this.onBehalfOf) {
+				ApplicationUser onBehalfOfUser = PluginUtil.getUserByKey(key);
+				if (onBehalfOfUser != null) {
+					this.onBehalfOfDisplayName.add(onBehalfOfUser.getDisplayName());
+				} else {
+					this.onBehalfOfDisplayName.add(key);
+				}
 			}
 		} else {
 			this.onBehalfOfDisplayName = null;
@@ -65,7 +70,7 @@ public class ApprovalPanelHistory {
 		LOGGER.debug("User: " + this.approver);
 		this.valid = PluginUtil.isApprover(this.approver, approverList);
 		if (!this.valid) {
-			this.valid = (PluginUtil.isDelegate(this.approver, approverList) != null);
+			this.valid = (PluginUtil.isDelegate(this.approver, approverList).size() != 0);
 		}
 		LOGGER.debug("isValid: " + this.valid);
 	}
@@ -76,10 +81,10 @@ public class ApprovalPanelHistory {
 	public String getApproverDisplayName() {
 		return approverDisplayName;
 	}
-	public String getOnBehalfOf() {
+	public List<String> getOnBehalfOf() {
 		return onBehalfOf;
 	}
-	public String getOnBehalfOfDisplayName() {
+	public List<String> getOnBehalfOfDisplayName() {
 		return onBehalfOfDisplayName;
 	}
 	public boolean getApproved() {

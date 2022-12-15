@@ -37,28 +37,25 @@
 				<tbody>
 					#foreach ($item in $entry.value)
 						#if ($item.isValid())
-							<tr>
-								<td>
-									<span>${item.approverDisplayName}</span>
-									#if (${item.onBehalfOfDisplayName})
-										<span> on behalf of ${item.onBehalfOfDisplayName}</span>
-									#end
-								</td>
-								<td>${item.decision}</td>
-								<td>${item.approvedDateString}</td>
-							</tr>
+							#set ($strikeoutClass = "")
 						#else
-							<tr>
-								<td class="ApprovalHistoryStrikeOut">
-									<span>${item.approverDisplayName}</span>
-									#if (${item.onBehalfOfDisplayName})
-										<span> on behalf of ${item.onBehalfOfDisplayName}</span>
-									#end
-								</td>
-								<td class="ApprovalHistoryStrikeOut">${item.decision}</td>
-								<td class="ApprovalHistoryStrikeOut">${item.approvedDateString}</td>
-							</tr>
+							#set ($strikeoutClass = "ApprovalHistoryStrikeOut")
 						#end
+						<tr>
+							<td class="$!{strikeoutClass}">
+								<div>${item.approverDisplayName}</div>
+								#if (${item.onBehalfOfDisplayName})
+									<table>
+										<tr><th>Delegated From</th></tr>
+										#foreach ($approver in $item.onBehalfOfDisplayName)
+											<tr><td>${approver}</td></tr>
+										#end
+									</table>
+								#end
+							</td>
+							<td class="$!{strikeoutClass}">${item.decision}</td>
+							<td class="$!{strikeoutClass}">${item.approvedDateString}</td>
+						</tr>
 					#end
 				</tbody>
 			</table>

@@ -1,5 +1,6 @@
 package com.igsl.customapproval;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -365,9 +366,9 @@ public class PluginUtil {
 	 * @param ApplicationUser User to check
 	 * @param Issue issue
 	 * @param approverList From getApproverList
-	 * @return ApplicationUser The first delegating approver user found
+	 * @return List<ApplicationUser> Delegating approver users found
 	 */
-	public static ApplicationUser isDelegate(ApplicationUser user, Issue issue) {
+	public static List<ApplicationUser> isDelegate(ApplicationUser user, Issue issue) {
 		Map<String, ApplicationUser> approvers = getApproverList(issue);
 		return isDelegate(user.getKey(), approvers);
 	}
@@ -376,9 +377,9 @@ public class PluginUtil {
 	 * Check if user is a delegate of an approver as of today.
 	 * @param userKey User key to check
 	 * @param approverList From getApproverList
-	 * @return ApplicationUser The first delegating approver user found
+	 * @return List<ApplicationUser> Delegating approver users found
 	 */
-	public static ApplicationUser isDelegate(String userKey, Map<String, ApplicationUser> approverList) {
+	public static List<ApplicationUser> isDelegate(String userKey, Map<String, ApplicationUser> approverList) {
 		return isDelegate(userKey, approverList, null);
 	}
 	/**
@@ -386,14 +387,16 @@ public class PluginUtil {
 	 * @param userKey User key to check
 	 * @param approverList From getApproverList
 	 * @param approvalDate Approval date. If null, defaults to today
-	 * @return ApplicationUser The first delegating approver user found
+	 * @return List<ApplicationUser> Delegating approver users found
 	 */
-	public static ApplicationUser isDelegate(String userKey, Map<String, ApplicationUser> approverList, Date approvalDate) {
+	public static List<ApplicationUser> isDelegate(
+			String userKey, Map<String, ApplicationUser> approverList, Date approvalDate) {
+		List<ApplicationUser> result = new ArrayList<>();
 		for (Map.Entry<String, ApplicationUser> approver : approverList.entrySet()) {
 			if (DelegationUtil.isDelegate(userKey, approver.getKey(), approvalDate)) {
-				return approver.getValue();
+				result.add(approver.getValue());
 			}
 		}
-		return null;
+		return result;
 	}
 }
