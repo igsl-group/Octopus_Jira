@@ -38,6 +38,7 @@
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
 		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
 		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
+		<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>
 	</web-resource>
 
 	<!-- Add jira-config.properties to Jira home directory and set ops.bar.group.size.opsbar-operations=3 
@@ -120,6 +121,46 @@
 				name="com.igsl.customapproval.action.RejectAction"
 				alias="CustomApprovalRejectAction">
 				<view name="error">templates/action/error.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	<!-- User profile delegation -->
+	<web-section name="User Delegation Section" key="delegation-section"
+		location="system.user.options" weight="1">
+	</web-section>
+	<web-item key="Delegation"
+		name="Delegation" section="system.user.options/delegation-section">
+		<description key="delegation.desc">Approval Delegation</description>
+		<label key="delegation.label">Approval Delegation</label>
+		<link linkId="delegationLink">/secure/CustomApprovalUserDelegation.jspa</link>
+	</web-item>
+	
+	<!-- Admin delegation -->
+	<web-section key="admin-delegation-section"
+		location="system.admin.top.navigation.bar">
+		<label key="Approval Delegation" />
+	</web-section>
+	<web-section key="admin-delegation-subsection"
+		location="admin-delegation-section">
+		<label key="Approval Delegation" />
+	</web-section>
+	<web-item key="AdminDelegation"
+		name="Delegation" section="admin-delegation-section/admin-delegation-subsection">
+		<description key="delegation.desc">Approval Delegation</description>
+		<label key="delegation.label">Approval Delegation</label>
+		<link linkId="adminDelegationLink">/secure/CustomApprovalUserDelegation.jspa?admin=1</link>
+	</web-item>
+	
+	<!-- Delegation web action -->
+	<webwork1 key="UserDelegation"
+		name="Custom Approval User Delegation" class="java.lang.Object" roles-required="use">
+		<description>Approval Delegation</description>
+		<actions>
+			<action
+				name="com.igsl.customapproval.delegation.UserDelegation"
+				alias="CustomApprovalUserDelegation">
+				<view name="input">templates/delegation/input.vm</view>
 			</action>
 		</actions>
 	</webwork1>

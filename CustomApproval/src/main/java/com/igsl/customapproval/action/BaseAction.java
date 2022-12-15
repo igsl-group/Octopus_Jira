@@ -227,7 +227,7 @@ public abstract class BaseAction extends JiraWebActionSupport {
 		Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
 		return linkedStatus.getId();
 	}
-
+	
 	/**
 	 * Return to view issue page.
 	 * Return JiraWebActionSupport.NONE in doXXX() method after calling this.

@@ -47,7 +47,7 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	public static CustomField findCustomField() {
 		CustomField result = null;
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_READ_ONLY_TEXT);
+		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_TEXT_AREA);
 		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(PluginUtil.CUSTOM_FIELD_NAME);
 		if (list != null) {
 			Iterator<CustomField> it = list.iterator();
@@ -65,7 +65,7 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	
 	public static CustomFieldType<?, ?> getCustomFieldType() {
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_READ_ONLY_TEXT);
+		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_TEXT_AREA);
 		return cfType;
 	}
 	
