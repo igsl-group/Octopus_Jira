@@ -11,6 +11,9 @@ import java.util.UUID;
 import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.Group;
+import com.atlassian.jira.bc.issue.IssueService;
+import com.atlassian.jira.bc.issue.IssueService.IssueResult;
+import com.atlassian.jira.bc.issue.IssueService.TransitionValidationResult;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.event.type.EventDispatchOption;
@@ -24,12 +27,24 @@ import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
+import com.atlassian.jira.workflow.JiraWorkflow;
+import com.atlassian.jira.workflow.TransitionOptions;
+import com.atlassian.jira.workflow.WorkflowManager;
+import com.atlassian.jira.workflow.TransitionOptions.Builder;
+import com.atlassian.jira.workflow.WorkflowException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.customapproval.data.ApprovalData;
+import com.igsl.customapproval.data.ApprovalHistory;
 import com.igsl.customapproval.data.ApprovalSettings;
 import com.igsl.customapproval.data.DelegationSetting;
 import com.igsl.customapproval.delegation.DelegationUtil;
+import com.igsl.customapproval.exception.InvalidApprovalException;
+import com.igsl.customapproval.exception.InvalidApproverException;
+import com.igsl.customapproval.exception.InvalidWorkflowException;
+import com.igsl.customapproval.exception.LockException;
+import com.opensymphony.workflow.loader.ActionDescriptor;
+import com.opensymphony.workflow.loader.StepDescriptor;
 
 public class CustomApprovalUtil {
 	
@@ -477,4 +492,200 @@ public class CustomApprovalUtil {
 		}
 		return result;
 	}
+	
+	private static String getActionTarget(JiraWorkflow wf, ActionDescriptor actionDesc) {
+		int targetStepId = actionDesc.getUnconditionalResult().getStep();
+		StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
+		Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
+		return linkedStatus.getId();
+	}
+	
+	/**
+	 * Approve/reject current approval.
+	 * @param issue Issue
+	 * @param user ApplicationUser performing the action.
+	 * @param approve boolean, true to approve, false to reject.
+	 * @throws InvalidApprovalException when ApprovalSettings is not valid
+	 * @throws LockException when unable to lock issue
+	 * @throws InvalidApproverException when provided user is not approver/delegate
+	 * @throws InvalidWorkflowException when unable to locate transition for approval
+	 * @throws WorkflowException when unable to transit issue
+	 */
+	public static void approve(MutableIssue issue, ApplicationUser user, boolean approve) 
+			throws 
+				LockException, 
+				InvalidApproverException, 
+				InvalidApprovalException, 
+				InvalidWorkflowException, 
+				WorkflowException {
+		ApprovalSettings settings = getApprovalSettings(issue);
+		approve(issue, settings, user, approve);
+	}
+	
+	/**
+	 * Approve/reject a specific approval.
+	 * @param issue Issue
+	 * @param settings ApprovalSettings of a specific approval.
+	 * @param user ApplicationUser performing the action.
+	 * @param approve boolean, true to approve, false to reject.
+	 * @throws InvalidApprovalException when ApprovalSettings is not valid
+	 * @throws LockException when unable to lock issue
+	 * @throws InvalidApproverException when provided user is not approver/delegate
+	 * @throws InvalidWorkflowException when unable to locate transition for approval
+	 * @throws WorkflowException when unable to transit issue
+	 */
+	public static void approve(MutableIssue issue, ApprovalSettings settings, ApplicationUser user, boolean approve) 
+			throws 
+				LockException, 
+				InvalidApproverException, 
+				InvalidApprovalException, 
+				InvalidWorkflowException, 
+				WorkflowException {
+		if (user == null) {
+			throw new InvalidApproverException();
+		}
+		if (settings == null) {
+			throw new InvalidApprovalException();
+		}
+		Integer approveAction = null;
+		Integer rejectAction = null;
+		CustomField approvalDataCustomField = CustomApprovalSetup.getApprovalDataCustomField();
+		WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
+		JiraWorkflow wf = wfMan.getWorkflow(issue);
+		if (wf != null) {
+			List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
+			for (Object a : actions) {
+				ActionDescriptor desc = (ActionDescriptor) a;
+				String targetStatus = getActionTarget(wf, desc);
+				if (settings.getApprovedStatus().equals(targetStatus)) {
+					approveAction = desc.getId();
+					LOGGER.debug("Approve action found: " + approveAction);
+				} else if (settings.getRejectedStatus().equals(targetStatus)) {
+					rejectAction = desc.getId();
+					LOGGER.debug("Reject action found: " + rejectAction);
+				}
+			}
+		} else {
+			throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
+		}
+		if (approveAction == null) {
+			throw new InvalidWorkflowException("Approve action cannot be found in workflow");
+		}
+		if (rejectAction == null) {
+			throw new InvalidWorkflowException("Reject action cannot be found in workflow");
+		}
+		String lockId = null;
+		try {
+			lockId = CustomApprovalUtil.lockApproval(issue);
+			if (lockId == null) {
+				throw new LockException();
+			}
+			List<String> onBehalfOfList = null;
+			// Validate if user is approver
+			Map<String, ApplicationUser> approverList = getApproverList(issue, settings);
+			LOGGER.debug("Approvers: ");
+			for (String s : approverList.keySet()) {
+				LOGGER.debug(s);
+			}
+			LOGGER.debug("User: " + user.getKey());
+			if (!CustomApprovalUtil.isApprover(user.getKey(), approverList)) {
+				// Check is anyone's delegate
+				List<ApplicationUser> onBehalfOf = CustomApprovalUtil.isDelegate(user.getKey(), approverList);
+				if (onBehalfOf.size() == 0) {
+					throw new InvalidApproverException();
+				}
+				onBehalfOfList = new ArrayList<>();
+				for (ApplicationUser u : onBehalfOf) {
+					onBehalfOfList.add(u.getKey());
+				}
+			}
+			ApprovalData approvalData = getApprovalData(issue); 
+			// Update ApprovalHistory
+			Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(settings.getApprovalName());
+			if (historyList.containsKey(user.getKey())) {
+				// Already approved, update decision
+				ApprovalHistory historyItem = historyList.get(user.getKey());
+				historyItem.setApprovedDate(new Date());
+				historyItem.setApproved(approve);
+				if (onBehalfOfList != null) {
+					historyItem.setOnBehalfOf(onBehalfOfList);
+				}
+			} else {
+				// Add new record
+				ApprovalHistory historyItem = new ApprovalHistory();
+				historyItem.setApprover(user.getKey());
+				historyItem.setApprovedDate(new Date());
+				historyItem.setApproved(approve);
+				historyList.put(user.getKey(), historyItem);
+				if (onBehalfOfList != null) {
+					historyItem.setOnBehalfOf(onBehalfOfList);
+				}
+			}
+			// Save ApprovalData
+			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
+			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+			
+			// Check approval criteria, transit issue if met
+			double approveCount = 0;
+			double rejectCount = 0;
+			// Find history where the user or on behalf of user is still an approver
+			for (ApprovalHistory historyItem : historyList.values()) {
+				boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
+				if (!isApprover) {
+					isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
+				}
+				if (isApprover) {
+					if (historyItem.getApproved()) {
+						approveCount++;
+					} else {
+						rejectCount++;
+					}
+				}
+			}
+			LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
+			// Get target counts
+			double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(settings, approverList);
+			double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(settings, approverList);
+			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
+			Integer targetAction = null;
+			if (rejectCountTarget <= rejectCount) {
+				targetAction = rejectAction;
+			} else if (approveCountTarget <= approveCount) {
+				targetAction = approveAction;
+			}
+			if (targetAction != null) {
+				TransitionOptions.Builder builder = new Builder();
+				// There should be a hide from user condition on the transition, so need to skip condition
+				builder.skipConditions();
+				IssueService iService = ComponentAccessor.getIssueService();
+				TransitionValidationResult tvr = iService.validateTransition(
+						user, 
+						issue.getId(), 
+						targetAction, 
+						iService.newIssueInputParameters(), 
+						builder.build());
+				if (tvr.isValid()) {
+					IssueResult ir = iService.transition(user, tvr);
+					if (!ir.isValid()) {
+						StringBuilder sb = new StringBuilder();
+						for (String s : ir.getErrorCollection().getErrorMessages()) {
+							sb.append(s).append("; ");
+						}
+						throw new WorkflowException(sb.toString());
+					}
+				} else {
+					StringBuilder sb = new StringBuilder();
+					for (String s : tvr.getErrorCollection().getErrorMessages()) {
+						sb.append(s).append("; ");
+					}
+					throw new WorkflowException(sb.toString());
+				}		
+			}
+		} finally {
+			if (lockId != null) {
+				CustomApprovalUtil.unlockApproval(issue, lockId);
+			}
+		}
+	}
+	
 }

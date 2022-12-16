@@ -16,17 +16,6 @@ public class RejectAction extends BaseAction {
 	@Override
 	protected String doExecute() throws Exception {
 		LOGGER.debug("RejectAction doExecute()");
-		
-		if (!getData()) {
-			return JiraWebActionSupport.ERROR;
-		}
-		
-		LOGGER.debug("issue: " + this.issue);
-		LOGGER.debug("approveAction: " + this.approveAction);
-		LOGGER.debug("rejectAction: " + this.rejectAction);
-		LOGGER.debug("approvalData: " + this.approvalData);
-		LOGGER.debug("settings: " + this.settings);
-
 		if (transitIssue(getLoggedInUser(), false)) {
 			redirectToIssue();
 			return JiraWebActionSupport.NONE;
