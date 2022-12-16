@@ -81,8 +81,8 @@ public class ApprovalDataBuilder {
 	
 	/**
 	 * Set approver user list to be from a custom field
-	 * @param approvalName
-	 * @param fieldName
+	 * @param approvalName Name of approval
+	 * @param fieldName Name of custom field
 	 * @return ApprovalDataBuilder
 	 * @throws Exception If approval does not exist
 	 */
@@ -105,8 +105,8 @@ public class ApprovalDataBuilder {
 	
 	/**
 	 * Set approver group list to be from a custom field
-	 * @param approvalName
-	 * @param fieldName
+	 * @param approvalName Name of approval
+	 * @param fieldName Custom field name
 	 * @return ApprovalDataBuilder
 	 * @throws Exception If approval does not exist
 	 */
@@ -132,7 +132,7 @@ public class ApprovalDataBuilder {
 	 * @param approvalName Approval name
 	 * @param count 0 for all approvers, # for approver count, decimals for percentage.
 	 * @return ApprovalDataBuilder
-	 * @throws Exception If approval does not exist, or count < 0
+	 * @throws Exception If approval does not exist, or count less than 0
 	 */
 	public ApprovalDataBuilder setApproveCount(String approvalName, float count) throws Exception {
 		if (!data.getSettings().containsKey(approvalName)) {
@@ -152,7 +152,7 @@ public class ApprovalDataBuilder {
 	 * @param approvalName Approval name
 	 * @param count 0 for all approvers, # for approver count, decimals for percentage.
 	 * @return ApprovalDataBuilder
-	 * @throws Exception If approval does not exist, or count < 0
+	 * @throws Exception If approval does not exist, or count less than 0
 	 */
 	public ApprovalDataBuilder setRejectCount(String approvalName, float count) throws Exception {
 		if (!data.getSettings().containsKey(approvalName)) {

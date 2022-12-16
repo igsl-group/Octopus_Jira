@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalSettings;
+import com.igsl.customapproval.data.DelegationSetting;
 import com.igsl.customapproval.delegation.DelegationUtil;
 
 public class CustomApprovalUtil {
@@ -143,7 +144,7 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of group picker fields.
-	 * @return Map<String, CustomField>. Key is field name.
+	 * @return Map. Key is field name, value is CustomField.
 	 */
 	public static Map<String, CustomField> getGroupFieldList() {
 		Map<String, CustomField> result = new TreeMap<>();
@@ -160,7 +161,7 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of user picker fields.
-	 * @return Map<String, CustomField>. Key is field name.
+	 * @return Map. Key is field name, value is CustomField.
 	 */
 	public static Map<String, CustomField> getUserFieldList() {
 		Map<String, CustomField> result = new TreeMap<>();
@@ -177,7 +178,7 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of Status.
-	 * @return Map<Long, Status>. Key is status key.
+	 * @return Map. Key is status key (Long), value is Status.
 	 */
 	public static Map<Long, Status> getStatusList() {
 		Map<Long, Status> result = new TreeMap<>();
@@ -250,6 +251,22 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
+	 * Update ApprovalData directly.
+	 * Since approval history is stored in ApprovalData, you can alter them as well.
+	 * You should update status accordingly. 
+	 * Use with caution.
+	 * 
+	 * @param user Updating user.
+	 * @param issue Issue
+	 * @param data ApprovalData from getApprovalData().
+	 */
+	public static void setApprovalData(ApplicationUser user, MutableIssue issue, ApprovalData data) {
+		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
+		issue.setCustomFieldValue(cf, data);
+		ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+	}
+	
+	/**
 	 * Get ApprovalSettings associated with issue's current status.
 	 * @param issue Issue
 	 * @return ApprovalSettings, null if not found
@@ -277,7 +294,7 @@ public class CustomApprovalUtil {
 	/**
 	 * Checks both user/group settings and return a user list containing all approvers (not delegates) for current status.
 	 * @param issue Issue
-	 * @return Map<String, ApplicationUser>. Key is user key. Null if no approval is found for current status.
+	 * @return Map. Key is user key, value is ApplicationUser. Null if no approval is found for current status.
 	 */
 	public static Map<String, ApplicationUser> getApproverList(Issue issue) {
 		ApprovalSettings settings = getApprovalSettings(issue);
@@ -288,10 +305,29 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
+	 * Get list of delegates for provided approver list.
+	 * @param approverList From getApproverList().
+	 * @return Map. Key is user key, value is ApplicationUser.
+	 */
+	public static Map<String, ApplicationUser> getDelegates(Map<String, ApplicationUser> approverList) {
+		Map<String, ApplicationUser> result = new HashMap<>();
+		if (approverList != null) {
+			for (String approverKey : approverList.keySet()) {
+				List<DelegationSetting> delegateList = DelegationUtil.loadData(approverKey, false);
+				for (DelegationSetting setting : delegateList) {
+					ApplicationUser delegate = setting.getDelegateToUserObject();
+					result.put(delegate.getKey(), delegate);
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * Checks both user/group settings and return a user list containing all approvers (not delegates).
 	 * @param issue Issue
 	 * @param settings ApprovalSettings to choose which approval
-	 * @return Map<String, ApplicationUser>. Key is user key.
+	 * @return Map. Key is user key, value is ApplicationUser.
 	 */
 	@SuppressWarnings("unchecked")
 	public static Map<String, ApplicationUser> getApproverList(Issue issue, ApprovalSettings settings) {
@@ -385,9 +421,8 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Check if user is an approver for the issue's current status.
-	 * @param ApplicationUser User to check
-	 * @param Issue issue
-	 * @param approverList From getApproverList().
+	 * @param user ApplicationUser to check
+	 * @param issue Issue
 	 * @return boolean
 	 */
 	public static boolean isApprover(ApplicationUser user, Issue issue) {
@@ -407,10 +442,9 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Check if user is currently a delegate of an approver for the issue's current status.
-	 * @param ApplicationUser User to check
-	 * @param Issue issue
-	 * @param approverList From getApproverList
-	 * @return List<ApplicationUser> Delegating approver users found
+	 * @param user ApplicationUser to check
+	 * @param issue Issue
+	 * @return List of ApplicationUser. Delegating approver users found
 	 */
 	public static List<ApplicationUser> isDelegate(ApplicationUser user, Issue issue) {
 		Map<String, ApplicationUser> approvers = getApproverList(issue);
@@ -421,7 +455,7 @@ public class CustomApprovalUtil {
 	 * Check if user is a delegate of an approver as of today.
 	 * @param userKey User key to check
 	 * @param approverList From getApproverList
-	 * @return List<ApplicationUser> Delegating approver users found
+	 * @return List of ApplicationUser. Delegating approver users found
 	 */
 	public static List<ApplicationUser> isDelegate(String userKey, Map<String, ApplicationUser> approverList) {
 		return isDelegate(userKey, approverList, null);
@@ -431,7 +465,7 @@ public class CustomApprovalUtil {
 	 * @param userKey User key to check
 	 * @param approverList From getApproverList
 	 * @param approvalDate Approval date. If null, defaults to today
-	 * @return List<ApplicationUser> Delegating approver users found
+	 * @return List of ApplicationUser. Delegating approver users found
 	 */
 	public static List<ApplicationUser> isDelegate(
 			String userKey, Map<String, ApplicationUser> approverList, Date approvalDate) {

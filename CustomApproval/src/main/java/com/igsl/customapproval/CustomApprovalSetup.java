@@ -42,6 +42,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 
 	/**
 	 * Get CustomField for locking.
+	 * @return CustomField
 	 */
 	public static CustomField getApprovalLockCustomField() {
 		CustomField result = null;
@@ -64,6 +65,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	
 	/**
 	 * Get CustomField of ApprovalData.
+	 * @return CustomField
 	 */
 	public static CustomField getApprovalDataCustomField() {
 		CustomField result = null;

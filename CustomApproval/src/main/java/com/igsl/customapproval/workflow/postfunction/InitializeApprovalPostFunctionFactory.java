@@ -161,6 +161,9 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	/**
 	 * Extract parameter lists from a generic map.
 	 * The lists will be stored in the map as string.
+	 * @param m Map
+	 * @return Map of String to String[]
+	 * @throws Exception Error parsing the arguments.
 	 */
 	public static Map<String, String[]> parseArguments(@SuppressWarnings("rawtypes") Map m) throws Exception {
 		Map<String, String[]> result = new HashMap<>();
