@@ -165,4 +165,28 @@
 		</actions>
 	</webwork1>
 	
+	<!-- Configuration page -->
+	<web-section key="CustomApprovalConfigSection"
+		location="admin_plugins_menu">
+		<label key="Custom Approval Configuration" />
+	</web-section>
+	<web-item key="CustomApprovalConfigMenu"
+		name="Custom Approval Configuration" section="admin_plugins_menu/CustomApprovalConfigSection" weight="10">
+		<description key="desc">Custom Approval Configuration
+		</description>
+		<label key="config.desc" />
+		<link linkId="CustomApprovalConfigLink">/secure/admin/plugins/handler/CustomApprovalConfig.jspa</link>
+	</web-item>
+	<webwork1 key="CustomApprovalConfig"
+		name="Custom Approval Configuration" class="java.lang.Object">
+		<description>Custom Approval Configuration</description>
+		<actions>
+			<action
+				name="com.igsl.customapproval.CustomApprovalConfig"
+				alias="CustomApprovalConfig">
+				<view name="input">templates/config/input.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
 </atlassian-plugin>

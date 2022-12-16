@@ -10,22 +10,33 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserPropertyManager;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
 import com.opensymphony.module.propertyset.PropertySet;
 
 public class DelegationUtil {
-	
-	private static final long HISTORY_THRESHOLD_DAYS = 365;	// TOOD Move to config page? properties?
 	
 	private static final Logger LOGGER = Logger.getLogger(DelegationUtil.class);
 	private static final UserPropertyManager UPM = ComponentAccessor.getUserPropertyManager();
 
 	private static final String PROPERTY_DELEGATION = "customApprovalDelegation";
 
+	/**
+	 * Calculate no. of days in d2 - d1.
+	 * @param d1
+	 * @param d2
+	 * @return long
+	 */
 	private static long dateDiff(Date d1, Date d2) {
+		long d1v = d1.getTime();
+		long d2v = d2.getTime();
 		long diffInMillies = Math.abs(d2.getTime() - d1.getTime());
 	    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-	    return diff;		
+	    if (d1v > d2v) {
+	    	return diff * -1;
+	    } else {
+		    return diff;
+	    }
 	}
 	
 	private static PropertySet getPropertySet(String userKey) {
@@ -85,6 +96,7 @@ public class DelegationUtil {
 	
 	public static List<DelegationSetting> loadData(String userKey, boolean removeOldRecords) {
 		List<DelegationSetting> result = new ArrayList<>();
+		long threshold = CustomApprovalUtil.getDelegationHistoryRetainDays();
 		PropertySet ps = getPropertySet(userKey);
 		String s = ps.getText(PROPERTY_DELEGATION);
 		LOGGER.debug("Loaded property: " + s);
@@ -98,7 +110,7 @@ public class DelegationUtil {
 					if (end != null) {
 						long diff = dateDiff(today, end);
 						LOGGER.debug("End date: " + end + ", diff: " + diff);
-						if (diff <= HISTORY_THRESHOLD_DAYS) {
+						if (diff <= threshold) {
 							LOGGER.debug("Record within threshold, adding: " + setting);
 							result.add(setting);
 						}
@@ -111,6 +123,11 @@ public class DelegationUtil {
 					LOGGER.debug("Adding no end date check: " + setting);
 					result.add(setting);
 				}
+			}
+			if (removeOldRecords) {
+				String out = DelegationSetting.format(result);
+				LOGGER.debug("Removing old records: " + out);
+				ps.setText(PROPERTY_DELEGATION, out);
 			}
 		}
 		return result;

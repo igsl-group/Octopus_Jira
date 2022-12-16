@@ -1,6 +1,7 @@
 package com.igsl.customapproval;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,10 @@ import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.TransitionOptions;
 import com.atlassian.jira.workflow.WorkflowManager;
 import com.atlassian.jira.workflow.TransitionOptions.Builder;
+import com.atlassian.sal.api.pluginsettings.PluginSettings;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.jira.workflow.WorkflowException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.customapproval.data.ApprovalData;
@@ -56,6 +60,13 @@ public class CustomApprovalUtil {
 	private static final StatusManager STATUS_MANAGER = ComponentAccessor.getComponent(StatusManager.class);
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
 	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
+	
+	// Configuration
+	private static final String CONFIG_KEY = "CustomApprovalConfigData:";
+	private static final String KEY_RETAIN_DAYS = CONFIG_KEY + "retainDays";
+	private static final String KEY_ADMIN_GROUPS = CONFIG_KEY + "adminGroups";
+	private static final long DEFAULT_RETAIN_DAYS = 365;
+	private static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
 	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
@@ -688,4 +699,51 @@ public class CustomApprovalUtil {
 		}
 	}
 	
+	public static long getDelegationHistoryRetainDays() {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			return Long.parseLong(String.valueOf(settings.get(KEY_RETAIN_DAYS)));
+		} catch (Exception ex) {
+			LOGGER.error("Failed to read delegation history retain period", ex);
+		}
+		return DEFAULT_RETAIN_DAYS;
+	}
+	
+	public static void setDelegationHistoryRetainDays(long days) {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			settings.put(KEY_RETAIN_DAYS, Long.toString(days));
+		} catch (Exception ex) {
+			LOGGER.error("Failed to update delegation history retain period", ex);
+		}
+	}
+	
+	public static List<String> getDelegationAdminGroups() {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			return OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
+					new TypeReference<List<String>>() {});
+		} catch (Exception ex) {
+			LOGGER.error("Failed to read delegation admin groups", ex);
+		}
+		List<String> list = new ArrayList<>();
+		Group adminGroup = checkGroupName(DEFAULT_ADMIN_GROUP);
+		if (adminGroup != null) {
+			list.add(adminGroup.getName());
+		}
+		return list;
+	}
+	
+	public static void setDelegationAdminGroups(List<String> groups) {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			settings.put(KEY_ADMIN_GROUPS, OM.writeValueAsString(groups));
+		} catch (Exception ex) {
+			LOGGER.error("Failed to update delegation admin groups", ex);
+		}
+	}
 }

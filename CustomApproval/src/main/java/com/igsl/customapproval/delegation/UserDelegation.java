@@ -38,8 +38,6 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOGGER = Logger.getLogger(UserDelegation.class);
 	
-	private static final String[] ADMIN_GROUPS = {"jira-administrators"};	// TODO config page
-	
 	private static final GroupManager GM = ComponentAccessor.getGroupManager();
 	
 	private static final String PARAM_ADMIN = "admin";
@@ -78,8 +76,9 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	}
 	
 	public boolean isAdmin() {
+		List<String> groups = CustomApprovalUtil.getDelegationAdminGroups();
 		if (getHttpRequest().getParameter(PARAM_ADMIN) != null) {
-			for (String s : ADMIN_GROUPS) {
+			for (String s : groups) {
 				Group g = GM.getGroup(s);
 				if (GM.isUserInGroup(getLoggedInUser(), g)) {
 					return true;

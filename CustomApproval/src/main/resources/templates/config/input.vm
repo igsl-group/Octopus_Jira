@@ -1,0 +1,112 @@
+<html>
+	<head>
+		<title>Custom Approval Configuration</title>
+		<meta content="admin" name="decorator" />
+		<style type="text/css">
+			table.DeletgationConfig {
+				width: 100%;
+				text-align: left;
+				table-layout: fixed;
+				vertical-align: top;
+			}
+		</style>
+	</head>
+	<body>
+		<table class="DeletgationConfig">
+			<form method="POST" action="secure/admin/plugins/handler/CustomApprovalConfig.jspa">
+				<tr>
+					<th width="40%">
+						Retention Period for Expired Delegation History (days): <br/>
+					</th>
+					<td width="60%">
+						<input 	type="text" 
+								pattern="[0-9]+" 
+								id="retainDays"
+								name="retainDays" 
+								value="${action.getDelegationHistoryRetainDays()}" />
+					</td>
+				</tr>
+				<tr>
+					<th>
+						Delegation Administrator User Group(s): <br/>
+						(can modify delegation for all users)
+					</th>
+					<td>
+						<input 	type="hidden" 
+								id="adminGroups" 
+								name="adminGroups" 
+								value="${action.getAdminGroupsAsJSON()}"/>
+						<input 	type="text" 
+								class="ajs-dirty-warning-exempt"
+								id="adminGroupsPicker" 
+								value="${action.getAdminGroupsAsJSON()}"/>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="100%">
+						<input 	type="submit" 
+								id="Save" 
+								name="Save" 
+								value="Save" 
+								onclick="groupsUpdated()"/>
+					</td>
+				</tr>
+			</form>
+		</table>
+		<script type="text/javascript">
+			function groupsUpdated() {
+				var list = $('#adminGroupsPicker').select2('val');
+				$('#adminGroups').val(JSON.stringify(list));
+			}
+		
+			var groupPickerConfig = {
+				delay: 250,
+				placeholder: 'Select Groups',
+				width: '100%',
+				multiple: true,
+				initSelection: function (element, callback) {
+					var list = [];
+					var data = JSON.parse(element.val());
+					element.val(null);
+					for (idx in data) {
+						list.push({
+							id: data[idx],
+							text: data[idx]
+						});	
+					}
+					callback(list);
+                },
+				ajax: {
+					type: 'GET',
+					url: AJS.contextPath() + '/rest/api/2/groups/picker',
+					dataType: 'json',
+					params: {
+						contentType:'application/json'
+					},
+					data: function(term) {
+						return { 
+							query: (term? term : ''),
+							maxResults: 1000
+						};
+					},
+					results: function(data, params) {
+						var list = [];
+						if (data && data.groups && data.groups.length) {
+							var src = data.groups;
+							for (var i = 0; i < src.length; i++) {
+								list.push({
+									id: src[i].name,
+									text: src[i].name
+								});
+							}
+						}
+						return {
+							results: list
+						};
+					}
+				}
+			};
+			$('#adminGroupsPicker').select2(groupPickerConfig);
+		</script>
+	</body>
+</html>
