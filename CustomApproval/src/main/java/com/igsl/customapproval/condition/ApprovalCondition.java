@@ -11,8 +11,8 @@ import com.atlassian.jira.plugin.webfragment.conditions.AbstractWebCondition;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igsl.customapproval.PluginSetup;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalSetup;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalHistory;
 import com.igsl.customapproval.data.ApprovalSettings;
@@ -30,7 +30,7 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 	 */
 	protected final boolean isApprovalEnabled(JiraHelper helper) {
 		Issue issue = getIssue(helper);
-		CustomField cf = PluginSetup.findCustomField();
+		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 		Object value = issue.getCustomFieldValue(cf);
 		if (value != null) {
 			ApprovalData data = ApprovalData.parse(String.valueOf(value));
@@ -51,27 +51,27 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 	 */
 	protected final boolean isUserApprover(ApplicationUser user, JiraHelper helper, boolean approve) {
 		Issue issue = getIssue(helper);
-		ApprovalData data = PluginUtil.getApprovalData(issue);
+		ApprovalData data = CustomApprovalUtil.getApprovalData(issue);
 		if (data == null) {
 			LOGGER.debug("No approval data");
 			return false;
 		}
-		ApprovalSettings settings = PluginUtil.getApprovalSettings(issue);
+		ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
 		if (settings == null) {
 			LOGGER.debug("Status not match");
 			return false;
 		}
 		// Check if user is approver
-		Map<String, ApplicationUser> userList = PluginUtil.getApproverList(issue, settings);
+		Map<String, ApplicationUser> userList = CustomApprovalUtil.getApproverList(issue, settings);
 		try {
 			String s = OM.writeValueAsString(userList);
 			LOGGER.debug("approver list: " + s);
 		} catch (Exception ex) {
 			LOGGER.debug("approver list serialization failed", ex);
 		}
-		boolean userIsApprover = PluginUtil.isApprover(user.getKey(), userList);
+		boolean userIsApprover = CustomApprovalUtil.isApprover(user.getKey(), userList);
 		if (!userIsApprover) {
-			userIsApprover = (PluginUtil.isDelegate(user.getKey(), userList).size() != 0);
+			userIsApprover = (CustomApprovalUtil.isDelegate(user.getKey(), userList).size() != 0);
 		}
 		if (!userIsApprover) {
 			LOGGER.debug("User is not approver");

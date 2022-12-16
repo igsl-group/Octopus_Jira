@@ -23,8 +23,8 @@ import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.TransitionOptions;
 import com.atlassian.jira.workflow.TransitionOptions.Builder;
 import com.atlassian.jira.workflow.WorkflowManager;
-import com.igsl.customapproval.PluginSetup;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalSetup;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalHistory;
 import com.igsl.customapproval.data.ApprovalSettings;
@@ -64,21 +64,21 @@ public abstract class BaseAction extends JiraWebActionSupport {
 	 * Get value for fields.
 	 */
 	protected boolean getData() {
-		this.approvalDataCustomField = PluginSetup.findCustomField();		
+		this.approvalDataCustomField = CustomApprovalSetup.getApprovalDataCustomField();		
 		String issueId = getHttpRequest().getParameter(PARAM_ISSUE_ID);
 		long issueIdAsLong = Long.parseLong(issueId);
 		this.issue = ComponentAccessor.getIssueManager().getIssueObject(issueIdAsLong);
 		if (this.issue != null) {
 			this.issueURL = ComponentAccessor.getApplicationProperties().getJiraBaseUrl() + 
 					"/browse/" + this.issue.getKey();	// TODO Handle embedded pages like search issue
-			this.approvalData = PluginUtil.getApprovalData(issue);
+			this.approvalData = CustomApprovalUtil.getApprovalData(issue);
 			if (this.approvalData == null) {
 				this.addErrorMessage("Unable to read approval data from issue");
 			}
-			this.settings = PluginUtil.getApprovalSettings(issue);
+			this.settings = CustomApprovalUtil.getApprovalSettings(issue);
 			if (this.settings != null) {
 				this.approvalName = this.settings.getApprovalName();
-				this.approverList = PluginUtil.getApproverList(issue, settings);
+				this.approverList = CustomApprovalUtil.getApproverList(issue, settings);
 				if (this.approverList == null || this.approverList.size() == 0) {
 					this.addErrorMessage("No approvers found");
 				}
@@ -122,108 +122,119 @@ public abstract class BaseAction extends JiraWebActionSupport {
 	 * @return boolean. If false, return JiraWebActionSupport.ERROR from doXXX() method. 
 	 */
 	protected boolean transitIssue(ApplicationUser user, boolean approve) {
-		// TODO Concurrency
 		if (user == null) {
 			this.addErrorMessage("Approving user is not provided");
 			return false;
 		}
-		List<ApplicationUser> onBehalfOf = null;
-		List<String> onBehalfOfList = null;
-		// Validate if user is approver
-		if (!PluginUtil.isApprover(user.getKey(), this.approverList)) {
-			// Check is anyone's delegate
-			onBehalfOf = PluginUtil.isDelegate(user.getKey(), approverList);
-			if (onBehalfOf.size() == 0) {
-				this.addErrorMessage("User is not an approver");
+		String lockId = null;
+		try {
+			lockId = CustomApprovalUtil.lockApproval(this.issue);
+			if (lockId == null) {
+				this.addErrorMessage("Another user is approving this issue, please try again later.");
 				return false;
 			}
-			onBehalfOfList = new ArrayList<>();
-			for (ApplicationUser u : onBehalfOf) {
-				onBehalfOfList.add(u.getKey());
-			}
-		}	
-		// Update ApprovalHistory
-		Map<String, ApprovalHistory> historyList = this.approvalData.getHistory().get(this.approvalName);
-		if (historyList.containsKey(user.getKey())) {
-			// Already approved, update decision
-			ApprovalHistory historyItem = historyList.get(user.getKey());
-			historyItem.setApprovedDate(new Date());
-			historyItem.setApproved(approve);
-			if (onBehalfOfList != null) {
-				historyItem.setOnBehalfOf(onBehalfOfList);
-			}
-		} else {
-			// Add new record
-			ApprovalHistory historyItem = new ApprovalHistory();
-			historyItem.setApprover(user.getKey());
-			historyItem.setApprovedDate(new Date());
-			historyItem.setApproved(approve);
-			historyList.put(user.getKey(), historyItem);
-			if (onBehalfOfList != null) {
-				historyItem.setOnBehalfOf(onBehalfOfList);
-			}
-		}
-		// Save ApprovalData
-		this.issue.setCustomFieldValue(this.approvalDataCustomField, this.approvalData.toString());
-		ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
-		
-		// Check approval criteria, transit issue if met
-		double approveCount = 0;
-		double rejectCount = 0;
-		// Find history where the user or on behalf of user is still an approver
-		for (ApprovalHistory historyItem : historyList.values()) {
-			boolean isApprover = PluginUtil.isApprover(historyItem.getApprover(), this.approverList);
-			if (!isApprover) {
-				isApprover = (PluginUtil.isDelegate(historyItem.getApprover(), this.approverList) != null);
-			}
-			if (isApprover) {
-				if (historyItem.getApproved()) {
-					approveCount++;
-				} else {
-					rejectCount++;
+			List<ApplicationUser> onBehalfOf = null;
+			List<String> onBehalfOfList = null;
+			// Validate if user is approver
+			if (!CustomApprovalUtil.isApprover(user.getKey(), this.approverList)) {
+				// Check is anyone's delegate
+				onBehalfOf = CustomApprovalUtil.isDelegate(user.getKey(), approverList);
+				if (onBehalfOf.size() == 0) {
+					this.addErrorMessage("User is not an approver");
+					return false;
+				}
+				onBehalfOfList = new ArrayList<>();
+				for (ApplicationUser u : onBehalfOf) {
+					onBehalfOfList.add(u.getKey());
+				}
+			}	
+			// Update ApprovalHistory
+			Map<String, ApprovalHistory> historyList = this.approvalData.getHistory().get(this.approvalName);
+			if (historyList.containsKey(user.getKey())) {
+				// Already approved, update decision
+				ApprovalHistory historyItem = historyList.get(user.getKey());
+				historyItem.setApprovedDate(new Date());
+				historyItem.setApproved(approve);
+				if (onBehalfOfList != null) {
+					historyItem.setOnBehalfOf(onBehalfOfList);
+				}
+			} else {
+				// Add new record
+				ApprovalHistory historyItem = new ApprovalHistory();
+				historyItem.setApprover(user.getKey());
+				historyItem.setApprovedDate(new Date());
+				historyItem.setApproved(approve);
+				historyList.put(user.getKey(), historyItem);
+				if (onBehalfOfList != null) {
+					historyItem.setOnBehalfOf(onBehalfOfList);
 				}
 			}
-		}
-		LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
-		// Get target counts
-		double approveCountTarget = PluginUtil.getApproveCountTarget(this.settings, this.approverList);
-		double rejectCountTarget = PluginUtil.getRejectCountTarget(this.settings, this.approverList);
-		LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
-		Integer targetAction = null;
-		if (rejectCountTarget <= rejectCount) {
-			targetAction = this.rejectAction;
-		} else if (approveCountTarget <= approveCount) {
-			targetAction = this.approveAction;
-		}
-		if (targetAction != null) {
-			TransitionOptions.Builder builder = new Builder();
-			// There should be a hide from user condition on the transition, so need to skip condition
-			builder.skipConditions();
-			IssueService iService = ComponentAccessor.getIssueService();
-			TransitionValidationResult tvr = iService.validateTransition(
-					user, 
-					this.issue.getId(), 
-					targetAction, 
-					iService.newIssueInputParameters(), 
-					builder.build());
-			if (tvr.isValid()) {
-				IssueResult ir = iService.transition(getLoggedInUser(), tvr);
-				if (ir.isValid()) {				
-					return true;
+			// Save ApprovalData
+			this.issue.setCustomFieldValue(this.approvalDataCustomField, this.approvalData.toString());
+			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+			
+			// Check approval criteria, transit issue if met
+			double approveCount = 0;
+			double rejectCount = 0;
+			// Find history where the user or on behalf of user is still an approver
+			for (ApprovalHistory historyItem : historyList.values()) {
+				boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), this.approverList);
+				if (!isApprover) {
+					isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), this.approverList) != null);
+				}
+				if (isApprover) {
+					if (historyItem.getApproved()) {
+						approveCount++;
+					} else {
+						rejectCount++;
+					}
+				}
+			}
+			LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
+			// Get target counts
+			double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(this.settings, this.approverList);
+			double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(this.settings, this.approverList);
+			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
+			Integer targetAction = null;
+			if (rejectCountTarget <= rejectCount) {
+				targetAction = this.rejectAction;
+			} else if (approveCountTarget <= approveCount) {
+				targetAction = this.approveAction;
+			}
+			if (targetAction != null) {
+				TransitionOptions.Builder builder = new Builder();
+				// There should be a hide from user condition on the transition, so need to skip condition
+				builder.skipConditions();
+				IssueService iService = ComponentAccessor.getIssueService();
+				TransitionValidationResult tvr = iService.validateTransition(
+						user, 
+						this.issue.getId(), 
+						targetAction, 
+						iService.newIssueInputParameters(), 
+						builder.build());
+				if (tvr.isValid()) {
+					IssueResult ir = iService.transition(getLoggedInUser(), tvr);
+					if (ir.isValid()) {				
+						return true;
+					} else {
+						for (String s : ir.getErrorCollection().getErrorMessages()) {
+							this.addErrorMessage(s);
+						}
+						return false;
+					}
 				} else {
-					for (String s : ir.getErrorCollection().getErrorMessages()) {
+					for (String s : tvr.getErrorCollection().getErrorMessages()) {
 						this.addErrorMessage(s);
 					}
 					return false;
-				}
+				}		
 			} else {
-				for (String s : tvr.getErrorCollection().getErrorMessages()) {
-					this.addErrorMessage(s);
-				}
-				return false;
-			}		
-		} else {
-			return true;
+				return true;
+			}
+		} finally {
+			if (lockId != null) {
+				CustomApprovalUtil.unlockApproval(this.issue, lockId);
+			}
 		}
 	}
 	

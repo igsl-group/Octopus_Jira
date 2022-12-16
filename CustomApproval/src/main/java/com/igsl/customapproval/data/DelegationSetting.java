@@ -11,7 +11,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalUtil;
 
 /**
  * Delegation settings. 
@@ -44,9 +44,9 @@ public class DelegationSetting {
 	
 	public static void translate(DelegationSetting ds) {
 		if (ds != null) {
-			ds.setDelegateToUserObject(PluginUtil.getUserByKey(ds.getDelegateToUser()));
-			ds.setFromUserObject(PluginUtil.getUserByKey(ds.getFromUser()));
-			ds.setLastModifiedByObject(PluginUtil.getUserByKey(ds.getLastModifiedBy()));
+			ds.setDelegateToUserObject(CustomApprovalUtil.getUserByKey(ds.getDelegateToUser()));
+			ds.setFromUserObject(CustomApprovalUtil.getUserByKey(ds.getFromUser()));
+			ds.setLastModifiedByObject(CustomApprovalUtil.getUserByKey(ds.getLastModifiedBy()));
 			ds.setStartDateString(
 					(ds.getStartDate() == null)? DATE_NO_LIMIT : SDF.format(ds.getStartDate()));
 			ds.setEndDateString(

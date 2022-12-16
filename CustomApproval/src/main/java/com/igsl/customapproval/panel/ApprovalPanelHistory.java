@@ -8,11 +8,9 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.jira.user.util.UserManager;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalHistory;
 import com.igsl.customapproval.data.ApprovalSettings;
 
@@ -40,7 +38,7 @@ public class ApprovalPanelHistory {
 		this.approved = history.getApproved();
 		this.approvedDate = history.getApprovedDate();
 		// Translate
-		ApplicationUser approverUser = PluginUtil.getUserByKey(this.approver);
+		ApplicationUser approverUser = CustomApprovalUtil.getUserByKey(this.approver);
 		if (approverUser != null) {
 			this.approverDisplayName = approverUser.getDisplayName();
 		} else {
@@ -49,7 +47,7 @@ public class ApprovalPanelHistory {
 		if (this.onBehalfOf != null) {
 			this.onBehalfOfDisplayName = new ArrayList<>();
 			for (String key : this.onBehalfOf) {
-				ApplicationUser onBehalfOfUser = PluginUtil.getUserByKey(key);
+				ApplicationUser onBehalfOfUser = CustomApprovalUtil.getUserByKey(key);
 				if (onBehalfOfUser != null) {
 					this.onBehalfOfDisplayName.add(onBehalfOfUser.getDisplayName());
 				} else {
@@ -63,14 +61,19 @@ public class ApprovalPanelHistory {
 			this.approvedDateString = SDF.format(this.approvedDate);
 		}
 		this.decision = (this.approved)? "Approved" : "Rejected";
-		Map<String, ApplicationUser> approverList = PluginUtil.getApproverList(issue, settings);
+		Map<String, ApplicationUser> approverList = CustomApprovalUtil.getApproverList(issue, settings);
 		for (String s : approverList.keySet()) {
 			LOGGER.debug("Approver list: " + s);
 		}
 		LOGGER.debug("User: " + this.approver);
-		this.valid = PluginUtil.isApprover(this.approver, approverList);
+		this.valid = CustomApprovalUtil.isApprover(this.approver, approverList);
 		if (!this.valid) {
-			this.valid = (PluginUtil.isDelegate(this.approver, approverList).size() != 0);
+			// We will not verify delegation settings here... if it is present, then it is considered valid.
+			// We do not want to keep all delegation history in user properties.
+			// Since delegation history can get cleaned up, we cannot verify.
+			if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
+				this.valid = true;
+			}
 		}
 		LOGGER.debug("isValid: " + this.valid);
 	}

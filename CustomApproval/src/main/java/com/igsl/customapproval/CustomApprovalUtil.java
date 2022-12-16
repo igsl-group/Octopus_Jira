@@ -6,14 +6,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.Group;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.StatusManager;
+import com.atlassian.jira.event.type.EventDispatchOption;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.IssueManager;
+import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.status.Status;
@@ -26,16 +30,17 @@ import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalSettings;
 import com.igsl.customapproval.delegation.DelegationUtil;
 
-public class PluginUtil {
+public class CustomApprovalUtil {
 	
-	private static final Logger LOGGER = Logger.getLogger(PluginUtil.class);
+	private static final Logger LOGGER = Logger.getLogger(CustomApprovalUtil.class);
 	private static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
 	private static final UserManager USER_MANAGER = ComponentAccessor.getUserManager();
 	private static final GroupManager GROUP_MANAGER = ComponentAccessor.getGroupManager();
 	private static final StatusManager STATUS_MANAGER = ComponentAccessor.getComponent(StatusManager.class);
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
-
+	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
+	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
 	public static final String CUSTOM_FIELD_TEXT_AREA = SYSTEM_CUSTOM_FIELD_TYPE + "textarea";
@@ -53,6 +58,8 @@ public class PluginUtil {
 	
 	public static final String ADMIN_USER_KEY = "admin";
 
+	public static final String LOCK_FIELD_NAME = "Approval Lock";
+	public static final String LOCK_FIELD_DESCRIPTION = "[Custom Approval] Approval lock";
 	public static final String CUSTOM_FIELD_NAME = "Approval Data";
 	public static final String CUSTOM_FIELD_DESCRIPTION = "[Custom Approval] Approval data as JSON string";
 	
@@ -181,12 +188,49 @@ public class PluginUtil {
 	}
 	
 	/**
+	 * Lock issue for custom approval.
+	 * Always use a try...finally block to unlock afterwards. 
+	 * @param issue Issue
+	 * @return Lock Id. Use this value to unlock. If null, locking failed (someone else is editing).
+	 */
+	public static String lockApproval(MutableIssue issue) {
+		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+		UUID newId = UUID.randomUUID();
+		CustomField cf = CustomApprovalSetup.getApprovalLockCustomField();
+		Object o = issue.getCustomFieldValue(cf);
+		if (o == null) {
+			issue.setCustomFieldValue(cf, newId.toString());
+			ISSUE_MANAGER.updateIssue(currentUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+			return newId.toString();
+		}
+		return null;
+	}
+	
+	/**
+	 * Unlock issue for custom approval.
+	 * @param issue Issue
+	 * @param lockId String, lock Id returned by lockApproval().
+	 * @return boolean true if unlocking is successful.
+	 */
+	public static boolean unlockApproval(MutableIssue issue, String lockId) {
+		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+		CustomField cf = CustomApprovalSetup.getApprovalLockCustomField();
+		Object o = issue.getCustomFieldValue(cf);
+		if (o != null && String.valueOf(o).equals(lockId)) {
+			issue.setCustomFieldValue(cf, null);
+			ISSUE_MANAGER.updateIssue(currentUser, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * Retrieve ApprovalData custom field value from issue.
 	 * @param issue Issue
 	 * @return ApprovalData, null if not present or invalid.
 	 */
 	public static ApprovalData getApprovalData(Issue issue) {
-		CustomField cf = PluginSetup.findCustomField();
+		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 		Object value = issue.getCustomFieldValue(cf);
 		if (value == null) {
 			LOGGER.debug("No approval data");
@@ -362,7 +406,7 @@ public class PluginUtil {
 	}
 	
 	/**
-	 * Check if user is a delegate of an approver for the issue's current status.
+	 * Check if user is currently a delegate of an approver for the issue's current status.
 	 * @param ApplicationUser User to check
 	 * @param Issue issue
 	 * @param approverList From getApproverList

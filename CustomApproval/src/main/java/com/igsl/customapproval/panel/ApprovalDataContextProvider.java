@@ -10,8 +10,8 @@ import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.plugin.webfragment.contextproviders.AbstractJiraContextProvider;
 import com.atlassian.jira.plugin.webfragment.model.JiraHelper;
 import com.atlassian.jira.user.ApplicationUser;
-import com.igsl.customapproval.PluginSetup;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalSetup;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalHistory;
 import com.igsl.customapproval.data.ApprovalSettings;
@@ -29,7 +29,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 		Map<String, Object> result = new HashMap<>();
 		Issue issue = (Issue) helper.getContextParams().get(PARAM_ISSUE);
 		if (issue != null) {
-			CustomField cf = PluginSetup.findCustomField();
+			CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 			if (cf != null) {
 				ApprovalData ad = ApprovalData.parse(String.valueOf(issue.getCustomFieldValue(cf)));
 				if (ad != null) {
@@ -39,9 +39,9 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 						ApprovalSettings settings = ad.getSettings().get(entry.getKey());
 						ApprovalPanelSettings displaySetting = new ApprovalPanelSettings();
 						Map<String, ApplicationUser> approverList = 
-								PluginUtil.getApproverList(issue, settings);
-						displaySetting.setApproveCountTarget(PluginUtil.getApproveCountTarget(settings, approverList));
-						displaySetting.setRejectCountTarget(PluginUtil.getRejectCountTarget(settings, approverList));
+								CustomApprovalUtil.getApproverList(issue, settings);
+						displaySetting.setApproveCountTarget(CustomApprovalUtil.getApproveCountTarget(settings, approverList));
+						displaySetting.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
 						List<ApprovalPanelHistory> list = new ArrayList<>();
 						for (ApprovalHistory historyItem : entry.getValue().values()) {
 							ApprovalPanelHistory displayHistory = new ApprovalPanelHistory(historyItem, issue, settings);

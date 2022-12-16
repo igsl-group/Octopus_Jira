@@ -11,7 +11,7 @@ import com.atlassian.jira.plugin.workflow.UpdateIssueFieldFunctionPluginFactory;
 import com.atlassian.jira.user.UserKeyService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.FunctionDescriptor;
 
@@ -65,9 +65,9 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	protected void getVelocityParamsForInput(Map velocityParams) {
 		LOGGER.debug("getVelocityParamsForInput");
 		// Set data for pickers
-		velocityParams.put(VELOCITY_USER_FIELD_LIST, PluginUtil.getUserFieldList());
-		velocityParams.put(VELOCITY_GROUP_FIELD_LIST, PluginUtil.getGroupFieldList());
-		velocityParams.put(VELOCITY_STATUS_LIST, PluginUtil.getStatusList());
+		velocityParams.put(VELOCITY_USER_FIELD_LIST, CustomApprovalUtil.getUserFieldList());
+		velocityParams.put(VELOCITY_GROUP_FIELD_LIST, CustomApprovalUtil.getGroupFieldList());
+		velocityParams.put(VELOCITY_STATUS_LIST, CustomApprovalUtil.getStatusList());
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })

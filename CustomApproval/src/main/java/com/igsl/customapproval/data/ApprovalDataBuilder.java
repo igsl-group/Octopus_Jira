@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalUtil;
 
 public class ApprovalDataBuilder {
 
@@ -58,13 +58,13 @@ public class ApprovalDataBuilder {
 		if (data.getSettings().containsKey(approvalName)) {
 			throw new Exception("Approval \"" + approvalName + "\" already exists");
 		} else {
-			if (PluginUtil.checkStatus(startingStatus) == null) {
+			if (CustomApprovalUtil.checkStatus(startingStatus) == null) {
 				throw new Exception("Starting status \"" + startingStatus + "\" is not valid");
 			}
-			if (PluginUtil.checkStatus(approveStatus) == null) {
+			if (CustomApprovalUtil.checkStatus(approveStatus) == null) {
 				throw new Exception("Approve status \"" + approveStatus + "\" is not valid");
 			}
-			if (PluginUtil.checkStatus(rejectStatus) == null) {
+			if (CustomApprovalUtil.checkStatus(rejectStatus) == null) {
 				throw new Exception("Reject status \"" + rejectStatus + "\" is not valid");
 			}
 			ApprovalSettings settings = new ApprovalSettings();
@@ -91,7 +91,7 @@ public class ApprovalDataBuilder {
 			throw new Exception("Approval \"" + approvalName + "\" does not exist");
 		} else {
 			if (fieldName != null && !fieldName.isEmpty()) {
-				if (PluginUtil.checkUserField(fieldName) != null) {
+				if (CustomApprovalUtil.checkUserField(fieldName) != null) {
 					data.getSettings().get(approvalName).setApproverUserField(fieldName);
 				} else {
 					throw new Exception("Custom field \"" + fieldName + "\" is not a user picker");
@@ -115,7 +115,7 @@ public class ApprovalDataBuilder {
 			throw new Exception("Approval \"" + approvalName + "\" does not exist");
 		} else {
 			if (fieldName != null && !fieldName.isEmpty()) {
-				if (PluginUtil.checkGroupField(fieldName) != null) {
+				if (CustomApprovalUtil.checkGroupField(fieldName) != null) {
 					data.getSettings().get(approvalName).setApproverGroupField(fieldName);	
 				} else {
 					throw new Exception("Custom field \"" + fieldName + "\" is not a group picker");

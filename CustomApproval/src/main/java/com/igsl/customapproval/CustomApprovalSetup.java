@@ -29,32 +29,53 @@ import com.atlassian.plugin.event.events.PluginEnabledEvent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
 
 @Component
-public class PluginSetup implements InitializingBean, DisposableBean {
+public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	
-	private static final Logger LOGGER = Logger.getLogger(PluginSetup.class);
-	
+	private static final Logger LOGGER = Logger.getLogger(CustomApprovalSetup.class);
 	
 	private EventPublisher eventPublisher;
 	
 	@Autowired
-	public PluginSetup(@JiraImport EventPublisher eventPublisher) {
+	public CustomApprovalSetup(@JiraImport EventPublisher eventPublisher) {
 	    this.eventPublisher = eventPublisher;
 	}
-	
+
 	/**
-	 * Get CustomField of ApprovalData.
+	 * Get CustomField for locking.
 	 */
-	public static CustomField findCustomField() {
+	public static CustomField getApprovalLockCustomField() {
 		CustomField result = null;
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_TEXT_AREA);
-		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(PluginUtil.CUSTOM_FIELD_NAME);
+		CustomFieldType<?, ?> cfType = getCustomFieldType();
+		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.LOCK_FIELD_NAME);
 		if (list != null) {
 			Iterator<CustomField> it = list.iterator();
 			while (it.hasNext()) {
 				CustomField cf = it.next();
 				if (cfType.equals(cf.getCustomFieldType()) && 
-					PluginUtil.CUSTOM_FIELD_DESCRIPTION.equals(cf.getDescription())) {
+					CustomApprovalUtil.LOCK_FIELD_DESCRIPTION.equals(cf.getDescription())) {
+					result = cf;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Get CustomField of ApprovalData.
+	 */
+	public static CustomField getApprovalDataCustomField() {
+		CustomField result = null;
+		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
+		CustomFieldType<?, ?> cfType = getCustomFieldType();
+		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.CUSTOM_FIELD_NAME);
+		if (list != null) {
+			Iterator<CustomField> it = list.iterator();
+			while (it.hasNext()) {
+				CustomField cf = it.next();
+				if (cfType.equals(cf.getCustomFieldType()) && 
+					CustomApprovalUtil.CUSTOM_FIELD_DESCRIPTION.equals(cf.getDescription())) {
 					result = cf;
 					break;
 				}
@@ -65,23 +86,23 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	
 	public static CustomFieldType<?, ?> getCustomFieldType() {
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(PluginUtil.CUSTOM_FIELD_TEXT_AREA);
+		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(CustomApprovalUtil.CUSTOM_FIELD_TEXT_AREA);
 		return cfType;
 	}
 	
-	private static CustomField createCustomField() {
+	private static void createCustomFields() {
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldType(); 
 		// Find if field exists
-		CustomField result = findCustomField();
+		CustomField result = getApprovalDataCustomField();
 		// Create if not
 		if (result == null) {
 			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
 			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
 			try {
 				CustomField created = cfMan.createCustomField(
-					PluginUtil.CUSTOM_FIELD_NAME, 
-					PluginUtil.CUSTOM_FIELD_DESCRIPTION, 
+					CustomApprovalUtil.CUSTOM_FIELD_NAME, 
+					CustomApprovalUtil.CUSTOM_FIELD_DESCRIPTION, 
 					cfType, 
 					(CustomFieldSearcher) null, // Searcher not supported by custom field type
 					contexts, 
@@ -102,7 +123,36 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 				LOGGER.error("Failed to create custom field", ex);
 			}
 		}
-		return result;
+		// Find if lock field exists
+		CustomField lockField = getApprovalLockCustomField();
+		// Create if not
+		if (lockField == null) {
+			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
+			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
+			try {
+				CustomField created = cfMan.createCustomField(
+					CustomApprovalUtil.LOCK_FIELD_NAME, 
+					CustomApprovalUtil.LOCK_FIELD_DESCRIPTION, 
+					cfType, 
+					(CustomFieldSearcher) null, // Searcher not supported by custom field type
+					contexts, 
+					issueTypes);
+				// Lock the custom field
+				ManagedConfigurationItemService configItemService = 
+						ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
+				ManagedConfigurationItem item = configItemService.getManagedCustomField(created);
+				ManagedConfigurationItemBuilder builder = item.newBuilder();
+				item = builder
+						.setConfigurationItemAccessLevel(ConfigurationItemAccessLevel.ADMIN)
+						.setManaged(true)
+						.build();
+				configItemService.updateManagedConfigurationItem(item);
+				lockField = created;
+				LOGGER.debug("Lock field created");
+			} catch (Exception ex) {
+				LOGGER.error("Failed to create lock field", ex);
+			}
+		}
 	}
 	
 	// PluginInstalledEvent, PluginUninstallingEvent and PluginUninstalledEvent 
@@ -116,8 +166,8 @@ public class PluginSetup implements InitializingBean, DisposableBean {
 	@EventListener
     public void onPluginEnabled(PluginEnabledEvent event) {
 		LOGGER.debug("PluginEvent enabled: " + event.getPlugin().getKey());
-		if (PluginUtil.PLUGIN_KEY.equals(event.getPlugin().getKey())) {
-			PluginSetup.createCustomField();
+		if (CustomApprovalUtil.PLUGIN_KEY.equals(event.getPlugin().getKey())) {
+			CustomApprovalSetup.createCustomFields();
 		}
 	}
 	

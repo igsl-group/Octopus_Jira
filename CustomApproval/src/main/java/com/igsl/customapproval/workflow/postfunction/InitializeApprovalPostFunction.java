@@ -13,8 +13,8 @@ import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.function.issue.AbstractJiraFunctionProvider;
-import com.igsl.customapproval.PluginSetup;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalSetup;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalDataBuilder;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -30,8 +30,8 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		// transientVars contains the issue object
 		// Post function configuration is in args
-		CustomField cf = PluginSetup.findCustomField();
-		ApplicationUser adminUser = PluginUtil.getAdminUser();
+		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
+		ApplicationUser adminUser = CustomApprovalUtil.getAdminUser();
 		MutableIssue issue = getIssue(transientVars);
 		
 		ApprovalDataBuilder builder = new ApprovalDataBuilder();

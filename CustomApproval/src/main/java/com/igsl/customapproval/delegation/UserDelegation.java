@@ -13,7 +13,7 @@ import com.atlassian.crowd.embedded.api.Group;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
-import com.igsl.customapproval.PluginUtil;
+import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
 
 public class UserDelegation extends JiraWebActionSupport {
@@ -101,7 +101,7 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 		}
 		this.settings = DelegationUtil.loadData(fromUser, true);
 		this.selectedUserKey = fromUser;
-		this.selectedUserDisplayName = PluginUtil.getUserByKey(fromUser).getDisplayName();
+		this.selectedUserDisplayName = CustomApprovalUtil.getUserByKey(fromUser).getDisplayName();
 		
 		if (req.getParameter(PARAM_ADD) != null) {
 			// Add
