@@ -95,6 +95,11 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	private static void createCustomFields() {
 		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldType(); 
+		CustomFieldSearcher cfSearcher = null;
+		List<CustomFieldSearcher> cfSearcherList = cfMan.getCustomFieldSearchers(cfType);
+		if (cfSearcherList != null && cfSearcherList.size() != 0) {
+			cfSearcher = cfSearcherList.get(0);
+		}
 		// Find if field exists
 		CustomField result = getApprovalDataCustomField();
 		// Create if not
@@ -106,7 +111,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 					CustomApprovalUtil.CUSTOM_FIELD_NAME, 
 					CustomApprovalUtil.CUSTOM_FIELD_DESCRIPTION, 
 					cfType, 
-					(CustomFieldSearcher) null, // Searcher not supported by custom field type
+					cfSearcher,
 					contexts, 
 					issueTypes);
 				// Lock the custom field
@@ -116,7 +121,6 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 				ManagedConfigurationItemBuilder builder = item.newBuilder();
 				item = builder
 						.setConfigurationItemAccessLevel(ConfigurationItemAccessLevel.ADMIN)
-						.setManaged(true)
 						.build();
 				configItemService.updateManagedConfigurationItem(item);
 				result = created;
@@ -136,7 +140,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 					CustomApprovalUtil.LOCK_FIELD_NAME, 
 					CustomApprovalUtil.LOCK_FIELD_DESCRIPTION, 
 					cfType, 
-					(CustomFieldSearcher) null, // Searcher not supported by custom field type
+					cfSearcher,
 					contexts, 
 					issueTypes);
 				// Lock the custom field
@@ -146,7 +150,6 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 				ManagedConfigurationItemBuilder builder = item.newBuilder();
 				item = builder
 						.setConfigurationItemAccessLevel(ConfigurationItemAccessLevel.ADMIN)
-						.setManaged(true)
 						.build();
 				configItemService.updateManagedConfigurationItem(item);
 				lockField = created;
@@ -171,6 +174,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 		if (CustomApprovalUtil.PLUGIN_KEY.equals(event.getPlugin().getKey())) {
 			CustomApprovalSetup.createCustomFields();
 		}
+		CustomApprovalUtil.createScheduledJob(CustomApprovalUtil.getJobFrequency());
 	}
 	
 	@Override

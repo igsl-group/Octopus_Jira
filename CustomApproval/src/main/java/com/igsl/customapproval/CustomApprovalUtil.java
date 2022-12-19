@@ -35,6 +35,14 @@ import com.atlassian.jira.workflow.WorkflowException;
 import com.atlassian.jira.workflow.WorkflowManager;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
+import com.atlassian.scheduler.SchedulerService;
+import com.atlassian.scheduler.SchedulerServiceException;
+import com.atlassian.scheduler.config.JobConfig;
+import com.atlassian.scheduler.config.JobId;
+import com.atlassian.scheduler.config.JobRunnerKey;
+import com.atlassian.scheduler.config.RunMode;
+import com.atlassian.scheduler.config.Schedule;
+import com.atlassian.scheduler.status.JobDetails;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -65,8 +73,10 @@ public class CustomApprovalUtil {
 	private static final String CONFIG_KEY = "CustomApprovalConfigData:";
 	private static final String KEY_RETAIN_DAYS = CONFIG_KEY + "retainDays";
 	private static final String KEY_ADMIN_GROUPS = CONFIG_KEY + "adminGroups";
-	private static final long DEFAULT_RETAIN_DAYS = 365;
-	private static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
+	private static final String KEY_JOB_FREQUENCY = CONFIG_KEY + "jobFrequency";
+	public static final long DEFAULT_RETAIN_DAYS = 365;
+	public static final long DEFAULT_JOB_FREQUENCY = 300000;
+	public static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
 	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
@@ -512,7 +522,7 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
-	 * Approve/reject current approval.
+	 * Approve/reject current approval. Transit status is condition is matched.
 	 * @param issue Issue
 	 * @param user ApplicationUser performing the action.
 	 * @param approve boolean, true to approve, false to reject.
@@ -539,13 +549,14 @@ public class CustomApprovalUtil {
 	 * @param settings ApprovalSettings of a specific approval.
 	 * @param user ApplicationUser performing the action.
 	 * @param approve boolean, true to approve, false to reject.
+	 * @return boolean True if issue is transited.
 	 * @throws InvalidApprovalException when ApprovalSettings is not valid
 	 * @throws LockException when unable to lock issue
 	 * @throws InvalidApproverException when provided user is not approver/delegate
 	 * @throws InvalidWorkflowException when unable to locate transition for approval
 	 * @throws WorkflowException when unable to transit issue
 	 */
-	public static void approve(MutableIssue issue, ApprovalSettings settings, ApplicationUser user, boolean approve) 
+	public static boolean approve(MutableIssue issue, ApprovalSettings settings, ApplicationUser user, boolean approve) 
 			throws 
 				LockException, 
 				InvalidApproverException, 
@@ -619,7 +630,7 @@ public class CustomApprovalUtil {
 			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
 			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
 			
-			transitIssueWithoutLock(issue, user);
+			return transitIssueWithoutLock(issue, user);
 		} finally {
 			if (lockId != null) {
 				CustomApprovalUtil.unlockApproval(issue, lockId);
@@ -631,8 +642,9 @@ public class CustomApprovalUtil {
 	 * Check if approval condition has been completed and transit issue.
 	 * @param issue Issue
 	 * @param user User performing the action
+	 * @return boolean True if issue has been transited
 	 */
-	public static void transitIssue(MutableIssue issue, ApplicationUser user)
+	public static boolean transitIssue(MutableIssue issue, ApplicationUser user)
 			throws LockException, InvalidWorkflowException, WorkflowException {
 		String lockId = null;
 		try {
@@ -640,7 +652,7 @@ public class CustomApprovalUtil {
 			if (lockId == null) {
 				throw new LockException();
 			}
-			transitIssueWithoutLock(issue, user);
+			return transitIssueWithoutLock(issue, user);
 		} finally {
 			if (lockId != null) {
 				CustomApprovalUtil.unlockApproval(issue, lockId);
@@ -648,105 +660,137 @@ public class CustomApprovalUtil {
 		}
 	}
 	
-	private static void transitIssueWithoutLock(MutableIssue issue, ApplicationUser user)
+	private static boolean transitIssueWithoutLock(MutableIssue issue, ApplicationUser user)
 			throws LockException, InvalidWorkflowException, WorkflowException {
 		ApprovalData approvalData = getApprovalData(issue);
 		ApprovalSettings approvalSettings = getApprovalSettings(issue);
-		Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
-		Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(approvalSettings.getApprovalName());
-		Integer approveAction = null;
-		Integer rejectAction = null;
-		WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
-		JiraWorkflow wf = wfMan.getWorkflow(issue);
-		if (wf != null) {
-			List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
-			for (Object a : actions) {
-				ActionDescriptor desc = (ActionDescriptor) a;
-				String targetStatus = getActionTarget(wf, desc);
-				if (approvalSettings.getApprovedStatus().equals(targetStatus)) {
-					approveAction = desc.getId();
-					LOGGER.debug("Approve action found: " + approveAction);
-				} else if (approvalSettings.getRejectedStatus().equals(targetStatus)) {
-					rejectAction = desc.getId();
-					LOGGER.debug("Reject action found: " + rejectAction);
+		if (approvalSettings != null) {
+			Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
+			Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(approvalSettings.getApprovalName());
+			Integer approveAction = null;
+			Integer rejectAction = null;
+			WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
+			JiraWorkflow wf = wfMan.getWorkflow(issue);
+			if (wf != null) {
+				List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
+				for (Object a : actions) {
+					ActionDescriptor desc = (ActionDescriptor) a;
+					String targetStatus = getActionTarget(wf, desc);
+					if (approvalSettings.getApprovedStatus().equals(targetStatus)) {
+						approveAction = desc.getId();
+						LOGGER.debug("Approve action found: " + approveAction);
+					} else if (approvalSettings.getRejectedStatus().equals(targetStatus)) {
+						rejectAction = desc.getId();
+						LOGGER.debug("Reject action found: " + rejectAction);
+					}
+				}
+			} else {
+				throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
+			}
+			if (approveAction == null) {
+				throw new InvalidWorkflowException("Approve action cannot be found in workflow");
+			}
+			if (rejectAction == null) {
+				throw new InvalidWorkflowException("Reject action cannot be found in workflow");
+			}
+			// Check approval criteria, transit issue if met
+			double approveCount = 0;
+			double rejectCount = 0;
+			// Find history where the user or on behalf of user is still an approver
+			for (ApprovalHistory historyItem : historyList.values()) {
+				boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
+				if (!isApprover) {
+					isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
+				}
+				if (isApprover) {
+					if (historyItem.getApproved()) {
+						approveCount++;
+					} else {
+						rejectCount++;
+					}
 				}
 			}
-		} else {
-			throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
-		}
-		if (approveAction == null) {
-			throw new InvalidWorkflowException("Approve action cannot be found in workflow");
-		}
-		if (rejectAction == null) {
-			throw new InvalidWorkflowException("Reject action cannot be found in workflow");
-		}
-		// Check approval criteria, transit issue if met
-		double approveCount = 0;
-		double rejectCount = 0;
-		// Find history where the user or on behalf of user is still an approver
-		for (ApprovalHistory historyItem : historyList.values()) {
-			boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
-			if (!isApprover) {
-				isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
+			LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
+			// Get target counts
+			double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(approvalSettings, approverList);
+			double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(approvalSettings, approverList);
+			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
+			Integer targetAction = null;
+			if (rejectCountTarget <= rejectCount) {
+				targetAction = rejectAction;
+			} else if (approveCountTarget <= approveCount) {
+				targetAction = approveAction;
 			}
-			if (isApprover) {
-				if (historyItem.getApproved()) {
-					approveCount++;
+			if (targetAction != null) {
+				TransitionOptions.Builder builder = new Builder();
+				// There should be a hide from user condition on the transition, so need to skip condition
+				builder.skipConditions();
+				IssueService iService = ComponentAccessor.getIssueService();
+				TransitionValidationResult tvr = iService.validateTransition(
+						user, 
+						issue.getId(), 
+						targetAction, 
+						iService.newIssueInputParameters(), 
+						builder.build());
+				if (tvr.isValid()) {
+					IssueResult ir = iService.transition(user, tvr);
+					if (!ir.isValid()) {
+						StringBuilder sb = new StringBuilder();
+						for (String s : ir.getErrorCollection().getErrorMessages()) {
+							sb.append(s).append("; ");
+						}
+						throw new WorkflowException(sb.toString());
+					}
 				} else {
-					rejectCount++;
-				}
-			}
-		}
-		LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
-		// Get target counts
-		double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(approvalSettings, approverList);
-		double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(approvalSettings, approverList);
-		LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
-		Integer targetAction = null;
-		if (rejectCountTarget <= rejectCount) {
-			targetAction = rejectAction;
-		} else if (approveCountTarget <= approveCount) {
-			targetAction = approveAction;
-		}
-		if (targetAction != null) {
-			TransitionOptions.Builder builder = new Builder();
-			// There should be a hide from user condition on the transition, so need to skip condition
-			builder.skipConditions();
-			IssueService iService = ComponentAccessor.getIssueService();
-			TransitionValidationResult tvr = iService.validateTransition(
-					user, 
-					issue.getId(), 
-					targetAction, 
-					iService.newIssueInputParameters(), 
-					builder.build());
-			if (tvr.isValid()) {
-				IssueResult ir = iService.transition(user, tvr);
-				if (!ir.isValid()) {
 					StringBuilder sb = new StringBuilder();
-					for (String s : ir.getErrorCollection().getErrorMessages()) {
+					for (String s : tvr.getErrorCollection().getErrorMessages()) {
 						sb.append(s).append("; ");
 					}
 					throw new WorkflowException(sb.toString());
 				}
-			} else {
-				StringBuilder sb = new StringBuilder();
-				for (String s : tvr.getErrorCollection().getErrorMessages()) {
-					sb.append(s).append("; ");
-				}
-				throw new WorkflowException(sb.toString());
-			}		
+				LOGGER.debug("Issue " + issue.getKey() + " transited");
+				return true;
+			}
 		}
+		return false;
 	}
 	
 	public static long getDelegationHistoryRetainDays() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		try {
-			return Long.parseLong(String.valueOf(settings.get(KEY_RETAIN_DAYS)));
+			String s = String.valueOf(settings.get(KEY_RETAIN_DAYS));
+			if (s != null && !s.isEmpty()) {
+				return Long.parseLong(s);
+			}
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation history retain period", ex);
 		}
 		return DEFAULT_RETAIN_DAYS;
+	}
+	
+	public static void setJobFrequency(long frequency) {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			settings.put(KEY_JOB_FREQUENCY, Long.toString(frequency));
+		} catch (Exception ex) {
+			LOGGER.error("Failed to update delegation job frequency", ex);
+		}
+	}
+	
+	public static long getJobFrequency() {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			String s = String.valueOf(settings.get(KEY_JOB_FREQUENCY));
+			if (s != null && !s.isEmpty()) {
+				return Long.parseLong(s);
+			}
+		} catch (Exception ex) {
+			LOGGER.error("Failed to read delegation job frequency", ex);
+		}
+		return DEFAULT_JOB_FREQUENCY;
 	}
 	
 	public static void setDelegationHistoryRetainDays(long days) {
@@ -758,6 +802,7 @@ public class CustomApprovalUtil {
 			LOGGER.error("Failed to update delegation history retain period", ex);
 		}
 	}
+	
 	
 	public static List<String> getDelegationAdminGroups() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
@@ -784,5 +829,41 @@ public class CustomApprovalUtil {
 		} catch (Exception ex) {
 			LOGGER.error("Failed to update delegation admin groups", ex);
 		}
+	}
+	
+	/**
+	 * Create/replace schedule job to scan issue for custom approval that hasn't transited
+	 * Such issues are caused by changing approver definition.
+	 * @param frequency Job frequency in milliseconds. 0 to disable.
+	 * @return boolean True if successful
+	 */
+	public static boolean createScheduledJob(long frequency) {
+		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
+		JobRunnerKey key = JobRunnerKey.of(CustomApprovalScheduleJob.class.getCanonicalName());
+		// Unregister
+		List<JobDetails> jobList = schedulerService.getJobsByJobRunnerKey(key);
+		if (jobList != null) { 
+			for (JobDetails job : jobList) {
+				schedulerService.unscheduleJob(job.getJobId());
+			}
+		}
+		schedulerService.unregisterJobRunner(key);
+		if (frequency > 0) {
+			// Register
+			schedulerService.registerJobRunner(key, new CustomApprovalScheduleJob());
+			Schedule schedule = Schedule.forInterval(frequency, null);
+			JobConfig jobConfig = JobConfig
+					.forJobRunnerKey(key)
+					.withSchedule(schedule)
+					.withRunMode(RunMode.RUN_ONCE_PER_CLUSTER);
+			JobId jobId = JobId.of(CustomApprovalScheduleJob.class.getCanonicalName());
+			try {
+				schedulerService.scheduleJob(jobId, jobConfig);
+			} catch (SchedulerServiceException e) {
+				LOGGER.error("Failed to create schedule job", e);
+				return false;
+			}
+		}
+		return true;
 	}
 }

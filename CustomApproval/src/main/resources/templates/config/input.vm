@@ -43,6 +43,18 @@
 					</td>
 				</tr>
 				<tr>
+					<th>
+						Approval Check Scheduled Job Frequency (milliseconds, 0 to disable):
+					</th>
+					<td>
+						<input 	type="text" 
+								pattern="[0-9]+" 
+								id="jobFrequency"
+								name="jobFrequency" 
+								value="${action.getJobFrequency()}"/>
+					</td>
+				</tr>
+				<tr>
 					<td colspan="100%">
 						<input 	type="submit" 
 								id="Save" 
