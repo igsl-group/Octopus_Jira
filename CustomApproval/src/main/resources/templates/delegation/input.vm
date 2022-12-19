@@ -94,6 +94,7 @@
 										id="startDate" 
 										name="startDate" 
 										value=""
+										autocomplete="off"
 										onchange="validateForm()"/>
 								
 							</td>
@@ -104,6 +105,7 @@
 										id="endDate" 
 										name="endDate" 
 										value=""
+										autocomplete="off"
 										onchange="validateForm()"/>
 								
 							</td>
