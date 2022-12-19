@@ -62,3 +62,13 @@
 		#end
 	#end
 #end
+#if ($current)
+	<h5>
+		<span>${current.approvalName}</span>
+		<span>(</span>
+		<span> Approve ${current.approveCount}/${current.approveCountTarget}</span>
+		<span> Reject ${current.rejectCount}/${current.rejectCountTarget}</span>
+		<span>)</span>
+	</h5>
+	<span>No approvals yet</span>
+#end

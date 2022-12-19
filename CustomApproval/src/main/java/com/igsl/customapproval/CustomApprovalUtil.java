@@ -1,7 +1,6 @@
 package com.igsl.customapproval;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -31,11 +30,11 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.TransitionOptions;
-import com.atlassian.jira.workflow.WorkflowManager;
 import com.atlassian.jira.workflow.TransitionOptions.Builder;
+import com.atlassian.jira.workflow.WorkflowException;
+import com.atlassian.jira.workflow.WorkflowManager;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.atlassian.jira.workflow.WorkflowException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -559,33 +558,7 @@ public class CustomApprovalUtil {
 		if (settings == null) {
 			throw new InvalidApprovalException();
 		}
-		Integer approveAction = null;
-		Integer rejectAction = null;
 		CustomField approvalDataCustomField = CustomApprovalSetup.getApprovalDataCustomField();
-		WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
-		JiraWorkflow wf = wfMan.getWorkflow(issue);
-		if (wf != null) {
-			List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
-			for (Object a : actions) {
-				ActionDescriptor desc = (ActionDescriptor) a;
-				String targetStatus = getActionTarget(wf, desc);
-				if (settings.getApprovedStatus().equals(targetStatus)) {
-					approveAction = desc.getId();
-					LOGGER.debug("Approve action found: " + approveAction);
-				} else if (settings.getRejectedStatus().equals(targetStatus)) {
-					rejectAction = desc.getId();
-					LOGGER.debug("Reject action found: " + rejectAction);
-				}
-			}
-		} else {
-			throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
-		}
-		if (approveAction == null) {
-			throw new InvalidWorkflowException("Approve action cannot be found in workflow");
-		}
-		if (rejectAction == null) {
-			throw new InvalidWorkflowException("Reject action cannot be found in workflow");
-		}
 		String lockId = null;
 		try {
 			lockId = CustomApprovalUtil.lockApproval(issue);
@@ -646,66 +619,106 @@ public class CustomApprovalUtil {
 			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
 			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
 			
-			// Check approval criteria, transit issue if met
-			double approveCount = 0;
-			double rejectCount = 0;
-			// Find history where the user or on behalf of user is still an approver
-			for (ApprovalHistory historyItem : historyList.values()) {
-				boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
-				if (!isApprover) {
-					isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
-				}
-				if (isApprover) {
-					if (historyItem.getApproved()) {
-						approveCount++;
-					} else {
-						rejectCount++;
-					}
-				}
-			}
-			LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
-			// Get target counts
-			double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(settings, approverList);
-			double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(settings, approverList);
-			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
-			Integer targetAction = null;
-			if (rejectCountTarget <= rejectCount) {
-				targetAction = rejectAction;
-			} else if (approveCountTarget <= approveCount) {
-				targetAction = approveAction;
-			}
-			if (targetAction != null) {
-				TransitionOptions.Builder builder = new Builder();
-				// There should be a hide from user condition on the transition, so need to skip condition
-				builder.skipConditions();
-				IssueService iService = ComponentAccessor.getIssueService();
-				TransitionValidationResult tvr = iService.validateTransition(
-						user, 
-						issue.getId(), 
-						targetAction, 
-						iService.newIssueInputParameters(), 
-						builder.build());
-				if (tvr.isValid()) {
-					IssueResult ir = iService.transition(user, tvr);
-					if (!ir.isValid()) {
-						StringBuilder sb = new StringBuilder();
-						for (String s : ir.getErrorCollection().getErrorMessages()) {
-							sb.append(s).append("; ");
-						}
-						throw new WorkflowException(sb.toString());
-					}
-				} else {
-					StringBuilder sb = new StringBuilder();
-					for (String s : tvr.getErrorCollection().getErrorMessages()) {
-						sb.append(s).append("; ");
-					}
-					throw new WorkflowException(sb.toString());
-				}		
-			}
+			transitIssue(issue, user);
 		} finally {
 			if (lockId != null) {
 				CustomApprovalUtil.unlockApproval(issue, lockId);
 			}
+		}
+	}
+	
+	/**
+	 * Check if approval condition has been completed and transit issue.
+	 * @param issue Issue
+	 * @param user User performing the action
+	 */
+	public static void transitIssue(MutableIssue issue, ApplicationUser user)
+			throws InvalidWorkflowException, WorkflowException {
+		ApprovalData approvalData = getApprovalData(issue);
+		ApprovalSettings approvalSettings = getApprovalSettings(issue);
+		Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
+		Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(approvalSettings.getApprovalName());
+		Integer approveAction = null;
+		Integer rejectAction = null;
+		WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
+		JiraWorkflow wf = wfMan.getWorkflow(issue);
+		if (wf != null) {
+			List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
+			for (Object a : actions) {
+				ActionDescriptor desc = (ActionDescriptor) a;
+				String targetStatus = getActionTarget(wf, desc);
+				if (approvalSettings.getApprovedStatus().equals(targetStatus)) {
+					approveAction = desc.getId();
+					LOGGER.debug("Approve action found: " + approveAction);
+				} else if (approvalSettings.getRejectedStatus().equals(targetStatus)) {
+					rejectAction = desc.getId();
+					LOGGER.debug("Reject action found: " + rejectAction);
+				}
+			}
+		} else {
+			throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
+		}
+		if (approveAction == null) {
+			throw new InvalidWorkflowException("Approve action cannot be found in workflow");
+		}
+		if (rejectAction == null) {
+			throw new InvalidWorkflowException("Reject action cannot be found in workflow");
+		}
+		// Check approval criteria, transit issue if met
+		double approveCount = 0;
+		double rejectCount = 0;
+		// Find history where the user or on behalf of user is still an approver
+		for (ApprovalHistory historyItem : historyList.values()) {
+			boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
+			if (!isApprover) {
+				isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
+			}
+			if (isApprover) {
+				if (historyItem.getApproved()) {
+					approveCount++;
+				} else {
+					rejectCount++;
+				}
+			}
+		}
+		LOGGER.debug("Current count, approve: " + approveCount + " reject: " + rejectCount);
+		// Get target counts
+		double approveCountTarget = CustomApprovalUtil.getApproveCountTarget(approvalSettings, approverList);
+		double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(approvalSettings, approverList);
+		LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
+		Integer targetAction = null;
+		if (rejectCountTarget <= rejectCount) {
+			targetAction = rejectAction;
+		} else if (approveCountTarget <= approveCount) {
+			targetAction = approveAction;
+		}
+		if (targetAction != null) {
+			TransitionOptions.Builder builder = new Builder();
+			// There should be a hide from user condition on the transition, so need to skip condition
+			builder.skipConditions();
+			IssueService iService = ComponentAccessor.getIssueService();
+			TransitionValidationResult tvr = iService.validateTransition(
+					user, 
+					issue.getId(), 
+					targetAction, 
+					iService.newIssueInputParameters(), 
+					builder.build());
+			if (tvr.isValid()) {
+				IssueResult ir = iService.transition(user, tvr);
+				if (!ir.isValid()) {
+					StringBuilder sb = new StringBuilder();
+					for (String s : ir.getErrorCollection().getErrorMessages()) {
+						sb.append(s).append("; ");
+					}
+					throw new WorkflowException(sb.toString());
+				}
+			} else {
+				StringBuilder sb = new StringBuilder();
+				for (String s : tvr.getErrorCollection().getErrorMessages()) {
+					sb.append(s).append("; ");
+				}
+				throw new WorkflowException(sb.toString());
+			}		
 		}
 	}
 	

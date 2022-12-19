@@ -79,7 +79,7 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 		}
 		// Check if user already approved
 		Map<String, ApprovalHistory> historyList = data.getHistory().get(settings.getApprovalName());
-		if (historyList.containsKey(user.getKey())) {
+		if (historyList != null && historyList.containsKey(user.getKey())) {
 			// Check if allow changing decision
 			LOGGER.debug("User already approved");
 			if (!settings.isAllowChangeDecision()) {

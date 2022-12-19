@@ -20,6 +20,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 
 	private static final String VELOCITY_HISTORY = "history";
 	private static final String VELOCITY_SETTINGS = "settings";
+	private static final String VELOCITY_CURRENT = "current";
 	
 	private static final String PARAM_ISSUE = "issue";
 	
@@ -35,11 +36,13 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 				if (ad != null) {
 					Map<String, ApprovalPanelSettings> displaySettings = new HashMap<>();
 					Map<String, List<ApprovalPanelHistory>> history = new HashMap<>();
+					ApprovalPanelSettings currentApproval = null;
 					for (Map.Entry<String, Map<String, ApprovalHistory>> entry : ad.getHistory().entrySet()) {
 						ApprovalSettings settings = ad.getSettings().get(entry.getKey());
 						ApprovalPanelSettings displaySetting = new ApprovalPanelSettings();
 						Map<String, ApplicationUser> approverList = 
 								CustomApprovalUtil.getApproverList(issue, settings);
+						displaySetting.setApprovalName(entry.getKey());
 						displaySetting.setApproveCountTarget(CustomApprovalUtil.getApproveCountTarget(settings, approverList));
 						displaySetting.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
 						List<ApprovalPanelHistory> list = new ArrayList<>();
@@ -57,8 +60,22 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 						history.put(entry.getKey(), list);
 						displaySettings.put(entry.getKey(), displaySetting);
 					}
+					ApprovalSettings currentApprovalSettings = CustomApprovalUtil.getApprovalSettings(issue);
+					if (!ad.getHistory().containsKey(currentApprovalSettings.getApprovalName())) {
+						Map<String, ApplicationUser> approverList = 
+								CustomApprovalUtil.getApproverList(issue, currentApprovalSettings);
+						currentApproval = new ApprovalPanelSettings();
+						currentApproval.setApprovalName(currentApprovalSettings.getApprovalName());
+						currentApproval.setApproveCount(0);
+						currentApproval.setRejectCount(0);
+						currentApproval.setApproveCountTarget(
+								CustomApprovalUtil.getApproveCountTarget(currentApprovalSettings, approverList));
+						currentApproval.setRejectCountTarget(
+								CustomApprovalUtil.getRejectCountTarget(currentApprovalSettings, approverList));
+					}
 					result.put(VELOCITY_SETTINGS, displaySettings);
 					result.put(VELOCITY_HISTORY, history);
+					result.put(VELOCITY_CURRENT, currentApproval);
 				}
 			}
 		}

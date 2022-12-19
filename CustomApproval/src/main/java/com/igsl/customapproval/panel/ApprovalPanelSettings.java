@@ -1,7 +1,8 @@
 package com.igsl.customapproval.panel;
 
 public class ApprovalPanelSettings {
-	
+
+	private String approvalName;
 	private int approveCountTarget;
 	private int rejectCountTarget;
 	private int approveCount = 0;
@@ -30,5 +31,11 @@ public class ApprovalPanelSettings {
 	}
 	public void setRejectCount(double rejectCount) {
 		this.rejectCount = (int) rejectCount;
+	}
+	public String getApprovalName() {
+		return approvalName;
+	}
+	public void setApprovalName(String approvalName) {
+		this.approvalName = approvalName;
 	}
 }
