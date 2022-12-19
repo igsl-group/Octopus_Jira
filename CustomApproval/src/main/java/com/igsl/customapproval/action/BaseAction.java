@@ -2,6 +2,7 @@ package com.igsl.customapproval.action;
 
 import java.io.IOException;
 
+import org.apache.http.HttpHeaders;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
@@ -38,8 +39,14 @@ public abstract class BaseAction extends JiraWebActionSupport {
 		long issueIdAsLong = Long.parseLong(issueId);
 		this.issue = ComponentAccessor.getIssueManager().getIssueObject(issueIdAsLong);
 		if (this.issue != null) {
-			this.issueURL = ComponentAccessor.getApplicationProperties().getJiraBaseUrl() + 
-					"/browse/" + this.issue.getKey();	// TODO Handle embedded pages like search issue
+			String referrer = getHttpRequest().getHeader(HttpHeaders.REFERER);
+			LOGGER.debug("Referrer: " + referrer);
+			if (referrer != null) {
+				this.issueURL = referrer;
+			} else {
+				this.issueURL = ComponentAccessor.getApplicationProperties().getJiraBaseUrl() + 
+						"/browse/" + this.issue.getKey();	// TODO Handle embedded pages like search issue
+			}
 			ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
 			try {
 				CustomApprovalUtil.approve(issue, settings, user, approve);
