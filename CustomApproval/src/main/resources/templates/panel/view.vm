@@ -10,19 +10,36 @@
 	.ApprovalHistoryStrikeOut {
 		text-decoration: line-through;
 	}
+	.ApprovalTitle {
+		font-size: 1em;
+		font-weight: bold;
+	}
+	.ApprovalCount {
+		font-size: 0.8em;
+		font-weight: bold;
+	}
 </style>
 #if ($history)
 	#foreach ($entry in $history.entrySet())
-		<h5>
+		#set ($setting = $settings.get($entry.key))
+		<div class="ApprovalTitle">
 			<span>$entry.key</span>
-			#set ($setting = $settings.get($entry.key))
-			#if ($setting)
-				<span>(</span>
-				<span> Approve ${setting.approveCount}/${setting.approveCountTarget}</span>
-				<span> Reject ${setting.rejectCount}/${setting.rejectCountTarget}</span>
-				<span>)</span>
-			#end
-		</h5>
+			#if ($setting.isCompleted())
+				#if ($setting.isApproved())
+					<span>- Approved</span>
+				#else
+					<span>- Rejected</span>
+				#end
+			#else
+				<span>- Pending</span>
+			#end			
+		</div>
+		<div class="ApprovalCount">
+			<span>(</span>
+			<span>Approve ${setting.approveCount}/${setting.approveCountTarget}</span>
+			<span>Reject ${setting.rejectCount}/${setting.rejectCountTarget}</span>
+			<span>)</span>
+		</div>
 		#if ($entry.value.size() == 0)
 			<span>No approvals yet</span>
 		#else
@@ -59,16 +76,20 @@
 					#end
 				</tbody>
 			</table>
+			<br/>
 		#end
 	#end
 #end
 #if ($current)
-	<h5>
+	<div class="ApprovalTitle">
 		<span>${current.approvalName}</span>
+		<span>- Pending</span>
+	</div>
+	<div class="ApprovalCount">
 		<span>(</span>
 		<span> Approve ${current.approveCount}/${current.approveCountTarget}</span>
 		<span> Reject ${current.rejectCount}/${current.rejectCountTarget}</span>
 		<span>)</span>
-	</h5>
+	</div>
 	<span>No approvals yet</span>
 #end

@@ -29,6 +29,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 	public Map getContextMap(ApplicationUser user, JiraHelper helper) {
 		Map<String, Object> result = new HashMap<>();
 		Issue issue = (Issue) helper.getContextParams().get(PARAM_ISSUE);
+		ApprovalSettings currentSettings = CustomApprovalUtil.getApprovalSettings(issue);
 		if (issue != null) {
 			CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 			if (cf != null) {
@@ -39,23 +40,30 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 					ApprovalPanelSettings currentApproval = null;
 					for (Map.Entry<String, Map<String, ApprovalHistory>> entry : ad.getHistory().entrySet()) {
 						ApprovalSettings settings = ad.getSettings().get(entry.getKey());
-						ApprovalPanelSettings displaySetting = new ApprovalPanelSettings();
+						ApprovalPanelSettings displaySetting = new ApprovalPanelSettings(settings);
 						Map<String, ApplicationUser> approverList = 
 								CustomApprovalUtil.getApproverList(issue, settings);
-						displaySetting.setApprovalName(entry.getKey());
-						displaySetting.setApproveCountTarget(CustomApprovalUtil.getApproveCountTarget(settings, approverList));
-						displaySetting.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
+						if (!settings.isCompleted()) {
+							displaySetting.setApproveCountTarget(CustomApprovalUtil.getApproveCountTarget(settings, approverList));
+							displaySetting.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
+						}
+						int aCount = 0;
+						int rCount = 0;
 						List<ApprovalPanelHistory> list = new ArrayList<>();
 						for (ApprovalHistory historyItem : entry.getValue().values()) {
 							ApprovalPanelHistory displayHistory = new ApprovalPanelHistory(historyItem, issue, settings);
 							list.add(displayHistory);
-							if (displayHistory.isValid()) {
+							if (displayHistory.isValid() && !settings.isCompleted()) {
 								if (displayHistory.getApproved()) {
-									displaySetting.setApproveCount(displaySetting.getApproveCount() + 1);
+									aCount++;
 								} else {
-									displaySetting.setRejectCount(displaySetting.getRejectCount() + 1);
+									rCount++;
 								}
 							}
+						}
+						if (!settings.isCompleted()) {
+							displaySetting.setApproveCount(aCount);
+							displaySetting.setRejectCount(rCount);
 						}
 						history.put(entry.getKey(), list);
 						displaySettings.put(entry.getKey(), displaySetting);
@@ -65,7 +73,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 						if (!ad.getHistory().containsKey(currentApprovalSettings.getApprovalName())) {
 							Map<String, ApplicationUser> approverList = 
 									CustomApprovalUtil.getApproverList(issue, currentApprovalSettings);
-							currentApproval = new ApprovalPanelSettings();
+							currentApproval = new ApprovalPanelSettings(currentApprovalSettings);
 							currentApproval.setApprovalName(currentApprovalSettings.getApprovalName());
 							currentApproval.setApproveCount(0);
 							currentApproval.setRejectCount(0);

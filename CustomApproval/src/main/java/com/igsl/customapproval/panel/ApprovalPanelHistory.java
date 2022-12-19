@@ -66,13 +66,22 @@ public class ApprovalPanelHistory {
 			LOGGER.debug("Approver list: " + s);
 		}
 		LOGGER.debug("User: " + this.approver);
-		this.valid = CustomApprovalUtil.isApprover(this.approver, approverList);
-		if (!this.valid) {
-			// We will not verify delegation settings here... if it is present, then it is considered valid.
-			// We do not want to keep all delegation history in user properties.
-			// Since delegation history can get cleaned up, we cannot verify.
-			if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
-				this.valid = true;
+		// We will not verify delegation settings here... if it is present, then it is considered valid.
+		// We do not want to keep all delegation history in user properties.
+		// Since delegation history can get cleaned up, we cannot verify.
+		if (settings.isCompleted()) {
+			this.valid = CustomApprovalUtil.isApprover(this.approver, settings.getFinalApproverList());
+			if (!this.valid) {
+				if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
+					this.valid = true;
+				}
+			}
+		} else {
+			this.valid = CustomApprovalUtil.isApprover(this.approver, approverList);
+			if (!this.valid) {
+				if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
+					this.valid = true;
+				}
 			}
 		}
 		LOGGER.debug("isValid: " + this.valid);

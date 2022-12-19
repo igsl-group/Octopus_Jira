@@ -1,5 +1,8 @@
 package com.igsl.customapproval.data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ApprovalSettings {	
 	
 	/**
@@ -49,6 +52,34 @@ public class ApprovalSettings {
 	 * This is used to resolve ties.
 	 */
 	private boolean allowChangeDecision = false;
+	/**
+	 * Flag to indicate approval has completed
+	 */
+	private boolean completed = false;
+	/**
+	 * Approved or not.
+	 */
+	private boolean approved;
+	/**
+	 * Approve count target, locked in when transitioning.
+	 */
+	private double finalApproveCountTarget;
+	/**
+	 * Reject count target, locked in when transitioning.
+	 */
+	private double finalRejectCountTarget;
+	/**
+	 * Approve count, locked in when transitioning.
+	 */
+	private double finalApproveCount;
+	/**
+	 * Reject count, locked in when transitioning.
+	 */
+	private double finalRejectCount;
+	/**
+	 * Approver user list, locked in when transitioning.
+	 */
+	private List<String> finalApproverList = new ArrayList<>();
 	
 	public String getStartingStatus() {
 		return startingStatus;
@@ -103,5 +134,47 @@ public class ApprovalSettings {
 	}
 	public void setApprovalName(String approvalName) {
 		this.approvalName = approvalName;
+	}
+	public double getFinalApproveCountTarget() {
+		return finalApproveCountTarget;
+	}
+	public void setFinalApproveCountTarget(double finalApproveCountTarget) {
+		this.finalApproveCountTarget = finalApproveCountTarget;
+	}
+	public double getFinalRejectCountTarget() {
+		return finalRejectCountTarget;
+	}
+	public void setFinalRejectCountTarget(double finalRejectCountTarget) {
+		this.finalRejectCountTarget = finalRejectCountTarget;
+	}
+	public double getFinalApproveCount() {
+		return finalApproveCount;
+	}
+	public void setFinalApproveCount(double finalApproveCount) {
+		this.finalApproveCount = finalApproveCount;
+	}
+	public double getFinalRejectCount() {
+		return finalRejectCount;
+	}
+	public void setFinalRejectCount(double finalRejectCount) {
+		this.finalRejectCount = finalRejectCount;
+	}
+	public boolean isCompleted() {
+		return completed;
+	}
+	public void setCompleted(boolean completed) {
+		this.completed = completed;
+	}
+	public boolean isApproved() {
+		return approved;
+	}
+	public void setApproved(boolean approved) {
+		this.approved = approved;
+	}
+	public List<String> getFinalApproverList() {
+		return finalApproverList;
+	}
+	public void setFinalApproverList(List<String> finalApproverList) {
+		this.finalApproverList = finalApproverList;
 	}
 }

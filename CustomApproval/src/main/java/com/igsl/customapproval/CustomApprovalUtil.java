@@ -469,6 +469,16 @@ public class CustomApprovalUtil {
 	/**
 	 * Check if user is an approver.
 	 * @param userKey User key.
+	 * @param approverList List of String (user key)
+	 * @return boolean
+	 */
+	public static boolean isApprover(String userKey, List<String> approverList) {
+		return approverList.contains(userKey);
+	}
+	
+	/**
+	 * Check if user is an approver.
+	 * @param userKey User key.
 	 * @param approverList From getApproverList().
 	 * @return boolean
 	 */
@@ -716,12 +726,28 @@ public class CustomApprovalUtil {
 			double rejectCountTarget = CustomApprovalUtil.getRejectCountTarget(approvalSettings, approverList);
 			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
 			Integer targetAction = null;
+			boolean approved = false;
 			if (rejectCountTarget <= rejectCount) {
 				targetAction = rejectAction;
+				approved = false;
 			} else if (approveCountTarget <= approveCount) {
 				targetAction = approveAction;
+				approved = true;
 			}
 			if (targetAction != null) {
+				// Update settings to mark approve as completed
+				ApprovalSettings as = approvalData.getSettings().get(approvalSettings.getApprovalName());
+				as.setCompleted(true);
+				as.setApproved(approved);
+				as.setFinalApproveCount(approveCount);
+				as.setFinalRejectCount(rejectCount);
+				as.setFinalApproveCountTarget(approveCountTarget);
+				as.setFinalRejectCountTarget(rejectCountTarget);
+				as.getFinalApproverList().addAll(approverList.keySet());
+				issue.setCustomFieldValue(CustomApprovalSetup.getApprovalDataCustomField(), approvalData.toString());
+				LOGGER.debug("Locking in approval: " + as.getApprovalName() + ": " + approvalData.toString());
+				ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+				
 				TransitionOptions.Builder builder = new Builder();
 				// There should be a hide from user condition on the transition, so need to skip condition
 				builder.skipConditions();
