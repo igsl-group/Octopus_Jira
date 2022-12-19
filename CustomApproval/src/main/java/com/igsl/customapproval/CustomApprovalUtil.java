@@ -656,18 +656,18 @@ public class CustomApprovalUtil {
 	 */
 	public static boolean transitIssue(MutableIssue issue, ApplicationUser user)
 			throws LockException, InvalidWorkflowException, WorkflowException {
-		String lockId = null;
-		try {
-			lockId = CustomApprovalUtil.lockApproval(issue);
-			if (lockId == null) {
-				throw new LockException();
-			}
+//		String lockId = null;
+//		try {
+//			lockId = CustomApprovalUtil.lockApproval(issue);
+//			if (lockId == null) {
+//				throw new LockException();
+//			}
 			return transitIssueWithoutLock(issue, user);
-		} finally {
-			if (lockId != null) {
-				CustomApprovalUtil.unlockApproval(issue, lockId);
-			}
-		}
+//		} finally {
+//			if (lockId != null) {
+//				CustomApprovalUtil.unlockApproval(issue, lockId);
+//			}
+//		}
 	}
 	
 	private static boolean transitIssueWithoutLock(MutableIssue issue, ApplicationUser user)

@@ -1,7 +1,5 @@
 package com.igsl.customapproval;
 
-import java.util.Collections;
-
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
