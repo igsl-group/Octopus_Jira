@@ -82,6 +82,7 @@
 						<tr>
 							<td>
 								<input 	type="text" 
+										class="ajs-dirty-warning-exempt"
 										id="userKey"
 										name="userKey" 
 										value=""
@@ -90,7 +91,7 @@
 							<td>
 								<input 	type="text" 
 										style="width: 95%" 
-										class="DatePicker" 
+										class="DatePicker ajs-dirty-warning-exempt" 
 										id="startDate" 
 										name="startDate" 
 										value=""
@@ -101,7 +102,7 @@
 							<td>
 								<input 	type="text" 
 										style="width: 95%" 
-										class="DatePicker" 
+										class="DatePicker ajs-dirty-warning-exempt" 
 										id="endDate" 
 										name="endDate" 
 										value=""

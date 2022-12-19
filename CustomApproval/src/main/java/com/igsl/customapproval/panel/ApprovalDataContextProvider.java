@@ -61,17 +61,19 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 						displaySettings.put(entry.getKey(), displaySetting);
 					}
 					ApprovalSettings currentApprovalSettings = CustomApprovalUtil.getApprovalSettings(issue);
-					if (!ad.getHistory().containsKey(currentApprovalSettings.getApprovalName())) {
-						Map<String, ApplicationUser> approverList = 
-								CustomApprovalUtil.getApproverList(issue, currentApprovalSettings);
-						currentApproval = new ApprovalPanelSettings();
-						currentApproval.setApprovalName(currentApprovalSettings.getApprovalName());
-						currentApproval.setApproveCount(0);
-						currentApproval.setRejectCount(0);
-						currentApproval.setApproveCountTarget(
-								CustomApprovalUtil.getApproveCountTarget(currentApprovalSettings, approverList));
-						currentApproval.setRejectCountTarget(
-								CustomApprovalUtil.getRejectCountTarget(currentApprovalSettings, approverList));
+					if (currentApprovalSettings != null) {
+						if (!ad.getHistory().containsKey(currentApprovalSettings.getApprovalName())) {
+							Map<String, ApplicationUser> approverList = 
+									CustomApprovalUtil.getApproverList(issue, currentApprovalSettings);
+							currentApproval = new ApprovalPanelSettings();
+							currentApproval.setApprovalName(currentApprovalSettings.getApprovalName());
+							currentApproval.setApproveCount(0);
+							currentApproval.setRejectCount(0);
+							currentApproval.setApproveCountTarget(
+									CustomApprovalUtil.getApproveCountTarget(currentApprovalSettings, approverList));
+							currentApproval.setRejectCountTarget(
+									CustomApprovalUtil.getRejectCountTarget(currentApprovalSettings, approverList));
+						}
 					}
 					result.put(VELOCITY_SETTINGS, displaySettings);
 					result.put(VELOCITY_HISTORY, history);

@@ -534,7 +534,7 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
-	 * Approve/reject a specific approval.
+	 * Approve/reject a specific approval. Transit status is condition is matched.
 	 * @param issue Issue
 	 * @param settings ApprovalSettings of a specific approval.
 	 * @param user ApplicationUser performing the action.
@@ -619,7 +619,7 @@ public class CustomApprovalUtil {
 			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
 			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
 			
-			transitIssue(issue, user);
+			transitIssueWithoutLock(issue, user);
 		} finally {
 			if (lockId != null) {
 				CustomApprovalUtil.unlockApproval(issue, lockId);
@@ -633,7 +633,23 @@ public class CustomApprovalUtil {
 	 * @param user User performing the action
 	 */
 	public static void transitIssue(MutableIssue issue, ApplicationUser user)
-			throws InvalidWorkflowException, WorkflowException {
+			throws LockException, InvalidWorkflowException, WorkflowException {
+		String lockId = null;
+		try {
+			lockId = CustomApprovalUtil.lockApproval(issue);
+			if (lockId == null) {
+				throw new LockException();
+			}
+			transitIssueWithoutLock(issue, user);
+		} finally {
+			if (lockId != null) {
+				CustomApprovalUtil.unlockApproval(issue, lockId);
+			}
+		}
+	}
+	
+	private static void transitIssueWithoutLock(MutableIssue issue, ApplicationUser user)
+			throws LockException, InvalidWorkflowException, WorkflowException {
 		ApprovalData approvalData = getApprovalData(issue);
 		ApprovalSettings approvalSettings = getApprovalSettings(issue);
 		Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
