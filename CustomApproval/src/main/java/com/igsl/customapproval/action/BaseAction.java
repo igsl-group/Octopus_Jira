@@ -39,12 +39,13 @@ public abstract class BaseAction extends JiraWebActionSupport {
 		long issueIdAsLong = Long.parseLong(issueId);
 		this.issue = ComponentAccessor.getIssueManager().getIssueObject(issueIdAsLong);
 		if (this.issue != null) {
+			String baseURL = ComponentAccessor.getApplicationProperties().getJiraBaseUrl();
 			String referrer = getHttpRequest().getHeader(HttpHeaders.REFERER);
 			LOGGER.debug("Referrer: " + referrer);
-			if (referrer != null) {
+			if (referrer != null && referrer.startsWith(baseURL)) {
 				this.issueURL = referrer;
 			} else {
-				this.issueURL = ComponentAccessor.getApplicationProperties().getJiraBaseUrl() + 
+				this.issueURL = baseURL + 
 						"/browse/" + this.issue.getKey();	// TODO Handle embedded pages like search issue
 			}
 			ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
