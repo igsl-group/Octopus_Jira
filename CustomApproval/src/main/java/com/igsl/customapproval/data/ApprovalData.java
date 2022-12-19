@@ -1,6 +1,7 @@
 package com.igsl.customapproval.data;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,13 +21,13 @@ public class ApprovalData {
 	/**
 	 * Key is name of an approval process.
 	 */
-	private Map<String, ApprovalSettings> settings = new HashMap<>();
+	private Map<String, ApprovalSettings> settings = new LinkedHashMap<>();
 	
 	/**
 	 * Top level key is name of an approval process.
 	 * Value map key is user key.
 	 */
-	private Map<String, Map<String, ApprovalHistory>> history = new HashMap<>();
+	private Map<String, Map<String, ApprovalHistory>> history = new LinkedHashMap<>();
 
 	public static ApprovalData parse(String s) {
 		try {

@@ -73,8 +73,6 @@ public class ApprovalDataBuilder {
 			settings.setApprovedStatus(approveStatus);
 			settings.setRejectedStatus(rejectStatus);
 			data.getSettings().put(approvalName, settings);
-			Map<String, ApprovalHistory> list = new HashMap<>();
-			data.getHistory().put(approvalName, list);
 		}
 		return this;
 	}

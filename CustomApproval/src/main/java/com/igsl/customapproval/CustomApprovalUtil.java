@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -612,7 +613,13 @@ public class CustomApprovalUtil {
 			}
 			ApprovalData approvalData = getApprovalData(issue); 
 			// Update ApprovalHistory
-			Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(settings.getApprovalName());
+			Map<String, ApprovalHistory> historyList;
+			if (approvalData.getHistory().containsKey(settings.getApprovalName())) {
+				historyList = approvalData.getHistory().get(settings.getApprovalName());
+			} else {
+				historyList = new LinkedHashMap<String, ApprovalHistory>();
+				approvalData.getHistory().put(settings.getApprovalName(), historyList);
+			}
 			if (historyList.containsKey(user.getKey())) {
 				// Already approved, update decision
 				ApprovalHistory historyItem = historyList.get(user.getKey());
@@ -621,16 +628,19 @@ public class CustomApprovalUtil {
 				if (onBehalfOfList != null) {
 					historyItem.setOnBehalfOf(onBehalfOfList);
 				}
+				// Remove and add to put item at the bottom of the list
+				historyList.remove(user.getKey());
+				historyList.put(user.getKey(), historyItem);
 			} else {
 				// Add new record
 				ApprovalHistory historyItem = new ApprovalHistory();
 				historyItem.setApprover(user.getKey());
 				historyItem.setApprovedDate(new Date());
 				historyItem.setApproved(approve);
-				historyList.put(user.getKey(), historyItem);
 				if (onBehalfOfList != null) {
 					historyItem.setOnBehalfOf(onBehalfOfList);
 				}
+				historyList.put(user.getKey(), historyItem);
 			}
 			// Save ApprovalData
 			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
