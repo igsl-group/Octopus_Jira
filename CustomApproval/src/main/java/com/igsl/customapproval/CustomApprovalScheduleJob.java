@@ -9,6 +9,7 @@ import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
+import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.jql.builder.JqlClauseBuilder;
 import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.web.bean.PagerFilter;
@@ -35,9 +36,13 @@ public class CustomApprovalScheduleJob implements JobRunner {
 		JqlClauseBuilder search = 
 				JqlQueryBuilder.newClauseBuilder()
 					.not()
+					.statusCategory(StatusCategory.COMPLETE)
+					.and()
+					.not()
 					.addEmptyCondition(CustomApprovalUtil.CUSTOM_FIELD_NAME);
 		builder.where().addClause(search.buildClause());
 		Query q = builder.buildQuery();
+		LOGGER.debug("Issue filter: " + q.toString());
 		try {
 			list = SEARCH_SERVICE.search(CustomApprovalUtil.getAdminUser(), q, PagerFilter.getUnlimitedFilter());
 			for (Issue issue : list.getResults()) {
