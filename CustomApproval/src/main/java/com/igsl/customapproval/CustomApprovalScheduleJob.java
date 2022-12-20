@@ -8,6 +8,9 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.search.SearchResults;
+import com.atlassian.jira.issue.status.category.StatusCategory;
+import com.atlassian.jira.jql.builder.JqlClauseBuilder;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.jql.parser.JqlQueryParser;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.jira.workflow.WorkflowException;
@@ -29,19 +32,19 @@ public class CustomApprovalScheduleJob implements JobRunner {
 		int successCount = 0;
 		int errorCount = 0;
 		SearchResults<Issue> list = null;
-//		JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
-//		JqlClauseBuilder search = 
-//				JqlQueryBuilder.newClauseBuilder()
-//					.not()
-//					.statusCategory(StatusCategory.COMPLETE)
-//					.and()
-//					.not()
-//					.addEmptyCondition(CustomApprovalUtil.CUSTOM_FIELD_NAME);
-//		builder.where().addClause(search.buildClause());
-//		Query q = builder.buildQuery();
 		try {
-			JqlQueryParser parser = ComponentAccessor.getComponent(JqlQueryParser.class);
-			Query q = parser.parseQuery("statusCategory != Done and \"Approval Data\" is not empty");
+			JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
+			JqlClauseBuilder search = 
+					JqlQueryBuilder.newClauseBuilder()
+						.not()
+						.statusCategory(StatusCategory.COMPLETE)
+						.and()
+						.not()
+						.addEmptyCondition(CustomApprovalUtil.CUSTOM_FIELD_NAME);
+			builder.where().addClause(search.buildClause());
+			Query q = builder.buildQuery();
+//			JqlQueryParser parser = ComponentAccessor.getComponent(JqlQueryParser.class);
+//			Query q = parser.parseQuery("statusCategory != Done and \"Approval Data\" is not empty");
 			LOGGER.debug("Issue filter: " + q.toString());
 			list = SEARCH_SERVICE.search(CustomApprovalUtil.getAdminUser(), q, PagerFilter.getUnlimitedFilter());
 			LOGGER.debug("User: " + CustomApprovalUtil.getAdminUser());
