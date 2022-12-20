@@ -21,7 +21,7 @@ public class DelegationSetting {
 	private static final Logger LOGGER = Logger.getLogger(DelegationSetting.class);
 	public static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
 	private static final ObjectMapper OM = new ObjectMapper();
-	private static final String DATE_NO_LIMIT = "--";
+	private static final String DATE_NO_LIMIT = "Never Expires";
 	
 	@Override
 	public String toString() {

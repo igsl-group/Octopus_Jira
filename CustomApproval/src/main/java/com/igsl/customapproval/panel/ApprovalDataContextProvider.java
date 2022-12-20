@@ -2,6 +2,7 @@ package com.igsl.customapproval.panel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 				ApprovalData ad = ApprovalData.parse(String.valueOf(issue.getCustomFieldValue(cf)));
 				if (ad != null) {
 					Map<String, ApprovalPanelSettings> displaySettings = new HashMap<>();
-					Map<String, List<ApprovalPanelHistory>> history = new HashMap<>();
+					Map<String, List<ApprovalPanelHistory>> history = new LinkedHashMap<>();
 					ApprovalPanelSettings currentApproval = null;
 					for (Map.Entry<String, Map<String, ApprovalHistory>> entry : ad.getHistory().entrySet()) {
 						ApprovalSettings settings = ad.getSettings().get(entry.getKey());

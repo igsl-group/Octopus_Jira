@@ -26,6 +26,7 @@
 				#if ($action.isAdmin()) 
 					<h3>Select User to Manage</h3>
 					<input 	type="text"
+							class="ajs-dirty-warning-exempt"
 							style="width: 50%"
 							id="fromUserKey"
 							name="fromUserKey" 
@@ -139,9 +140,6 @@
 			</form>
 		</div>
 		<!-- To push the Atlassian bottom banner away -->
-		<br/>
-		<br/>
-		<br/>
 		<br/>
 		<br/>
 		<script type="text/javascript">
@@ -258,7 +256,7 @@
 			var fromUserPickerConfig = {
 				delay: 250,
 				placeholder: "Select User",
-				width: '100%',
+				width: '50%',
 				initSelection: function (element, callback) {
 					var data = { 
                     	id: '${action.getSelectedUserKey()}', 
