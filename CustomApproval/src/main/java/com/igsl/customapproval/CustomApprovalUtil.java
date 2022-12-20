@@ -86,7 +86,7 @@ public class CustomApprovalUtil {
 	public static final long DEFAULT_JOB_FREQUENCY = 300000;
 	public static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
 	public static final String DEFAULT_JOB_FILTER = 
-			"statsCategory != Done and \"" + CustomApprovalUtil.CUSTOM_FIELD_NAME + "\" is not empty";
+			"statusCategory != Done and \"" + CustomApprovalUtil.CUSTOM_FIELD_NAME + "\" is not empty";
 	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
