@@ -8,9 +8,6 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.search.SearchResults;
-import com.atlassian.jira.issue.status.category.StatusCategory;
-import com.atlassian.jira.jql.builder.JqlClauseBuilder;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.jql.parser.JqlQueryParser;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.jira.workflow.WorkflowException;
@@ -26,28 +23,19 @@ public class CustomApprovalScheduleJob implements JobRunner {
 	private static final Logger LOGGER = Logger.getLogger(CustomApprovalScheduleJob.class);
 	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
 	private static final SearchService SEARCH_SERVICE = ComponentAccessor.getComponent(SearchService.class);
+	private static final JqlQueryParser JQL_PARSER = ComponentAccessor.getComponent(JqlQueryParser.class);
 	
 	@Override
 	public JobRunnerResponse runJob(JobRunnerRequest request) {
 		int successCount = 0;
 		int errorCount = 0;
 		SearchResults<Issue> list = null;
+		String filter = CustomApprovalUtil.getJobFilter();
 		try {
-			JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
-			JqlClauseBuilder search = 
-					JqlQueryBuilder.newClauseBuilder()
-						.not()
-						.statusCategory(StatusCategory.COMPLETE)
-						.and()
-						.not()
-						.addEmptyCondition(CustomApprovalUtil.CUSTOM_FIELD_NAME);
-			builder.where().addClause(search.buildClause());
-			Query q = builder.buildQuery();
-//			JqlQueryParser parser = ComponentAccessor.getComponent(JqlQueryParser.class);
-//			Query q = parser.parseQuery("statusCategory != Done and \"Approval Data\" is not empty");
+			Query q = JQL_PARSER.parseQuery(filter);
 			LOGGER.debug("Issue filter: " + q.toString());
-			list = SEARCH_SERVICE.search(CustomApprovalUtil.getAdminUser(), q, PagerFilter.getUnlimitedFilter());
 			LOGGER.debug("User: " + CustomApprovalUtil.getAdminUser());
+			list = SEARCH_SERVICE.search(CustomApprovalUtil.getAdminUser(), q, PagerFilter.getUnlimitedFilter());
 			LOGGER.debug("List size: " + list.getResults().size());
 			for (Issue issue : list.getResults()) {
 				MutableIssue mi = ISSUE_MANAGER.getIssueObject(issue.getKey());
@@ -66,12 +54,12 @@ public class CustomApprovalScheduleJob implements JobRunner {
 		}
 		String msg;
 		if (list != null && list.getResults().size() != 0) {
-			msg = "Issues found: " + list.getResults().size() + ", transited: " + successCount;
+			msg = "Filter: [" + filter + "], Issues found: " + list.getResults().size() + ", transited: " + successCount;
 			if (errorCount != 0) {
 				msg += ", errors: " + errorCount + ", please check server log for details.";
 			}
 		} else {
-			msg = "No issue found";
+			msg = "Filter: [" + filter + "], No issue found";
 		}
 		return JobRunnerResponse.success(msg);
 	}

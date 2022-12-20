@@ -55,6 +55,19 @@
 					</td>
 				</tr>
 				<tr>
+					<th>
+						Approval Check Scheduled Job Filter:
+					</th>
+					<td>
+						<textarea
+								rows="3"
+								cols="80"
+								id="jobFilter"
+								name="jobFilter" 
+						>${action.getJobFilter()}</textarea>
+					</td>
+				</tr>
+				<tr>
 					<td colspan="100%">
 						<input 	type="submit" 
 								id="Save" 
@@ -64,6 +77,14 @@
 					</td>
 				</tr>
 			</form>
+		</table>
+		<br/>
+		<table class="DeletgationConfig">
+			#foreach ($err in $action.getErrorMessages())
+				<tr>
+					<td class="aui-message aui-message-error qf-message-error">${err}</td>
+				</tr>
+			#end
 		</table>
 		<script type="text/javascript">
 			function groupsUpdated() {

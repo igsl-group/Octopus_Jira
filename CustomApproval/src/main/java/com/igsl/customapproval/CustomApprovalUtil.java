@@ -25,6 +25,7 @@ import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.status.Status;
+import com.atlassian.jira.jql.parser.JqlQueryParser;
 import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
@@ -68,15 +69,19 @@ public class CustomApprovalUtil {
 	private static final StatusManager STATUS_MANAGER = ComponentAccessor.getComponent(StatusManager.class);
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
 	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
+	private static final JqlQueryParser JQL_PARSER = ComponentAccessor.getComponent(JqlQueryParser.class);
 	
 	// Configuration
 	private static final String CONFIG_KEY = "CustomApprovalConfigData:";
 	private static final String KEY_RETAIN_DAYS = CONFIG_KEY + "retainDays";
 	private static final String KEY_ADMIN_GROUPS = CONFIG_KEY + "adminGroups";
 	private static final String KEY_JOB_FREQUENCY = CONFIG_KEY + "jobFrequency";
+	private static final String KEY_JOB_FILTER = CONFIG_KEY + "jobFilter";
 	public static final long DEFAULT_RETAIN_DAYS = 365;
 	public static final long DEFAULT_JOB_FREQUENCY = 300000;
 	public static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
+	public static final String DEFAULT_JOB_FILTER = 
+			"statsCategory != Done and \"" + CustomApprovalUtil.CUSTOM_FIELD_NAME + "\" is not empty";
 	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
@@ -785,9 +790,9 @@ public class CustomApprovalUtil {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		try {
-			String s = String.valueOf(settings.get(KEY_RETAIN_DAYS));
-			if (s != null && !s.isEmpty()) {
-				return Long.parseLong(s);
+			Object o = settings.get(KEY_RETAIN_DAYS);
+			if (o != null) {
+				return Long.parseLong(String.valueOf(o));
 			}
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation history retain period", ex);
@@ -798,20 +803,16 @@ public class CustomApprovalUtil {
 	public static void setJobFrequency(long frequency) {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
-		try {
-			settings.put(KEY_JOB_FREQUENCY, Long.toString(frequency));
-		} catch (Exception ex) {
-			LOGGER.error("Failed to update delegation job frequency", ex);
-		}
+		settings.put(KEY_JOB_FREQUENCY, Long.toString(frequency));
 	}
 	
 	public static long getJobFrequency() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		try {
-			String s = String.valueOf(settings.get(KEY_JOB_FREQUENCY));
-			if (s != null && !s.isEmpty()) {
-				return Long.parseLong(s);
+			Object o = settings.get(KEY_JOB_FREQUENCY);
+			if (o != null) {
+				return Long.parseLong(String.valueOf(o));
 			}
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation job frequency", ex);
@@ -819,14 +820,31 @@ public class CustomApprovalUtil {
 		return DEFAULT_JOB_FREQUENCY;
 	}
 	
-	public static void setDelegationHistoryRetainDays(long days) {
+	public static void setJobFilter(String filter) throws Exception {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		try {
-			settings.put(KEY_RETAIN_DAYS, Long.toString(days));
-		} catch (Exception ex) {
-			LOGGER.error("Failed to update delegation history retain period", ex);
+			JQL_PARSER.parseQuery(filter);
+			settings.put(KEY_JOB_FILTER, filter);
+		} catch (Exception e) {
+			throw new Exception("Filter is not valid: " + filter, e);
 		}
+	}
+	
+	public static String getJobFilter() {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		Object o = settings.get(KEY_JOB_FILTER);
+		if (o != null) {
+			return String.valueOf(o);
+		}
+		return DEFAULT_JOB_FILTER;
+	}
+	
+	public static void setDelegationHistoryRetainDays(long days) throws Exception {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		settings.put(KEY_RETAIN_DAYS, Long.toString(days));
 	}
 	
 	
@@ -847,14 +865,10 @@ public class CustomApprovalUtil {
 		return list;
 	}
 	
-	public static void setDelegationAdminGroups(List<String> groups) {
+	public static void setDelegationAdminGroups(List<String> groups) throws Exception {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
-		try {
-			settings.put(KEY_ADMIN_GROUPS, OM.writeValueAsString(groups));
-		} catch (Exception ex) {
-			LOGGER.error("Failed to update delegation admin groups", ex);
-		}
+		settings.put(KEY_ADMIN_GROUPS, OM.writeValueAsString(groups));
 	}
 	
 	/**
