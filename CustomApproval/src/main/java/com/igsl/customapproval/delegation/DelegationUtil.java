@@ -22,7 +22,7 @@ public class DelegationUtil {
 	private static final String PROPERTY_DELEGATION = "customApprovalDelegation";
 
 	/**
-	 * Calculate no. of days in d2 - d1.
+	 * Calculate no. of days in d1 - d2.
 	 * @param d1
 	 * @param d2
 	 * @return long
@@ -30,12 +30,12 @@ public class DelegationUtil {
 	private static long dateDiff(Date d1, Date d2) {
 		long d1v = d1.getTime();
 		long d2v = d2.getTime();
-		long diffInMillies = Math.abs(d2.getTime() - d1.getTime());
-	    long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+		long diffInMillies = d1.getTime() - d2.getTime();
+	    long diff = TimeUnit.DAYS.convert(Math.abs(diffInMillies), TimeUnit.MILLISECONDS);
 	    if (d1v > d2v) {
-	    	return diff * -1;
+	    	return diff;
 	    } else {
-		    return diff;
+		    return diff * -1;
 	    }
 	}
 	
@@ -69,13 +69,13 @@ public class DelegationUtil {
 				LOGGER.debug("isDelegate start: " + ds.getStartDate());
 				LOGGER.debug("isDelegate end: " + ds.getEndDate());
 				if (ds.getEndDate() == null) {
-					if (dateDiff(ds.getStartDate(), approvalDate) >= 0) {
+					if (dateDiff(ds.getStartDate(), approvalDate) <= 0) {
 						LOGGER.debug("isDelegate: " + user + " of " + delegatingUser + " = true");
 						return true;
 					}
 				} else {
-					if (dateDiff(ds.getStartDate(), approvalDate) >= 0 && 
-						dateDiff(ds.getEndDate(), approvalDate) < 0) {
+					if (dateDiff(ds.getStartDate(), approvalDate) <= 0 && 
+						dateDiff(ds.getEndDate(), approvalDate) > 0) {
 						LOGGER.debug("isDelegate: " + user + " of " + delegatingUser + " = true");
 						return true;
 					}
@@ -108,13 +108,13 @@ public class DelegationUtil {
 					// Check if end date already passed threshold
 					Date end = setting.getEndDate();
 					if (end != null) {
-						long diff = dateDiff(today, end);
+						long diff = dateDiff(end, today);
 						LOGGER.debug("End date: " + end + ", diff: " + diff);
-						if (diff >= threshold) {
+						if (diff < 0 && Math.abs(diff) > threshold) {
+							LOGGER.debug("Record outside threshold, removing: " + setting);
+						} else {
 							LOGGER.debug("Record within threshold, adding: " + setting);
 							result.add(setting);
-						} else {
-							LOGGER.debug("Record outside threshold, removing: " + setting);
 						}
 					} else {
 						// No end date, add

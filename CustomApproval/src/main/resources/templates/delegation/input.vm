@@ -39,8 +39,8 @@
 					<thead>
 						<th width="5%"></th>
 						<th width="19%">Delegate to User</th>
-						<th width="19%">Start Date</th>
-						<th width="19%">End Date</th>
+						<th width="19%">Start Date (inclusive)</th>
+						<th width="19%">End Date (exclusive)</th>
 						<th width="19%">Modified By</th>
 						<th width="19%">Modified Date</th>
 					</thead>
