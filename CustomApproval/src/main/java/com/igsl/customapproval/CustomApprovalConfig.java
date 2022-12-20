@@ -76,6 +76,7 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 			try {
 				this.jobFrequency = Long.parseLong(req.getParameter(PARAM_JOB_FREQUENCY));
 				// Create scheduled job
+				CustomApprovalUtil.setJobFrequency(this.jobFrequency);
 				CustomApprovalUtil.createScheduledJob(this.jobFrequency);				
 			} catch (Exception ex) {
 				LOGGER.error("Failed to parse parameters", ex);

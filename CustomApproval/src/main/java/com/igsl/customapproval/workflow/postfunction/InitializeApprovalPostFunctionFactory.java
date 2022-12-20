@@ -97,13 +97,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		} else {
 			throw new IllegalArgumentException("Descriptor must be a FunctionDescriptor.");
 		}
-		String s = null;
-		try {
-			s = OM.writeValueAsString(velocityParams);
-		} catch (Exception ex) {
-			LOGGER.error("Failed to serialize " + s, ex);
-		}
-		LOGGER.debug("getVelocityParamsForEdit result <" + s + ">");
+		LOGGER.debug("getVelocityParamsForEdit returning");
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -148,13 +142,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 			}
 			result.put(s, value);
 		}
-		String s = null;
-		try {
-			s = OM.writeValueAsString(result);
-		} catch (Exception ex) {
-			LOGGER.error("Failed to serialize map", ex);
-		}
-		LOGGER.debug("getDescriptorParams result <" + s + ">");
+		LOGGER.debug("getDescriptorParams returning");
 		return result;
     }
 	

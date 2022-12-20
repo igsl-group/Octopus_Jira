@@ -93,8 +93,8 @@ public class CustomApprovalUtil {
 	public static final String VALUE_ALLOW = "Allow";
 	public static final String VALUE_DENY = "Deny";
 	
-	public static final String ADMIN_USER_KEY = "admin";
-
+	public static final String ADMIN_USER_NAME = "admin";
+	
 	public static final String LOCK_FIELD_NAME = "Approval Lock";
 	public static final String LOCK_FIELD_DESCRIPTION = "[Custom Approval] Approval lock";
 	public static final String CUSTOM_FIELD_NAME = "Approval Data";
@@ -105,7 +105,7 @@ public class CustomApprovalUtil {
 	 * @return ApplicationUser
 	 */
 	public static ApplicationUser getAdminUser() {
-		return USER_MANAGER.getUserByKey(ADMIN_USER_KEY);
+		return USER_MANAGER.getUserByName(ADMIN_USER_NAME);
 	}
 	
 	/**
