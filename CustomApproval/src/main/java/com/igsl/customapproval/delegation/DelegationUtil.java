@@ -110,9 +110,11 @@ public class DelegationUtil {
 					if (end != null) {
 						long diff = dateDiff(today, end);
 						LOGGER.debug("End date: " + end + ", diff: " + diff);
-						if (diff <= threshold) {
+						if (diff >= threshold) {
 							LOGGER.debug("Record within threshold, adding: " + setting);
 							result.add(setting);
+						} else {
+							LOGGER.debug("Record outside threshold, removing: " + setting);
 						}
 					} else {
 						// No end date, add
@@ -126,7 +128,7 @@ public class DelegationUtil {
 			}
 			if (removeOldRecords) {
 				String out = DelegationSetting.format(result);
-				LOGGER.debug("Removing old records: " + out);
+				LOGGER.debug("Removed old records: " + out);
 				ps.setText(PROPERTY_DELEGATION, out);
 			}
 		}
