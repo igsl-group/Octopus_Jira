@@ -33,6 +33,8 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 	private List<String> adminGroups = Arrays.asList(CustomApprovalUtil.DEFAULT_ADMIN_GROUP);
 	private long jobFrequency = CustomApprovalUtil.DEFAULT_JOB_FREQUENCY;
 	private String jobFilter = CustomApprovalUtil.DEFAULT_JOB_FILTER;
+	private String newFilter = null;
+	private List<String> issuesFound = null;
 	
 	@Inject
 	protected CustomApprovalConfig(@ComponentImport ManagedConfigurationItemService managedConfigurationItemService) {
@@ -59,6 +61,43 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 		return jobFrequency;
 	}
 	
+	public String getDefaultAdminGroups() {
+		return CustomApprovalUtil.DEFAULT_ADMIN_GROUP;
+	}
+	
+	public long getDefaultDelegationHistoryRetainDays() {
+		return CustomApprovalUtil.DEFAULT_RETAIN_DAYS;
+	}
+	
+	public long getDefaultJobFrequency() {
+		return CustomApprovalUtil.DEFAULT_JOB_FREQUENCY;
+	}
+	
+	public String getDefaultJobFitler() {
+		return CustomApprovalUtil.DEFAULT_JOB_FILTER;
+	}
+	
+	public String getIssuesFound() {
+		final String DELIMITER = ", ";
+		StringBuilder result = new StringBuilder("");
+		if (this.newFilter != null) {
+			result.append("With filter: ").append(this.newFilter).append("\n");
+		}
+		if (this.issuesFound != null) {
+			StringBuilder issueList = new StringBuilder();
+			if (this.issuesFound.size() != 0) {
+				for (String s : this.issuesFound) {
+					issueList.append(DELIMITER).append(s);
+				}
+				issueList.delete(0, DELIMITER.length());
+			} else {
+				issueList.append("None");
+			}
+			result.append("Issues found: ").append(issueList);
+		}
+		return result.toString();
+	}
+	
 	@Override
 	protected String doExecute() throws Exception {
 		// Load settings
@@ -66,6 +105,8 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 		this.adminGroups = CustomApprovalUtil.getDelegationAdminGroups();
 		this.jobFrequency = CustomApprovalUtil.getJobFrequency();
 		this.jobFilter = CustomApprovalUtil.getJobFilter();
+		this.issuesFound = CustomApprovalUtil.setJobFilter(this.jobFilter);
+		this.newFilter = null;
 		HttpServletRequest req = getHttpRequest();
 		if (req.getParameter(PARAM_SAVE) != null) {
 			try {
@@ -90,7 +131,6 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 				this.jobFrequency = Long.parseLong(req.getParameter(PARAM_JOB_FREQUENCY));
 				// Create scheduled job
 				CustomApprovalUtil.setJobFrequency(this.jobFrequency);
-				CustomApprovalUtil.createScheduledJob(this.jobFrequency);				
 			} catch (Exception ex) {
 				LOGGER.error(ex);
 				this.jobFrequency = CustomApprovalUtil.getJobFrequency();
@@ -98,14 +138,16 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 				this.addErrorMessage(ex.getMessage());
 			}
 			try {
-				this.jobFilter = req.getParameter(PARAM_JOB_FILTER);
-				CustomApprovalUtil.setJobFilter(this.jobFilter);
+				this.newFilter = req.getParameter(PARAM_JOB_FILTER);
+				this.issuesFound = CustomApprovalUtil.setJobFilter(this.newFilter);
+				this.jobFilter = this.newFilter;
 			} catch (Exception ex) {
 				LOGGER.error(ex);
 				this.jobFilter = CustomApprovalUtil.getJobFilter();
 				this.addErrorMessage("Unable to set Approval Check Scheduled Job Filter");
 				this.addErrorMessage(ex.getMessage());
 			}
+			CustomApprovalUtil.createScheduledJob(this.jobFrequency);
 		}
 		return JiraWebActionSupport.INPUT;
 	}

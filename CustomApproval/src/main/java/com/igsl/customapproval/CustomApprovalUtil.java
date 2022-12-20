@@ -15,6 +15,7 @@ import com.atlassian.crowd.embedded.api.Group;
 import com.atlassian.jira.bc.issue.IssueService;
 import com.atlassian.jira.bc.issue.IssueService.IssueResult;
 import com.atlassian.jira.bc.issue.IssueService.TransitionValidationResult;
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.event.type.EventDispatchOption;
@@ -24,16 +25,19 @@ import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.jql.parser.JqlQueryParser;
 import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
+import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.TransitionOptions;
 import com.atlassian.jira.workflow.TransitionOptions.Builder;
 import com.atlassian.jira.workflow.WorkflowException;
 import com.atlassian.jira.workflow.WorkflowManager;
+import com.atlassian.query.Query;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.scheduler.SchedulerService;
@@ -70,6 +74,7 @@ public class CustomApprovalUtil {
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
 	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
 	private static final JqlQueryParser JQL_PARSER = ComponentAccessor.getComponent(JqlQueryParser.class);
+	private static final SearchService SEARCH_SERVICE = ComponentAccessor.getComponent(SearchService.class);
 	
 	// Configuration
 	private static final String CONFIG_KEY = "CustomApprovalConfigData:";
@@ -820,15 +825,31 @@ public class CustomApprovalUtil {
 		return DEFAULT_JOB_FREQUENCY;
 	}
 	
-	public static void setJobFilter(String filter) throws Exception {
+	/**
+	 * Update job filter JQL.
+	 * @param filter JQL.
+	 * @return List of String containing issue keys found.
+	 * @throws Exception If filter is not valid JQL.
+	 */
+	public static List<String> setJobFilter(String filter) throws Exception {
+		List<String> result = null;
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		try {
-			JQL_PARSER.parseQuery(filter);
+			Query q = JQL_PARSER.parseQuery(filter);
 			settings.put(KEY_JOB_FILTER, filter);
+			// Execute the query
+			SearchResults<Issue> list = SEARCH_SERVICE.search(getAdminUser(), q, PagerFilter.getUnlimitedFilter());
+			if (list.getResults() != null) {
+				result = new ArrayList<>();
+				for (Issue issue : list.getResults()) {
+					result.add(issue.getKey());
+				}
+			}
 		} catch (Exception e) {
 			throw new Exception("Filter is not valid: " + filter, e);
 		}
+		return result;
 	}
 	
 	public static String getJobFilter() {

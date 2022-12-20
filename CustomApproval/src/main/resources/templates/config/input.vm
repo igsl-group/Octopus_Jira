@@ -23,7 +23,8 @@
 								pattern="[0-9]+" 
 								id="retainDays"
 								name="retainDays" 
-								value="${action.getDelegationHistoryRetainDays()}" />
+								value="${action.getDelegationHistoryRetainDays()}" /><br/>
+						<i>Default: ${action.getDefaultDelegationHistoryRetainDays()}</i>
 					</td>
 				</tr>
 				<tr>
@@ -39,7 +40,8 @@
 						<input 	type="text" 
 								class="ajs-dirty-warning-exempt"
 								id="adminGroupsPicker" 
-								value="${action.getAdminGroupsAsJSON()}"/>
+								value="${action.getAdminGroupsAsJSON()}"/><br/>
+						<i>Default: ${action.getDefaultAdminGroups()}</i>
 					</td>
 				</tr>
 				<tr>
@@ -51,12 +53,13 @@
 								pattern="[0-9]+" 
 								id="jobFrequency"
 								name="jobFrequency" 
-								value="${action.getJobFrequency()}"/>
+								value="${action.getJobFrequency()}"/><br/>
+						<i>Default: ${action.getDefaultJobFrequency()}</i>
 					</td>
 				</tr>
 				<tr>
 					<th>
-						Approval Check Scheduled Job Filter:
+						Approval Check Scheduled Job Filter: 						
 					</th>
 					<td>
 						<textarea
@@ -65,6 +68,13 @@
 								id="jobFilter"
 								name="jobFilter" 
 						>${action.getJobFilter()}</textarea>
+						<i>Default: ${action.getDefaultJobFitler()}</i>
+					</td>
+				</tr>
+				<tr>
+					<th>Issues found: </th>
+					<td>
+						<textarea rows="3" cols="80" readonly>${action.getIssuesFound()}</textarea>
 					</td>
 				</tr>
 				<tr>
