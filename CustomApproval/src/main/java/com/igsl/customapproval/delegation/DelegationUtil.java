@@ -30,13 +30,8 @@ public class DelegationUtil {
 	private static long dateDiff(Date d1, Date d2) {
 		long d1v = d1.getTime();
 		long d2v = d2.getTime();
-		long diffInMillies = d1.getTime() - d2.getTime();
-	    long diff = TimeUnit.DAYS.convert(Math.abs(diffInMillies), TimeUnit.MILLISECONDS);
-	    if (d1v > d2v) {
-	    	return diff;
-	    } else {
-		    return diff * -1;
-	    }
+		long diff = d1.getTime() - d2.getTime();
+	    return diff;
 	}
 	
 	private static PropertySet getPropertySet(String userKey) {
@@ -87,6 +82,27 @@ public class DelegationUtil {
 		return false;
 	}
 	
+	public static void removeData(String userKey, DelegationSetting setting) {
+		List<DelegationSetting> list = loadData(userKey, false);
+		DelegationSetting remove = null;
+		for (DelegationSetting ds : list) {
+			if (ds.getId().equals(setting.getId())) {
+				remove = ds;
+				break;
+			}
+		}
+		if (remove != null) {
+			list.remove(remove);
+			saveData(userKey, list);
+		}
+	}
+	
+	public static void addData(String userKey, DelegationSetting setting) {
+		List<DelegationSetting> list = loadData(userKey, false);
+		list.add(setting);
+		saveData(userKey, list);
+	}
+	
 	public static void saveData(String userKey, List<DelegationSetting> list) {
 		String data = DelegationSetting.format(list);
 		LOGGER.debug("Saving property: " + data);
@@ -96,7 +112,7 @@ public class DelegationUtil {
 	
 	public static List<DelegationSetting> loadData(String userKey, boolean removeOldRecords) {
 		List<DelegationSetting> result = new ArrayList<>();
-		long threshold = CustomApprovalUtil.getDelegationHistoryRetainDays();
+		long threshold = CustomApprovalUtil.getDelegationHistoryRetainDays() * 1000 * 60 * 60 * 24;
 		PropertySet ps = getPropertySet(userKey);
 		String s = ps.getText(PROPERTY_DELEGATION);
 		LOGGER.debug("Loaded property: " + s);

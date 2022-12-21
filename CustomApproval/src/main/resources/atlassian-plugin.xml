@@ -39,6 +39,7 @@
 		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
 		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
 		<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>
+		<dependency>com.atlassian.auiplugin:aui-table-sortable</dependency>
 	</web-resource>
 
 	<!-- Add jira-config.properties to Jira home directory and set ops.bar.group.size.opsbar-operations=3 

@@ -13,17 +13,19 @@
 		* Scheduled job JQL (to filter out issues and improve performance).
 		* Frequency of scheduled job.
 		* Group that can manage delegation settings for all users.
-		* Delegation settings retention period.  
+		* Delegation settings retention period. 
 1. Supports approval delegation.
 	* Users can set delegation via menu in user profile.
 	* Administrators can set delegation for everyone.
 	* Can set delegation that never expires.
 	* Can set multiple delegations.
+	* Delegated user will approve on behalf of delegator. 
+	* If a delegated user has multiple delegators, the delegated user's decision will be applied for all delegators. 
+	* If change decision is allowed, delegator can overwrite delegated user's decision and vice versa. 
 
 ### Unimplemented Features
 1. Email notification. 
 1. Approval via email.
-1. Multiple delegates should not count as multiple approvers. 
 1. Service Management support.
 
 ### Usage

@@ -14,6 +14,14 @@
 			.ui-datepicker {
 			    background: white;
 			}
+			
+			input.DatePicker {
+				width: 50%;
+			}
+			
+			select.TimePicker {
+				width: 20%;
+			}
 		</style>
 	</head>
 	<body>
@@ -23,30 +31,22 @@
 			#else
 			<form action="CustomApprovalUserDelegation.jspa" method="post" id="main">
 			#end
-				#if ($action.isAdmin()) 
-					<h3>Select User to Manage</h3>
-					<input 	type="text"
-							class="ajs-dirty-warning-exempt"
-							style="width: 50%"
-							id="fromUserKey"
-							name="fromUserKey" 
-							value="${action.getSelectedUserKey()}"
-							onchange="$('#selectedUserSubmit').click()"/>
-					<br/>
-					<input type="submit" style="display:none" id="selectedUserSubmit" />
-				#end
 				<h3>Current Delegations</h3>
-				<table class="CustomApprovalDelegate">
+				<table class="CustomApprovalDelegate aui aui-table-sortable">
 					<thead>
-						<th width="5%"></th>
-						<th width="19%">Delegate to User</th>
-						<th width="19%">Start Date (inclusive)</th>
-						<th width="19%">End Date (exclusive)</th>
-						<th width="19%">Modified By</th>
-						<th width="19%">Modified Date</th>
+						<th width="10%"></th>
+						#if ($action.isAdmin()) 
+							<th width="15%">Delegate from User</th>
+						#end
+						<th width="15%">Delegate to User</th>
+						<th width="15%">Start Date (inclusive)</th>
+						<th width="15%">End Date (exclusive)</th>
+						<th width="15%">Modified By</th>
+						<th width="15%">Modified Date</th>
 					</thead>
 					<tbody>
-						<input type="hidden" name="id" id="id" value=""/> 										
+						<input type="hidden" name="id" id="id" value=""/>
+						<input type="hidden" name="delUser" id="delUser" value=""/>
 						#if ($action.getSettings().size() == 0)
 							<tr>
 								<td colspan="100%">No delegation configured</td>
@@ -55,10 +55,13 @@
 							#foreach ($item in $action.getSettings())
 								<tr>
 									<td>
-										<button name="delete" type="submit" onclick="$('#id').val('${item.getId()}')">
+										<button name="delete" type="submit" onclick="$('#id').val('${item.getId()}'); $('#delUser').val('${item.getFromUser()}')">
 											<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span>
 										</button>
 									</td>
+									#if ($action.isAdmin()) 
+										<td>${item.getFromUserObject().getDisplayName()}</td>
+									#end
 									<td>${item.getDelegateToUserObject().getDisplayName()}</td>
 									<td>${item.getStartDateString()}</td>
 									<td>${item.getEndDateString()}</td>
@@ -69,18 +72,30 @@
 						#end
 					</tbody>
 				</table>
-				<hr/>
 				<h3>Add Delegation</h3>
 				<table style="width: 70%">
 					<thead>
 						<tr>
-							<th width="50%">Delegate to User</th>
+							#if ($action.isAdmin()) 
+								<th width="25%">Delegate from User</th>
+							#end
+							<th width="25%">Delegate to User</th>
 							<th width="25%">Start Date</th>
 							<th width="25%">End Date</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
+							#if ($action.isAdmin()) 
+								<td>
+									<input 	type="text"
+											class="ajs-dirty-warning-exempt"
+											id="fromUserKey"
+											name="fromUserKey" 
+											value=""
+											onchange="validateForm()"/>
+								</td>
+							#end
 							<td>
 								<input 	type="text" 
 										class="ajs-dirty-warning-exempt"
@@ -91,28 +106,74 @@
 							</td>
 							<td>
 								<input 	type="text" 
-										style="width: 95%" 
 										class="DatePicker ajs-dirty-warning-exempt" 
 										id="startDate" 
 										name="startDate" 
 										value=""
 										autocomplete="off"
 										onchange="validateForm()"/>
-								
+								<select class="TimePicker ajs-dirty-warning-exempt" id="startHour" name="startHour">
+									<option value=""></option>
+									#foreach ($idx in [0..23])
+										#if ($idx lt 10)
+											<option value="0${idx}">0${idx}</option>
+										#else
+											<option value="${idx}">${idx}</option>
+										#end
+									#end
+								</select>
+								<span>:</span>
+								<select class="TimePicker ajs-dirty-warning-exempt" id="startMinute" name="startMinute">
+									<option value=""></option>
+									#foreach ($idx in [0..59])
+										#if ($idx lt 10)
+											<option value="0${idx}">0${idx}</option>
+										#else
+											<option value="${idx}">${idx}</option>
+										#end
+									#end
+								</select>
 							</td>
 							<td>
 								<input 	type="text" 
-										style="width: 95%" 
 										class="DatePicker ajs-dirty-warning-exempt" 
 										id="endDate" 
 										name="endDate" 
 										value=""
 										autocomplete="off"
 										onchange="validateForm()"/>
-								
+								<select class="TimePicker ajs-dirty-warning-exempt" id="endHour" name="endHour">
+									<option value=""></option>
+									#foreach ($idx in [0..23])
+										#if ($idx lt 10)
+											<option value="0${idx}">0${idx}</option>
+										#else
+											<option value="${idx}">${idx}</option>
+										#end
+									#end
+								</select>
+								<span>:</span>
+								<select class="TimePicker ajs-dirty-warning-exempt" id="endMinute" name="endMinute">
+									<option value=""></option>
+									#foreach ($idx in [0..59])
+										#if ($idx lt 10)
+											<option value="0${idx}">0${idx}</option>
+										#else
+											<option value="${idx}">${idx}</option>
+										#end
+									#end
+								</select>
 							</td>
 						</tr>
 						<tr>
+							#if ($action.isAdmin()) 
+								<td>
+									<div 	id="fromUserError" 
+											style="display: none; width; 95%">
+										Please select a user
+									</div>
+								</td>
+							#end
 							<td>
 								<div 	id="userError" 
 										style="display: none; width; 95%">
@@ -155,6 +216,25 @@
 				var user = $('#userKey').val();
 				var start = $('#startDate').val();
 				var end = $('#endDate').val();
+				var startHour = $('#startHour').val();
+				var startMin = $('#startMinute').val();
+				var endHour = $('#endHour').val();
+				var endMin = $('#endMinute').val();
+				// fromUser
+				#if ($action.isAdmin())
+					var fromUser = $('#fromUserKey').val();
+					if (!fromUser) {
+						error = true;
+						$('#fromUserError').show();
+					} else {
+						$('#fromUserError').hide();
+						if (user == fromUser) {
+							user = null;
+							$('#userKey').val('');
+							$('#userKey').select2('val', '');
+						}
+					}
+				#end
 				// User
 				if (!user) {
 					error = true;
@@ -186,6 +266,24 @@
 					start = formatDate(new Date());
 					$('#startDate').val(start);
 				}
+				// Initial startHour and startMin
+				if (start) {
+					if (!startHour) {
+						$('#startHour').val('00');
+					}
+					if (!startMin) {
+						$('#startMinute').val('00');
+					}
+				}				
+				// Initial endHour and endMin
+				if (end) {
+					if (!endHour) {
+						$('#endHour').val('23');
+					}
+					if (!endMin) {
+						$('#endMinute').val('59');
+					}
+				}
 				// Update min date on endDate
 				var minDate = new Date(start);
 				minDate.setDate(minDate.getDate() + 1);
@@ -199,7 +297,7 @@
 						$('#endDate').val(formatDate(endVal));
 					}
 				} else {
-					$('#endDate').val(null);
+					$('#endDate').val('');
 				}
 				// Update add button
 				$('#add').prop('disabled', error);
@@ -226,19 +324,21 @@
 				return null;
 			}
 			
-			function filterUser(data) {
+			function filterUser(data, exceptFromUser) {
 				var m = new Map();
 				if (data && data.users && data.users.length) {
 					var src = data.users;
 					for (var i = 0; i < src.length; i++) {
-						var currentUserKey = '${action.getSelectedUserKey()}';
-						if (currentUserKey) {
-							if (src[i].key != currentUserKey) {
+						console.log('exceptFromUser: ' + exceptFromUser);
+						if (exceptFromUser) {
+							var exceptKey = $('#fromUserKey').val();
+							console.log('exceptKey: ' + exceptKey);
+							if (src[i].key != exceptKey) {
 								m.set(src[i].key, {
 									id: src[i].key,
 									text: src[i].displayName
 								});
-							}	
+							}
 						} else {
 							m.set(src[i].key, {
 								id: src[i].key,
@@ -256,14 +356,7 @@
 			var fromUserPickerConfig = {
 				delay: 250,
 				placeholder: "Select User",
-				width: '50%',
-				initSelection: function (element, callback) {
-					var data = { 
-                    	id: '${action.getSelectedUserKey()}', 
-                    	text: '${action.getSelectedUserDisplayName()}'
-                    };
-                    callback(data);
-                },
+				width: '100%',
 				ajax: {
 					type: 'GET',
 					url: AJS.contextPath() + '/rest/api/2/user/picker',
@@ -278,13 +371,13 @@
 						};
 					},
 					results: function(data, params) {
-						return filterUser(data);
+						return filterUser(data, false);
 					}
 				}
 			};
 			$('#fromUserKey').select2(fromUserPickerConfig);
 			
-			// User picker for all users except self
+			// User picker for all users fromUser
 			var userPickerConfig = {
 				delay: 250,
 				placeholder: "Select User",
@@ -303,7 +396,7 @@
 						};
 					},
 					results: function(data, params) {
-						return filterUser(data);
+						return filterUser(data, true);
 					}
 				}
 			};
@@ -311,7 +404,7 @@
 			
 			// Date pickers
 			var startDate = {
-				width: '100%',
+				width: '50%',
 				changeMonth: true,
 				changeYear: true,
 				showWeek: false,
@@ -324,7 +417,7 @@
 				}
 			};
 			var endDate = {
-				width: '100%',
+				width: '50%',
 				changeMonth: true,
 				changeYear: true,
 				showWeek: false,

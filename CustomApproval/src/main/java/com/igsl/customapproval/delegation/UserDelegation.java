@@ -3,6 +3,7 @@ package com.igsl.customapproval.delegation;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,8 +11,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.Group;
+import com.atlassian.jira.bc.user.search.UserSearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.security.groups.GroupManager;
+import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
@@ -39,6 +42,7 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	private static final Logger LOGGER = Logger.getLogger(UserDelegation.class);
 	
 	private static final GroupManager GM = ComponentAccessor.getGroupManager();
+	private static final UserSearchService USER_SEARCH_SERVICE = ComponentAccessor.getUserSearchService();
 	
 	private static final String PARAM_ADMIN = "admin";
 	private static final String PARAM_FROM_USER = "fromUserKey";
@@ -46,12 +50,15 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	private static final String PARAM_DELETE = "delete";
 	private static final String PARAM_USER = "userKey";
 	private static final String PARAM_START = "startDate";
+	private static final String PARAM_START_HOUR = "startHour";
+	private static final String PARAM_START_MINUTE = "startMinute";
 	private static final String PARAM_END = "endDate";
+	private static final String PARAM_END_HOUR = "endHour";
+	private static final String PARAM_END_MINUTE = "endMinute";
 	private static final String PARAM_ID = "id";
+	private static final String PARAM_DEL_USER = "delUser";
 	
 	private List<DelegationSetting> settings = new ArrayList<>();
-	private String selectedUserKey = null;
-	private String selectedUserDisplayName = null;
 
 	public String getCurrentUserKey() {
 		return ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getKey();
@@ -59,14 +66,6 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	
 	public String getCurrentUserDisplayName() {
 		return ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getDisplayName();
-	}
-	
-	public String getSelectedUserKey() {
-		return this.selectedUserKey;
-	}
-	
-	public String getSelectedUserDisplayName() {
-		return this.selectedUserDisplayName;
 	}
 	
 	public List<DelegationSetting> getSettings() {
@@ -88,33 +87,48 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 		return false;
 	}
 	
+	private void refreshData(boolean cleanup) {
+		if (isAdmin()) {
+			this.settings = new ArrayList<>();
+			for (ApplicationUser user : USER_SEARCH_SERVICE.findUsersAllowEmptyQuery(getJiraServiceContext(), null)) {
+				this.settings.addAll(DelegationUtil.loadData(user.getKey(), true));
+			}
+		} else {
+			this.settings = DelegationUtil.loadData(getLoggedInUser().getKey(), cleanup);
+		}
+	}
+	
 	@Override
 	public String doExecute() throws Exception {
 		LOGGER.debug("doExecute(): " + this.hashCode());		
 		HttpServletRequest req = getHttpRequest();
-
-		// Load data from user property; defaults to current user
-		String fromUser = req.getParameter(PARAM_FROM_USER);
-		if (fromUser == null) {
-			fromUser = getCurrentUserKey();
-		}
-		this.settings = DelegationUtil.loadData(fromUser, true);
-		this.selectedUserKey = fromUser;
-		this.selectedUserDisplayName = CustomApprovalUtil.getUserByKey(fromUser).getDisplayName();
-		
+		refreshData(true);
 		if (req.getParameter(PARAM_ADD) != null) {
 			// Add
+			String fromUser = getLoggedInUser().getKey();
+			if (isAdmin()) {
+				String s = req.getParameter(PARAM_FROM_USER);
+				if (s != null) {
+					fromUser = s;
+				}
+			}
 			String toUser = req.getParameter(PARAM_USER);
 			String start = req.getParameter(PARAM_START);
+			String startHour = req.getParameter(PARAM_START_HOUR);
+			String startMinute = req.getParameter(PARAM_START_MINUTE);
 			String end = req.getParameter(PARAM_END);
+			String endHour = req.getParameter(PARAM_END_HOUR);
+			String endMinute = req.getParameter(PARAM_END_MINUTE);
 			DelegationSetting ds = new DelegationSetting();
 			ds.setDelegateToUser(toUser);
 			if (start != null && !start.isEmpty()) {
-				Date startDate = DelegationSetting.SDF.parse(start);
+				String s = start + " " + ((startHour != null)? startHour : "00") + ":" + ((startMinute != null)? startMinute : "00");
+				Date startDate = DelegationSetting.SDF.parse(s);
 				ds.setStartDate(startDate);
 			}
 			if (end != null && !end.isEmpty()) {
-				Date endDate = DelegationSetting.SDF.parse(end);
+				String s = end + " " + ((endHour != null)? endHour : "23") + ":" + ((endMinute != null)? endMinute : "59");
+				Date endDate = DelegationSetting.SDF.parse(s);
 				ds.setEndDate(endDate);
 			}
 			ds.setFromUser(fromUser);
@@ -124,28 +138,17 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 			DelegationSetting.translate(ds);
 			this.settings.add(ds);
 			// Update property set
-			DelegationUtil.saveData(fromUser, this.settings);
+			DelegationUtil.addData(fromUser, ds);
 		} else if (req.getParameter(PARAM_DELETE) != null) {
 			// Delete
+			String delUser = req.getParameter(PARAM_DEL_USER);
 			String id = req.getParameter(PARAM_ID);
-			LOGGER.debug("Remove: " + id);
-			DelegationSetting toRemove = null;
-			for (DelegationSetting ds : this.settings) {
-				LOGGER.debug("vs: " + ds.getId());
-				if (ds.getId().equals(id)) {
-					LOGGER.debug("To remove: " + ds);
-					toRemove = ds;
-					break;
-				}
-			}
-			if (toRemove != null) {
-				LOGGER.debug("Remove: " + toRemove);
-				this.settings.remove(toRemove);
-			}
-			// Update property set
-			DelegationUtil.saveData(fromUser, this.settings);
-		}
-		
+			DelegationSetting ds = new DelegationSetting();
+			ds.setId(id);
+			DelegationUtil.removeData(delUser, ds);
+		}		
+		// Refresh
+		refreshData(false);
 		return JiraWebActionSupport.INPUT;
 	}
 }
