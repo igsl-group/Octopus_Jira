@@ -1,9 +1,7 @@
 package com.igsl.customapproval.condition;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -84,6 +82,8 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 		// Check if user already approved
 		Map<String, ApprovalHistory> historyList = data.getHistory().get(settings.getApprovalName());
 		if (historyList != null) {
+			boolean showApprove = false;
+			boolean showReject = false;
 			if (userIsDelegated) {
 				// Check as delegates
 				// If any delegator cannot be found, allow both approve/reject buttons
@@ -96,21 +96,14 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 				if (alreadyApproved) {
 					if (!settings.isAllowChangeDecision()) {
 						LOGGER.debug("Already approved as delegate, change decision not allowed");
-						return false;
 					} else {
-						// We can assume all decisions are the same
-						boolean approved = historyList.get(delegators.get(0).getKey()).getApproved();
-						if (approved) {
-							// Disallow approve button
-							if (approve) {
-								LOGGER.debug("Delegate approve is not allowed");
-								return false;
-							}
-						} else {
-							// Disallow reject button
-							if (!approve) {
-								LOGGER.debug("Delegate reject is not allowed");
-								return false;
+						// Check each decision
+						for (ApplicationUser u : delegators) {
+							ApprovalHistory history = historyList.get(u.getKey());
+							if (history.getApproved()) {
+								showReject |= true;
+							} else {
+								showApprove |= true;
 							}
 						}
 					}
@@ -121,24 +114,21 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 				if (historyList.containsKey(user.getKey())) {
 					if (!settings.isAllowChangeDecision()) {
 						LOGGER.debug("Already approved, change decision not allowed");
-						return false;
 					} else {
-						boolean approved = historyList.get(user.getKey()).getApproved();
-						if (approved) {
-							// Disallow approve button
-							if (approve) {
-								LOGGER.debug("Approve is not allowed");
-								return false;
-							}
+						if (historyList.get(user.getKey()).getApproved()) {
+							showReject |= true;
 						} else {
-							// Disallow reject button
-							if (!approve) {
-								LOGGER.debug("Reject is not allowed");
-								return false;
-							}
+							showApprove |= true;
 						}
 					}
 				}
+			}
+			LOGGER.debug("showApprove: " + showApprove);
+			LOGGER.debug("showReject: " + showReject);
+			if (approve) {
+				return showApprove;
+			} else {
+				return showReject;
 			}
 		} else {
 			// No history

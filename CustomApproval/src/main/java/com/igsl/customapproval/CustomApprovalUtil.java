@@ -779,7 +779,7 @@ public class CustomApprovalUtil {
 				as.getFinalApproverList().addAll(approverList.keySet());
 				issue.setCustomFieldValue(CustomApprovalSetup.getApprovalDataCustomField(), approvalData.toString());
 				LOGGER.debug("Locking in approval: " + as.getApprovalName() + ": " + approvalData.toString());
-				ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
+				ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.ISSUE_UPDATED, false);
 				
 				TransitionOptions.Builder builder = new Builder();
 				// There should be a hide from user condition on the transition, so need to skip condition
