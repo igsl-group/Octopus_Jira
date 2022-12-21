@@ -596,7 +596,6 @@ public class CustomApprovalUtil {
 			if (lockId == null) {
 				throw new LockException();
 			}
-			List<String> onBehalfOfList = null;
 			// Validate if user is approver
 			Map<String, ApplicationUser> approverList = getApproverList(issue, settings);
 			LOGGER.debug("Approvers: ");
@@ -604,16 +603,19 @@ public class CustomApprovalUtil {
 				LOGGER.debug(s);
 			}
 			LOGGER.debug("User: " + user.getKey());
-			if (!CustomApprovalUtil.isApprover(user.getKey(), approverList)) {
-				// Check is anyone's delegate
-				List<ApplicationUser> onBehalfOf = CustomApprovalUtil.isDelegate(user.getKey(), approverList);
-				if (onBehalfOf.size() == 0) {
-					throw new InvalidApproverException();
+			boolean isApprover = CustomApprovalUtil.isApprover(user.getKey(), approverList);
+			// Check is anyone's delegate
+			List<ApplicationUser> delegators = CustomApprovalUtil.isDelegate(user.getKey(), approverList);
+			boolean isDelegated = (delegators != null && delegators.size() != 0);
+			List<String> delegatorList = null;
+			if (isDelegated) {
+				delegatorList = new ArrayList<>();
+				for (ApplicationUser u : delegators) {
+					delegatorList.add(u.getKey());
 				}
-				onBehalfOfList = new ArrayList<>();
-				for (ApplicationUser u : onBehalfOf) {
-					onBehalfOfList.add(u.getKey());
-				}
+			}
+			if (!isApprover && !isDelegated) {
+				throw new InvalidApproverException();
 			}
 			ApprovalData approvalData = getApprovalData(issue); 
 			// Update ApprovalHistory
@@ -624,32 +626,53 @@ public class CustomApprovalUtil {
 				historyList = new LinkedHashMap<String, ApprovalHistory>();
 				approvalData.getHistory().put(settings.getApprovalName(), historyList);
 			}
-			if (historyList.containsKey(user.getKey())) {
-				// Already approved, update decision
-				ApprovalHistory historyItem = historyList.get(user.getKey());
-				historyItem.setApprovedDate(new Date());
-				historyItem.setApproved(approve);
-				if (onBehalfOfList != null) {
-					historyItem.setOnBehalfOf(onBehalfOfList);
+			if (isApprover) {
+				// For user
+				if (historyList.containsKey(user.getKey())) {
+					// Already approved, update decision
+					ApprovalHistory historyItem = historyList.get(user.getKey());
+					historyItem.setApprovedDate(new Date());
+					historyItem.setApproved(approve);
+					historyItem.setDelegated(null);
+					// Remove and add to put item at the bottom of the list
+					historyList.remove(user.getKey());
+					historyList.put(user.getKey(), historyItem);
+				} else {
+					// Add new record
+					ApprovalHistory historyItem = new ApprovalHistory();
+					historyItem.setApprover(user.getKey());
+					historyItem.setApprovedDate(new Date());
+					historyItem.setApproved(approve);
+					historyItem.setDelegated(null);
+					historyList.put(user.getKey(), historyItem);
 				}
-				// Remove and add to put item at the bottom of the list
-				historyList.remove(user.getKey());
-				historyList.put(user.getKey(), historyItem);
-			} else {
-				// Add new record
-				ApprovalHistory historyItem = new ApprovalHistory();
-				historyItem.setApprover(user.getKey());
-				historyItem.setApprovedDate(new Date());
-				historyItem.setApproved(approve);
-				if (onBehalfOfList != null) {
-					historyItem.setOnBehalfOf(onBehalfOfList);
+			}
+			if (delegatorList != null) {
+				// Set decision for each delegator
+				for (String delegator : delegatorList) {
+					if (historyList.containsKey(delegator)) {
+						// Already approved, update decision
+						ApprovalHistory historyItem = historyList.get(delegator);
+						historyItem.setApprovedDate(new Date());
+						historyItem.setApproved(approve);
+						historyItem.setDelegated(user.getKey());
+						// Remove and add to put item at the bottom of the list
+						historyList.remove(delegator);
+						historyList.put(delegator, historyItem);
+					} else {
+						// Add new record
+						ApprovalHistory historyItem = new ApprovalHistory();
+						historyItem.setApprover(delegator);
+						historyItem.setApprovedDate(new Date());
+						historyItem.setApproved(approve);
+						historyItem.setDelegated(user.getKey());
+						historyList.put(delegator, historyItem);
+					}
 				}
-				historyList.put(user.getKey(), historyItem);
 			}
 			// Save ApprovalData
 			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
 			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
-			
 			return transitIssueWithoutLock(issue, user);
 		} finally {
 			if (lockId != null) {

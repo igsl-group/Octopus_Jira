@@ -1,5 +1,7 @@
 package com.igsl.customapproval.condition;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,39 +72,78 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 			LOGGER.debug("approver list serialization failed", ex);
 		}
 		boolean userIsApprover = CustomApprovalUtil.isApprover(user.getKey(), userList);
-		if (!userIsApprover) {
-			userIsApprover = (CustomApprovalUtil.isDelegate(user.getKey(), userList).size() != 0);
-		}
-		if (!userIsApprover) {
+		LOGGER.debug(user.getKey() + " isApprover: " + userIsApprover);
+		boolean userIsDelegated = false;
+		List<ApplicationUser> delegators = CustomApprovalUtil.isDelegate(user.getKey(), userList);
+		userIsDelegated = (delegators != null && delegators.size() != 0);
+		LOGGER.debug(user.getKey() + " isDelegated: " + userIsDelegated);
+		if (!userIsApprover && !userIsDelegated) {
 			LOGGER.debug("User is not approver");
 			return false;
 		}
 		// Check if user already approved
 		Map<String, ApprovalHistory> historyList = data.getHistory().get(settings.getApprovalName());
-		if (historyList != null && historyList.containsKey(user.getKey())) {
-			// Check if allow changing decision
-			LOGGER.debug("User already approved");
-			if (!settings.isAllowChangeDecision()) {
-				// Already approved
-				LOGGER.debug("Change decision not allowed");
-				return false;
-			} else {
-				LOGGER.debug("Change decision is allowed");
-				boolean approved = historyList.get(user.getKey()).getApproved();
-				if (approved) {
-					// Disallow approve button
-					if (approve) {
-						return false;
+		if (historyList != null) {
+			if (userIsDelegated) {
+				// Check as delegates
+				// If any delegator cannot be found, allow both approve/reject buttons
+				boolean alreadyApproved = true;
+				for (ApplicationUser delegator : delegators) {
+					if (!historyList.containsKey(delegator.getKey())) {
+						alreadyApproved &= false;
 					}
-				} else {
-					// Disallow reject button
-					if (!approve) {
+				}
+				if (alreadyApproved) {
+					if (!settings.isAllowChangeDecision()) {
+						LOGGER.debug("Already approved as delegate, change decision not allowed");
 						return false;
+					} else {
+						// We can assume all decisions are the same
+						boolean approved = historyList.get(delegators.get(0).getKey()).getApproved();
+						if (approved) {
+							// Disallow approve button
+							if (approve) {
+								LOGGER.debug("Delegate approve is not allowed");
+								return false;
+							}
+						} else {
+							// Disallow reject button
+							if (!approve) {
+								LOGGER.debug("Delegate reject is not allowed");
+								return false;
+							}
+						}
 					}
 				}
 			}
-		}		
-		LOGGER.debug("User is approver");
+			if (userIsApprover) {
+				// Check as approver
+				if (historyList.containsKey(user.getKey())) {
+					if (!settings.isAllowChangeDecision()) {
+						LOGGER.debug("Already approved, change decision not allowed");
+						return false;
+					} else {
+						boolean approved = historyList.get(user.getKey()).getApproved();
+						if (approved) {
+							// Disallow approve button
+							if (approve) {
+								LOGGER.debug("Approve is not allowed");
+								return false;
+							}
+						} else {
+							// Disallow reject button
+							if (!approve) {
+								LOGGER.debug("Reject is not allowed");
+								return false;
+							}
+						}
+					}
+				}
+			}
+		} else {
+			// No history
+			LOGGER.debug("No approval history, user is approver");
+		}
 		return true;
 	}
 	

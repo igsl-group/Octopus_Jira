@@ -60,14 +60,10 @@
 						#end
 						<tr>
 							<td class="$!{strikeoutClass}">
-								<div>${item.approverDisplayName}</div>
-								#if (${item.onBehalfOfDisplayName})
-									<table>
-										<tr><th>Delegated From</th></tr>
-										#foreach ($approver in $item.onBehalfOfDisplayName)
-											<tr><td>${approver}</td></tr>
-										#end
-									</table>
+								#if (${item.delegatedDisplayName})
+									<span>${item.delegatedDisplayName} on behalf of ${item.approverDisplayName}</span>
+								#else
+									<span>${item.approverDisplayName}</span>
 								#end
 							</td>
 							<td class="$!{strikeoutClass}">${item.decision}</td>

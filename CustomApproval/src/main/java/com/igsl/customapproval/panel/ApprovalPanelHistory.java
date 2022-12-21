@@ -1,9 +1,7 @@
 package com.igsl.customapproval.panel;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -24,8 +22,8 @@ public class ApprovalPanelHistory {
 	
 	private String approver;
 	private String approverDisplayName;
-	private List<String> onBehalfOf;
-	private List<String> onBehalfOfDisplayName;
+	private String delegated;
+	private String delegatedDisplayName;
 	private boolean approved;
 	private String decision;
 	private Date approvedDate;
@@ -34,7 +32,7 @@ public class ApprovalPanelHistory {
 	
 	public ApprovalPanelHistory(ApprovalHistory history, Issue issue, ApprovalSettings settings) {
 		this.approver = history.getApprover();
-		this.onBehalfOf = history.getOnBehalfOf();
+		this.delegated = history.getDelegated();
 		this.approved = history.getApproved();
 		this.approvedDate = history.getApprovedDate();
 		// Translate
@@ -44,18 +42,15 @@ public class ApprovalPanelHistory {
 		} else {
 			this.approverDisplayName = this.approver;
 		}
-		if (this.onBehalfOf != null) {
-			this.onBehalfOfDisplayName = new ArrayList<>();
-			for (String key : this.onBehalfOf) {
-				ApplicationUser onBehalfOfUser = CustomApprovalUtil.getUserByKey(key);
-				if (onBehalfOfUser != null) {
-					this.onBehalfOfDisplayName.add(onBehalfOfUser.getDisplayName());
-				} else {
-					this.onBehalfOfDisplayName.add(key);
-				}
+		if (this.delegated != null) {
+			ApplicationUser delegatedUser = CustomApprovalUtil.getUserByKey(this.delegated);
+			if (delegatedUser != null) {
+				this.delegatedDisplayName = delegatedUser.getDisplayName();
+			} else {
+				this.delegatedDisplayName = this.delegated;
 			}
 		} else {
-			this.onBehalfOfDisplayName = null;
+			this.delegatedDisplayName = null;
 		}
 		if (this.approvedDate != null) {
 			this.approvedDateString = SDF.format(this.approvedDate);
@@ -66,23 +61,10 @@ public class ApprovalPanelHistory {
 			LOGGER.debug("Approver list: " + s);
 		}
 		LOGGER.debug("User: " + this.approver);
-		// We will not verify delegation settings here... if it is present, then it is considered valid.
-		// We do not want to keep all delegation history in user properties.
-		// Since delegation history can get cleaned up, we cannot verify.
 		if (settings.isCompleted()) {
 			this.valid = CustomApprovalUtil.isApprover(this.approver, settings.getFinalApproverList());
-			if (!this.valid) {
-				if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
-					this.valid = true;
-				}
-			}
 		} else {
 			this.valid = CustomApprovalUtil.isApprover(this.approver, approverList);
-			if (!this.valid) {
-				if (this.onBehalfOf != null && this.onBehalfOf.size() != 0) {
-					this.valid = true;
-				}
-			}
 		}
 		LOGGER.debug("isValid: " + this.valid);
 	}
@@ -92,12 +74,6 @@ public class ApprovalPanelHistory {
 	}
 	public String getApproverDisplayName() {
 		return approverDisplayName;
-	}
-	public List<String> getOnBehalfOf() {
-		return onBehalfOf;
-	}
-	public List<String> getOnBehalfOfDisplayName() {
-		return onBehalfOfDisplayName;
 	}
 	public boolean getApproved() {
 		return approved;
@@ -113,5 +89,11 @@ public class ApprovalPanelHistory {
 	}
 	public boolean isValid() {
 		return valid;
+	}
+	public String getDelegated() {
+		return delegated;
+	}
+	public String getDelegatedDisplayName() {
+		return delegatedDisplayName;
 	}
 }

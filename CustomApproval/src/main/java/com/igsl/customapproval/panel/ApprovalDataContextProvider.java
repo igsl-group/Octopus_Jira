@@ -30,7 +30,7 @@ public class ApprovalDataContextProvider extends AbstractJiraContextProvider {
 	public Map getContextMap(ApplicationUser user, JiraHelper helper) {
 		Map<String, Object> result = new HashMap<>();
 		Issue issue = (Issue) helper.getContextParams().get(PARAM_ISSUE);
-		ApprovalSettings currentSettings = CustomApprovalUtil.getApprovalSettings(issue);
+		//ApprovalSettings currentSettings = CustomApprovalUtil.getApprovalSettings(issue);
 		if (issue != null) {
 			CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 			if (cf != null) {
