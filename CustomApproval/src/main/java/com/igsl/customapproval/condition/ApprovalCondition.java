@@ -97,7 +97,7 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 					if (!settings.isAllowChangeDecision()) {
 						LOGGER.debug("Already approved as delegate, change decision not allowed");
 					} else {
-						// Check each decision
+						// Show only opposite button
 						for (ApplicationUser u : delegators) {
 							ApprovalHistory history = historyList.get(u.getKey());
 							if (history.getApproved()) {
@@ -107,6 +107,10 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 							}
 						}
 					}
+				} else {
+					// Not approved yet, show both buttons
+					showReject |= true;
+					showApprove |= true;
 				}
 			}
 			if (userIsApprover) {
@@ -115,12 +119,17 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 					if (!settings.isAllowChangeDecision()) {
 						LOGGER.debug("Already approved, change decision not allowed");
 					} else {
+						// Show only opposite button
 						if (historyList.get(user.getKey()).getApproved()) {
 							showReject |= true;
 						} else {
 							showApprove |= true;
 						}
 					}
+				} else {
+					// Not approved yet, show both buttons
+					showReject |= true;
+					showApprove |= true;
 				}
 			}
 			LOGGER.debug("showApprove: " + showApprove);
