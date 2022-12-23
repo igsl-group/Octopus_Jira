@@ -21,7 +21,7 @@ function customApproval_addPanelData() {
 	console.log(customApproval_Sidebar);
 	console.log(customApproval_IssueKey)
 	if (customApproval_Sidebar.length == 1) {
-		if (customApproval_Sidebar.find('div.CustomApproval').length == 0) {
+		if (customApproval_Sidebar.find('div#approvalPanel').length == 0) {
 			console.log('Adding custom approval panel');
 			AJS.$.ajax({
 				url: AJS.contextPath() + '/rest/igsl/latest/getApprovalData',
@@ -122,21 +122,8 @@ function customApproval_addPanelData() {
 
 function customApproval_getData() {
 	console.log('getData starts');
-	var payloadSearchKey = 'div#jsonPayload';
-	var payload;
-	if (customApproval_iFrame) {
-		payload = AJS.$(customApproval_iFrame).contents().find(payloadSearchKey);
-	} else {
-		payload = AJS.$(payloadSearchKey);
-	}
-	if (payload && payload.length == 1) {
-		var data = payload[0].innerHTML;
-		var json = JSON.parse(data);
-		if (json && json.reqDetails && json.reqDetails.key) {
-			console.log('Found issue key: ' + json.reqDetails.key);
-			customApproval_IssueKey = json.reqDetails.key;
-		}
-	}
+	customApproval_IssueKey = location.href.substring(location.href.lastIndexOf('/') + 1);
+	console.log('Found issue key: ' + customApproval_IssueKey);
 	var sidebarKey = 'aside.aui-page-panel-sidebar div.cv-request-options';
 	var sidebar = null;
 	if (customApproval_iFrame) {
@@ -145,8 +132,7 @@ function customApproval_getData() {
 		sidebar = AJS.$(sidebarKey);
 	}
 	if (sidebar && sidebar.length == 1) {
-		console.log('Found sidebar: ');
-		console.log(sidebar);
+		console.log('Found sidebar');
 		customApproval_Sidebar = sidebar;
 	} 
 	if (customApproval_Sidebar != null && customApproval_IssueKey != null) {
