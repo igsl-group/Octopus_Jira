@@ -68,7 +68,14 @@ function customApproval_addPanelData() {
 						} else {
 							title += ' - Pending';
 						}
+						var count = 
+							'(Approve ' + 
+							panelData[i].approveCount + '/' + panelData[i].approveCountTarget + 
+							' Reject ' + 
+							panelData[i].rejectCount + '/' + panelData[i].rejectCountTarget + 
+							')';
 						historyPanel.append('<div class="CustomApprovalCustomerPortalTite">' + title + '</div>');
+						historyPanel.append('<div class="CustomApprovalCustomerPortalCount">' + count + '</div>')
 						var table = AJS.$(
 							'<table class="CustomApprovalCustomerPortal">' +
 								'<thead>' + 
@@ -93,12 +100,13 @@ function customApproval_addPanelData() {
 										history[i].approverDisplayName;
 								} else {
 									name = history[i].approverDisplayName;
-								}								
+								}
+								var cls = (history[i].valid)? '' : 'CustomApprovalStrikeOut';
 								AJS.$(table).find('tbody').append(
 									'<tr>' + 
-										'<td>' + name + '</td>' + 
-										'<td>' + history[i].decision + '</td>' + 
-										'<td>' + history[i].approvedDateString + '</td>' + 
+										'<td class="' + cls + '">' + name + '</td>' + 
+										'<td class="' + cls + '">' + history[i].decision + '</td>' + 
+										'<td class="' + cls + '">' + history[i].approvedDateString + '</td>' + 
 									'</tr>'
 								);
 							}

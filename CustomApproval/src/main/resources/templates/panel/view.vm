@@ -24,7 +24,7 @@
 		<div class="ApprovalTitle">
 			<span>$entry.approvalName</span>
 			#if ($entry.completed)
-				#if ($data.approved)
+				#if ($entry.approved)
 					<span>- Approved</span>
 				#else
 					<span>- Rejected</span>

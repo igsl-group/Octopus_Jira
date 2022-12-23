@@ -3,10 +3,19 @@ table.CustomApprovalCustomerPortal {
 }
 
 table.CustomApprovalCustomerPortal td,th {
-	font-size: 0.7em;
+	font-size: 0.8em;
 	table-layout: fixed;
 }
 
 div.CustomApprovalCustomerPortalTite {
 	font-weight: bold;
+}
+
+div.CustomApprovalCustomerPortalCount {
+	font-size: 0.8em;
+	font-weight: bold;
+}
+
+.CustomApprovalStrikeOut {
+	text-decoration: line-through;
 }
