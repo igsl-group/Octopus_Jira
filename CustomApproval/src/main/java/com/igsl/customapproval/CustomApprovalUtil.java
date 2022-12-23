@@ -1055,12 +1055,19 @@ public class CustomApprovalUtil {
 					if (!settings.isAllowChangeDecision()) {
 						LOGGER.debug("Already approved as delegate, change decision not allowed");
 					} else {
-						// Show only opposite button
+						// Allow opposite button for each decision
 						for (ApplicationUser u : delegators) {
-							ApprovalHistory history = historyList.get(u.getKey());
-							if (history.getApproved()) {
-								showReject |= true;
+							// Delegator has decision, allow opposites
+							if (historyList.containsKey(u.getKey())) {
+								ApprovalHistory history = historyList.get(u.getKey());
+								if (history.getApproved()) {
+									showReject |= true;
+								} else {
+									showApprove |= true;
+								}
 							} else {
+								// Delegator has no decision yet, allow both
+								showReject |= true;
 								showApprove |= true;
 							}
 						}
