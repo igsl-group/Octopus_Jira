@@ -196,7 +196,6 @@ function customApproval_checkPage(mutationList, observer) {
 
 function customApproval_init() {
 	customApproval_checkPage();
-	/*
 	// Register DOM observer
 	var observerConfig = { 
 		attributes: false, 
@@ -205,6 +204,5 @@ function customApproval_init() {
 	};
 	customApproval_observer = new MutationObserver(customApproval_checkPage);
 	customApproval_observer.observe(document, observerConfig);
-	*/
 }
 AJS.toInit(customApproval_init);
