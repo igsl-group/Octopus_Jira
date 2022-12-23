@@ -19,28 +19,27 @@
 		font-weight: bold;
 	}
 </style>
-#if ($history)
-	#foreach ($entry in $history.entrySet())
-		#set ($setting = $settings.get($entry.key))
+#if ($data)
+	#foreach ($entry in $data)
 		<div class="ApprovalTitle">
-			<span>$entry.key</span>
-			#if ($setting.isCompleted())
-				#if ($setting.isApproved())
+			<span>$entry.approvalName</span>
+			#if ($entry.completed)
+				#if ($data.approved)
 					<span>- Approved</span>
 				#else
 					<span>- Rejected</span>
 				#end
 			#else
 				<span>- Pending</span>
-			#end			
+			#end
 		</div>
 		<div class="ApprovalCount">
 			<span>(</span>
-			<span>Approve ${setting.approveCount}/${setting.approveCountTarget}</span>
-			<span>Reject ${setting.rejectCount}/${setting.rejectCountTarget}</span>
+			<span>Approve ${entry.approveCount}/${entry.approveCountTarget}</span>
+			<span>Reject ${entry.rejectCount}/${entry.rejectCountTarget}</span>
 			<span>)</span>
 		</div>
-		#if ($entry.value.size() == 0)
+		#if ($entry.history.size() == 0)
 			<span>No approvals yet</span>
 		#else
 			<table class="ApprovalHistory">
@@ -52,7 +51,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					#foreach ($item in $entry.value)
+					#foreach ($item in $entry.history)
 						#if ($item.isValid())
 							#set ($strikeoutClass = "")
 						#else
@@ -75,17 +74,4 @@
 			<br/>
 		#end
 	#end
-#end
-#if ($current)
-	<div class="ApprovalTitle">
-		<span>${current.approvalName}</span>
-		<span>- Pending</span>
-	</div>
-	<div class="ApprovalCount">
-		<span>(</span>
-		<span> Approve ${current.approveCount}/${current.approveCountTarget}</span>
-		<span> Reject ${current.rejectCount}/${current.rejectCountTarget}</span>
-		<span>)</span>
-	</div>
-	<span>No approvals yet</span>
 #end

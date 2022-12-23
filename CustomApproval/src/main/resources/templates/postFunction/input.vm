@@ -2,6 +2,20 @@
 	To store element for row construction.
 	Controls disabled to avoid being included in form data.
 -->
+<style type="text/css">
+	table.CustomApproval {
+		width: 100%;
+		table-layout: fixed;
+	}
+	
+	table.CustomApproval td {
+		vertical-align: bottom;
+	}
+	
+	table.CustomApproval td input, select {
+		width: 100%;
+	}
+</style>
 <table id="template" style="display: none">
 	<tr id="">
 		<td>

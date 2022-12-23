@@ -13,26 +13,40 @@
 
 	<resource type="i18n" name="i18n" location="CustomApproval" />
 
+   <!-- REST APIs -->
+	<rest key="RestApi" path="/igsl" version="1.0">
+		<description>Provides REST API for IGSL Custom Approval</description>
+		<!-- Package(s) to scan for REST APIs -->
+		<package>com.igsl.customapproval.rest</package>
+	</rest>
+
+	<!-- Web resources for customer portal only -->
+	<web-resource key="portalResources" name="Customer Portal Resources">
+		<context>customerportal</context> <!-- Customer portal, i.e. service management pages -->
+		<!-- This will transform AJS.I18n.getText('xxx') in .js files -->
+		<transformation extension="js">
+			<transformer key="jsI18n" />
+		</transformation>
+		<resource type="download" name="CustomApproval.css"
+			location="/css/CustomApproval.css" />
+		<resource type="download" name="CustomApproval.js"
+			location="/js/CustomApproval.js" />
+	</web-resource>
+
 	<!-- Web resources like CSS and JS -->
 	<web-resource key="resources" name="Jira Resources">
 		<!-- Since Jira 5.0, edit screen no longer supports $webResourceManager.requireResource. 
 			We need to put resources in specific context instead. -->
 		<context>atl.general</context> <!-- General context -->
 		<context>atl.admin</context> <!-- Admin context, i.e. custom field configuration pages -->
-		<context>customerportal</context> <!-- Customer portal, i.e. service management pages -->
 		<context>servicedesk.general</context> <!-- Service Desk general -->
 		<context>servicedesk.admin</context> <!-- Sercice Desk admin -->
-
 		<!-- This will transform AJS.I18n.getText('xxx') in .js files -->
 		<transformation extension="js">
 			<transformer key="jsI18n" />
 		</transformation>
-
 		<resource type="download" name="CustomApproval.css"
 			location="/css/CustomApproval.css" />
-		<resource type="download" name="CustomApproval.js"
-			location="/js/CustomApproval.js" />
-
 		<!-- Request inclusion of jquery-ui library for select2, a dropdown with 
 			autocomplete -->
 		<dependency>com.atlassian.auiplugin:ajs</dependency>

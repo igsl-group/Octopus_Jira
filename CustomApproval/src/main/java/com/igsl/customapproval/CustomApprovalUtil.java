@@ -1,6 +1,7 @@
 package com.igsl.customapproval;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -60,6 +61,8 @@ import com.igsl.customapproval.exception.InvalidApprovalException;
 import com.igsl.customapproval.exception.InvalidApproverException;
 import com.igsl.customapproval.exception.InvalidWorkflowException;
 import com.igsl.customapproval.exception.LockException;
+import com.igsl.customapproval.panel.ApprovalPanelHistory;
+import com.igsl.customapproval.panel.ApprovalPanelData;
 import com.opensymphony.workflow.loader.ActionDescriptor;
 import com.opensymphony.workflow.loader.StepDescriptor;
 
@@ -111,11 +114,28 @@ public class CustomApprovalUtil {
 	public static final String CUSTOM_FIELD_DESCRIPTION = "[Custom Approval] Approval data as JSON string";
 	
 	/**
+	 * Get issue by key.
+	 * @param issueKey Issue key.
+	 * @return MutableIssue.
+	 */
+	public static MutableIssue getIssue(String issueKey) {
+		return ISSUE_MANAGER.getIssueObject(issueKey);
+	}
+	
+	/**
 	 * Get admin user.
 	 * @return ApplicationUser
 	 */
 	public static ApplicationUser getAdminUser() {
 		return USER_MANAGER.getUserByName(ADMIN_USER_NAME);
+	}
+	
+	/**
+	 * Get current user.
+	 * @return ApplicationUser
+	 */
+	public static ApplicationUser getCurrentUser() {
+		return ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 	}
 	
 	/**
@@ -814,6 +834,10 @@ public class CustomApprovalUtil {
 		return false;
 	}
 	
+	/**
+	 * Get retain period for delegation history (no. of days).
+	 * @return long
+	 */
 	public static long getDelegationHistoryRetainDays() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -828,12 +852,20 @@ public class CustomApprovalUtil {
 		return DEFAULT_RETAIN_DAYS;
 	}
 	
+	/**
+	 * Set job frequency.
+	 * @param frequency Job will run every n milliseconds.
+	 */
 	public static void setJobFrequency(long frequency) {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		settings.put(KEY_JOB_FREQUENCY, Long.toString(frequency));
 	}
 	
+	/**
+	 * Get job frequency (milliseconds).
+	 * @return long
+	 */
 	public static long getJobFrequency() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -875,6 +907,10 @@ public class CustomApprovalUtil {
 		return result;
 	}
 	
+	/**
+	 * Get JQL filter for scheduled job.
+	 * @return JQL as string.
+	 */
 	public static String getJobFilter() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -885,6 +921,11 @@ public class CustomApprovalUtil {
 		return DEFAULT_JOB_FILTER;
 	}
 	
+	/**
+	 * Set no. of days to retain delegation history.
+	 * @param days
+	 * @throws Exception
+	 */
 	public static void setDelegationHistoryRetainDays(long days) throws Exception {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -892,6 +933,10 @@ public class CustomApprovalUtil {
 	}
 	
 	
+	/**
+	 * Get groups that can maintain delegation settings
+	 * @return List of Group
+	 */
 	public static List<String> getDelegationAdminGroups() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -909,6 +954,11 @@ public class CustomApprovalUtil {
 		return list;
 	}
 	
+	/**
+	 * Set group for admin of delegation settings.
+	 * @param groups List of Group
+	 * @throws Exception
+	 */
 	public static void setDelegationAdminGroups(List<String> groups) throws Exception {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
@@ -950,4 +1000,190 @@ public class CustomApprovalUtil {
 		}
 		return true;
 	}
+	
+	/**
+	 * Check if approve/reject button should be displayed.
+	 * @param issue Issue.
+	 * @param user ApplicationUser object of current user.
+	 * @param approve True for approve button, false for reject button.
+	 * @return boolean, true if button should be displayed.
+	 */
+	public static boolean hasButton(Issue issue, ApplicationUser user, boolean approve) {
+		ApprovalData data = CustomApprovalUtil.getApprovalData(issue);
+		if (data == null) {
+			LOGGER.debug("No approval data");
+			return false;
+		}
+		ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
+		if (settings == null) {
+			LOGGER.debug("Status not match");
+			return false;
+		}
+		// Check if user is approver
+		Map<String, ApplicationUser> userList = CustomApprovalUtil.getApproverList(issue, settings);
+		try {
+			String s = OM.writeValueAsString(userList);
+			LOGGER.debug("approver list: " + s);
+		} catch (Exception ex) {
+			LOGGER.debug("approver list serialization failed", ex);
+		}
+		boolean userIsApprover = CustomApprovalUtil.isApprover(user.getKey(), userList);
+		LOGGER.debug(user.getKey() + " isApprover: " + userIsApprover);
+		boolean userIsDelegated = false;
+		List<ApplicationUser> delegators = CustomApprovalUtil.isDelegate(user.getKey(), userList);
+		userIsDelegated = (delegators != null && delegators.size() != 0);
+		LOGGER.debug(user.getKey() + " isDelegated: " + userIsDelegated);
+		if (!userIsApprover && !userIsDelegated) {
+			LOGGER.debug("User is not approver");
+			return false;
+		}
+		// Check if user already approved
+		Map<String, ApprovalHistory> historyList = data.getHistory().get(settings.getApprovalName());
+		if (historyList != null) {
+			boolean showApprove = false;
+			boolean showReject = false;
+			if (userIsDelegated) {
+				// Check as delegates
+				// If any delegator cannot be found, allow both approve/reject buttons
+				boolean alreadyApproved = true;
+				for (ApplicationUser delegator : delegators) {
+					if (!historyList.containsKey(delegator.getKey())) {
+						alreadyApproved &= false;
+					}
+				}
+				if (alreadyApproved) {
+					if (!settings.isAllowChangeDecision()) {
+						LOGGER.debug("Already approved as delegate, change decision not allowed");
+					} else {
+						// Show only opposite button
+						for (ApplicationUser u : delegators) {
+							ApprovalHistory history = historyList.get(u.getKey());
+							if (history.getApproved()) {
+								showReject |= true;
+							} else {
+								showApprove |= true;
+							}
+						}
+					}
+				} else {
+					// Not approved yet, show both buttons
+					showReject |= true;
+					showApprove |= true;
+				}
+			}
+			if (userIsApprover) {
+				// Check as approver
+				if (historyList.containsKey(user.getKey())) {
+					if (!settings.isAllowChangeDecision()) {
+						LOGGER.debug("Already approved, change decision not allowed");
+					} else {
+						// Show only opposite button
+						if (historyList.get(user.getKey()).getApproved()) {
+							showReject |= true;
+						} else {
+							showApprove |= true;
+						}
+					}
+				} else {
+					// Not approved yet, show both buttons
+					showReject |= true;
+					showApprove |= true;
+				}
+			}
+			LOGGER.debug("showApprove: " + showApprove);
+			LOGGER.debug("showReject: " + showReject);
+			if (approve) {
+				return showApprove;
+			} else {
+				return showReject;
+			}
+		} else {
+			// No history
+			LOGGER.debug("No approval history, user is approver");
+		}
+		return true;
+	}
+	
+	/**
+	 * Get approval history data for panel display.
+	 * @param issue Issue.
+	 * @return List of ApprovalPanelData. 
+	 */
+	public static Collection<ApprovalPanelData> getPanelData(Issue issue) {
+		Map<String, ApprovalPanelData> result = new LinkedHashMap<>();
+		if (issue != null) {
+			ApprovalData approvalData = getApprovalData(issue);
+			if (approvalData != null) {
+				boolean hasCurrentApproval = false;
+				ApprovalSettings currentApprovalSettings = getApprovalSettings(issue);
+				String currentApprovalName = null;
+				if (currentApprovalSettings != null) {
+					currentApprovalName = currentApprovalSettings.getApprovalName();
+				}
+				// Format the data according to history order
+				for (Map.Entry<String, Map<String, ApprovalHistory>> entry : approvalData.getHistory().entrySet()) {
+					String approvalName = entry.getKey();
+					if (approvalName.equals(currentApprovalName)) {
+						hasCurrentApproval = true;
+					}				
+					ApprovalSettings settings = approvalData.getSettings().get(approvalName);
+					Map<String, ApplicationUser> approverList = CustomApprovalUtil.getApproverList(issue, settings);
+					ApprovalPanelData data;
+					if (result.containsKey(approvalName)) {
+						data = result.get(approvalName);
+					} else {
+						data = new ApprovalPanelData(settings);
+						result.put(approvalName, data);
+						// Only recalculate target counts for ongoing approvals
+						if (!settings.isCompleted()) {
+							data.setApproveCountTarget(CustomApprovalUtil.getApproveCountTarget(settings, approverList));
+							data.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
+						}
+					}
+					// Insert history and update counts
+					List<ApprovalPanelHistory> list = data.getHistory();
+					int approveCount = 0;
+					int rejectCount = 0;
+					for (ApprovalHistory historyItem : entry.getValue().values()) {
+						ApprovalPanelHistory displayHistory = new ApprovalPanelHistory(historyItem, issue, settings);
+						list.add(displayHistory);
+						if (displayHistory.isValid() && !settings.isCompleted()) {
+							if (displayHistory.getApproved()) {
+								approveCount++;
+							} else {
+								rejectCount++;
+							}
+						}
+					}
+					if (!settings.isCompleted()) {
+						data.setApproveCount(approveCount);
+						data.setRejectCount(rejectCount);
+					}
+				}
+				// Add data for current approval that has no history yet
+				if (currentApprovalName != null && !hasCurrentApproval) {
+					Map<String, ApplicationUser> approverList = 
+							CustomApprovalUtil.getApproverList(issue, currentApprovalSettings);
+					ApprovalPanelData newData = new ApprovalPanelData(currentApprovalSettings);
+					newData.setApproveCount(0);
+					newData.setRejectCount(0);
+					newData.setApproveCountTarget(
+							CustomApprovalUtil.getApproveCountTarget(currentApprovalSettings, approverList));
+					newData.setRejectCountTarget(
+							CustomApprovalUtil.getRejectCountTarget(currentApprovalSettings, approverList));
+					result.put(currentApprovalName, newData);
+				}
+			}
+		}
+		
+		try {
+			String s = OM.writeValueAsString(result);
+			LOGGER.debug("getPanelData(): " + s);
+		} catch (Exception ex) {
+			LOGGER.debug("getPanelData() failed to serialize", ex);
+		}
+		
+		return result.values();
+	}
+
 }

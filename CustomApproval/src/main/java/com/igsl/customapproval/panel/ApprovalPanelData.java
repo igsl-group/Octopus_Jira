@@ -1,8 +1,17 @@
 package com.igsl.customapproval.panel;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import com.igsl.customapproval.data.ApprovalSettings;
 
-public class ApprovalPanelSettings {
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
+public class ApprovalPanelData {
 
 	private boolean completed;
 	private boolean approved;
@@ -11,8 +20,9 @@ public class ApprovalPanelSettings {
 	private int rejectCountTarget;
 	private int approveCount = 0;
 	private int rejectCount = 0;
+	private List<ApprovalPanelHistory> history = new ArrayList<>();
 	
-	public ApprovalPanelSettings(ApprovalSettings settings) {
+	public ApprovalPanelData(ApprovalSettings settings) {
 		this.approvalName = settings.getApprovalName();
 		if (settings.isCompleted()) {
 			this.completed = true;
@@ -66,5 +76,8 @@ public class ApprovalPanelSettings {
 	}
 	public boolean isApproved() {
 		return approved;
+	}
+	public List<ApprovalPanelHistory> getHistory() {
+		return history;
 	}
 }

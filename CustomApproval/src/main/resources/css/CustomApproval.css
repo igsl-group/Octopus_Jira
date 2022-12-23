@@ -1,12 +1,12 @@
-table.CustomApproval {
+table.CustomApprovalCustomerPortal {
 	width: 100%;
+}
+
+table.CustomApprovalCustomerPortal td,th {
+	font-size: 0.7em;
 	table-layout: fixed;
 }
 
-table.CustomApproval td {
-	vertical-align: bottom;
-}
-
-table.CustomApproval td input, select {
-	width: 100%;
+div.CustomApprovalCustomerPortalTite {
+	font-weight: bold;
 }

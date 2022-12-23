@@ -4,6 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.issue.Issue;
@@ -15,6 +19,8 @@ import com.igsl.customapproval.data.ApprovalSettings;
 /**
  * Wrapper for ApprovalHistory
  */
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ApprovalPanelHistory {
 	
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
