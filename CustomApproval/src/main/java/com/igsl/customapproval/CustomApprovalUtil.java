@@ -1134,7 +1134,15 @@ public class CustomApprovalUtil {
 						hasCurrentApproval = true;
 					}				
 					ApprovalSettings settings = approvalData.getSettings().get(approvalName);
-					Map<String, ApplicationUser> approverList = CustomApprovalUtil.getApproverList(issue, settings);
+					Map<String, ApplicationUser> approverList;
+					if (settings.isCompleted()) {
+						approverList = new HashMap<String, ApplicationUser>();
+						for (String u : settings.getFinalApproverList()) {
+							approverList.put(u, CustomApprovalUtil.getUserByKey(u));
+						}
+					} else {
+						approverList = CustomApprovalUtil.getApproverList(issue, settings);
+					}
 					ApprovalPanelData data;
 					if (result.containsKey(approvalName)) {
 						data = result.get(approvalName);
