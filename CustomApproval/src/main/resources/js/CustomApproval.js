@@ -19,7 +19,6 @@ function customApproval_Submit(link, issueKey) {
 function customApproval_addPanelData() {
 	if (customApproval_Sidebar.length == 1) {
 		if (customApproval_Sidebar.find('div#approvalPanel').length == 0) {
-			console.log('CustomApproval adding panel');
 			AJS.$.ajax({
 				url: AJS.contextPath() + '/rest/igsl/latest/getApprovalData',
 				contentType:'application/json',
@@ -112,20 +111,26 @@ function customApproval_addPanelData() {
 				AJS.$('div#approvalPanel').append(buttonPanel);
 				AJS.$('div#approvalPanel').append('<br/>');
 				AJS.$('div#approvalPanel').append(historyPanel);
-				console.log('CustomApproval panel added');
-				customApproval_InProgress = false;
-				console.log('CustomApproval stops checking');
 			});
-		} else {
-			console.log('CustomApproval panel already added');
 		}
-	} else {
-		console.log('CustomApproval sidebar cannot be found');
 	}
 }
 
-function customApproval_getData() {
-	console.log('CustomApproval searching for side panel and issue key');
+var customApproval_RetryDelay = 1000;
+var customApproval_iFrame = null;
+var customApproval_IssueKey = null;
+var customApproval_Sidebar = null;
+
+function customApproval_init() {
+	if (document.location.pathname && 
+		document.location.pathname.startsWith(AJS.contextPath() + '/servicedesk/customer/portal/')) {
+		customApproval_iFrame = null;
+	}
+	var iFrame = AJS.$(
+		'iframe[id="portal-frame"][src*="' + AJS.contextPath() + '/servicedesk/customer/portal/"]')[0];
+	if (iFrame) {
+		customApproval_iFrame = iFrame;
+	}
 	customApproval_IssueKey = location.href.substring(location.href.lastIndexOf('/') + 1);
 	var sidebarKey = 'aside.aui-page-panel-sidebar div.cv-request-options';
 	var sidebar = null;
@@ -138,68 +143,8 @@ function customApproval_getData() {
 		customApproval_Sidebar = sidebar;
 	} 
 	if (customApproval_Sidebar != null && customApproval_IssueKey != null) {
-		console.log('CustomApproval side panel and issue key found');
-		return;
+		customApproval_addPanelData();
 	}
-	throw 'Cannot get payload containing issue key';
-}
-
-function customApproval_Delay(reason, delay) {
-	return new Promise(function(resolve, reject) {
-		setTimeout(reject, customApproval_RetryDelay); 
-	});
-}
-
-function customApproval_Retry(testFunc, successFunc) {
-	customApproval_InProgress = true;
-	var p = Promise.reject();
-	for (var i = 0; i < customApproval_MaxRetry; i++) {
-		p = p.catch(testFunc).catch(customApproval_Delay);
-	}
-	p = p.then(successFunc).catch(function() {
-		console.log('CustomApproval unable to locate side bar or issue key after all retries');
-	});
-}
-
-var customApproval_RetryDelay = 1000;
-var customApproval_MaxRetry = 100;
-var customApproval_iFrame = null;
-var customApproval_IssueKey = null;
-var customApproval_Sidebar = null;
-var customApproval_InProgress = false;
-
-function customApproval_checkPage(mutationList, observer) {
-	if (customApproval_InProgress) {
-		// Already checking
-		return;
-	}
-	customApproval_InProgress = true;
-	console.log('CustomApproval starts checking');
-	// Page in Customer Portal
-	if (document.location.pathname && 
-		document.location.pathname.startsWith(AJS.contextPath() + '/servicedesk/customer/portal/')) {
-		customApproval_iFrame = null;
-	}
-	// Dialog in Customer Portal
-	var iFrame = AJS.$(
-		'iframe[id="portal-frame"][src*="' + AJS.contextPath() + '/servicedesk/customer/portal/"]')[0];
-	if (iFrame) {
-		customApproval_iFrame = iFrame;
-	}
-	customApproval_Retry(
-		customApproval_getData, 
-		customApproval_addPanelData);
-}
-
-function customApproval_init() {
-	//customApproval_checkPage();
-	// Register DOM observer
-	var observerConfig = { 
-		attributes: false, 
-		childList: true, 
-		subtree: true 
-	};
-	customApproval_observer = new MutationObserver(customApproval_checkPage);
-	customApproval_observer.observe(document, observerConfig);
+	setTimeout(customApproval_init, customApproval_RetryDelay);
 }
 AJS.toInit(customApproval_init);
