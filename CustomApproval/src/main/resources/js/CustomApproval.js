@@ -126,6 +126,7 @@ function customApproval_addPanelData() {
 	} else {
 		console.log('sidebar cannot be found');
 	}
+	customApproval_InProgress = false;
 }
 
 function customApproval_getData() {
@@ -156,6 +157,7 @@ function customApproval_Delay(reason, delay) {
 }
 
 function customApproval_Retry(testFunc, successFunc) {
+	customApproval_InProgress = true;
 	var p = Promise.reject();
 	for (var i = 0; i < customApproval_MaxRetry; i++) {
 		p = p.catch(testFunc).catch(customApproval_Delay);
@@ -170,8 +172,14 @@ var customApproval_MaxRetry = 100;
 var customApproval_iFrame = null;
 var customApproval_IssueKey = null;
 var customApproval_Sidebar = null;
+var customApproval_InProgress = false;
 
 function customApproval_checkPage(mutationList, observer) {
+	if (customApproval_InProgress) {
+		// Already checking
+		return;
+	}
+	customApproval_InProgress = true;
 	// Page in Customer Portal
 	if (document.location.pathname && 
 		document.location.pathname.startsWith(AJS.contextPath() + '/servicedesk/customer/portal/')) {
