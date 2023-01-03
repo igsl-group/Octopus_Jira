@@ -54,6 +54,7 @@ public abstract class BaseAction extends JiraWebActionSupport {
 				return true;
 			} catch (Exception ex) {
 				LOGGER.error("Failed to approve/reject issue", ex);
+				this.addErrorMessage(ex.getMessage());
 			}
 		}
 		return false;
