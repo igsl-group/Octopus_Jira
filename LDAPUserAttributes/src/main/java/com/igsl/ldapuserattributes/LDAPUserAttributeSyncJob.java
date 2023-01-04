@@ -36,7 +36,7 @@ public class LDAPUserAttributeSyncJob implements JobRunner {
 			UserSearchService uss = ComponentAccessor.getUserSearchService();
 			UserPropertyManager upm = ComponentAccessor.getUserPropertyManager();
 			StringBuilder sb = new StringBuilder();
-			LDAPUserAttributesConfigData data = LDAPUserAttributesAction.getData();
+			LDAPUserAttributesConfigData data = LDAPUserAttributesSetup.getData();
 			String userNameAttribute = data.getUserNameAttribute();
 			Map<String, String> attributeMap = data.getAttributeMap();
 			Set<String> attributeList = new HashSet<String>();

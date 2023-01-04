@@ -44,13 +44,8 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 	
 	// Custom field configuration URL
 	private static final String PAGE_URL = "/secure/admin/plugins/handler/LDAPUserAttributesAction.jspa";
-
-	private static ObjectMapper OM = new ObjectMapper();
-	private static ObjectReader READER = OM.reader(LDAPUserAttributesConfigData.class);
-	private static ObjectWriter WRITER = OM.writerWithType(LDAPUserAttributesConfigData.class);
 	
 	// Web action key words
-	private static final String DATA_KEY = "LDAPUserAttributesConfig";
 	private static final String SAVE = "Save";
 	
 	private static final String PARAM_PROVIDER_URL = "providerURL";
@@ -84,38 +79,8 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 		this.service = managedConfigurationItemService;
 	}
 	
-	public static void setData(LDAPUserAttributesConfigData data, String key) {
-		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
-		PluginSettings settings = factory.createGlobalSettings();
-		try {
-			if (data == null) {
-				settings.remove(key);
-			} else {
-				String s = WRITER.writeValueAsString(data);
-				LOGGER.debug("Save JSON to " + key + ": <" + s + ">");
-				settings.put(key, s);
-			}
-		} catch (IOException e) {
-			LOGGER.error("Failed to convert LDAPUserAttributesConfigData to JSON", e);
-		}
-	}
-	
-	public static LDAPUserAttributesConfigData getData() {
-		LDAPUserAttributesConfigData data = null;
-		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
-		PluginSettings settings = factory.createGlobalSettings();
-		Object o = settings.get(DATA_KEY);
-		if (o != null) {
-			try {
-				data = READER.readValue(o.toString());
-			} catch (IOException e) {
-				LOGGER.error("Failed to convert LDAPUserAttributesConfigData from JSON", e);
-			}
-		}
-		if (data == null) {
-			data = new LDAPUserAttributesConfigData();
-		}
-		return data;
+	public LDAPUserAttributesConfigData getData() {
+		return LDAPUserAttributesSetup.getData();
 	}
 	
 	private List<String> parseData(HttpServletRequest req, LDAPUserAttributesConfigData data) {
@@ -280,7 +245,7 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 		}
 		String[] password = this.getHttpRequest().getParameterValues(PARAM_PASSWORD);
 		if (password != null && password.length == 1) {
-			String originalEncryptedPassword = getData().getEncryptedPassword();
+			String originalEncryptedPassword = LDAPUserAttributesSetup.getData().getEncryptedPassword();
 			if (!password[0].equals(originalEncryptedPassword)) {
 				String encryptedPassword = null;
 				try {
@@ -309,13 +274,6 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 		} else {
 			errors.add("Please specify source attributes");
 		}
-		String s = null;
-		try {
-			s = OM.writeValueAsString(data);
-		} catch (Exception ex) {
-			LOGGER.error("parseData failed to convert to JSON", ex);
-		}
-		LOGGER.debug("parseData JSON <" + s + ">");
 		return errors;
 	}
 	
@@ -369,7 +327,7 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 					}
 				}
 				data.getLastTestResults().add("Matching Jira users found: " + jiraUserFound);
-				setData(data, DATA_KEY);
+				LDAPUserAttributesSetup.setData(data);
 			} catch (Exception ex) {
 				reportStackTrace(ex);
 			}
@@ -380,7 +338,7 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 	
 	protected void doValidation() {
 		LOGGER.debug("doValidation");
-		LDAPUserAttributesConfigData data = getData();
+		LDAPUserAttributesConfigData data = LDAPUserAttributesSetup.getData();
 		List<String> errors = parseData(this.getHttpRequest(), data);
 		if (errors != null) {
 			if (errors.size() == 0) {
@@ -393,47 +351,18 @@ public class LDAPUserAttributesAction extends AbstractEditConfigurationItemActio
 		}
 	}
 
-	private void setSchedule(LDAPUserAttributesConfigData data) throws Exception {
-		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
-		JobRunnerKey key = JobRunnerKey.of(LDAPUserAttributeSyncJob.class.getCanonicalName());
-		// Unregister
-		List<JobDetails> jobList = schedulerService.getJobsByJobRunnerKey(key);
-		if (jobList != null) { 
-			for (JobDetails job : jobList) {
-				schedulerService.unscheduleJob(job.getJobId());
-			}
-		}
-		schedulerService.unregisterJobRunner(key);
-		if (data.getFrequency() != 0) {
-			// Register
-			schedulerService.registerJobRunner(key, new LDAPUserAttributeSyncJob());
-			Calendar nextRun = Calendar.getInstance();
-			nextRun.set(Calendar.HOUR_OF_DAY, Integer.parseInt(data.getHour()));
-			nextRun.set(Calendar.MINUTE, Integer.parseInt(data.getMinute()));
-			nextRun.set(Calendar.SECOND, Integer.parseInt(data.getSecond()));
-			Schedule schedule = Schedule.forInterval(data.getFrequency() * data.getFrequencyMultiplier(), nextRun.getTime());
-			JobConfig jobConfig = JobConfig
-					.forJobRunnerKey(key)
-					.withSchedule(schedule)
-					.withRunMode(RunMode.RUN_ONCE_PER_CLUSTER);
-					//.withParameters(ImmutableMap.<String, Serializable>of("SUBSCRIPTION_ID", subscriptionId));
-			JobId jobId = JobId.of(LDAPUserAttributeSyncJob.class.getCanonicalName());
-			schedulerService.scheduleJob(jobId, jobConfig);
-		}
-	}
-	
 	// Expected return value is name of associated view
 	@Override
 	protected String doExecute() throws Exception {
 		LOGGER.debug("doExecute");
-		LDAPUserAttributesConfigData data = getData();
+		LDAPUserAttributesConfigData data = LDAPUserAttributesSetup.getData();
 		parseData(getHttpRequest(), data);
 		String save = getHttpRequest().getParameter(SAVE);
 		if (save != null) {
 			LOGGER.debug("doExecute - save");
-			setData(data, DATA_KEY);
+			LDAPUserAttributesSetup.setData(data);
 			try {
-				setSchedule(data);
+				LDAPUserAttributesSetup.setSchedule(data);
 			} catch (Exception ex) {
 				LOGGER.error("schedule failed", ex);
 				throw ex;
