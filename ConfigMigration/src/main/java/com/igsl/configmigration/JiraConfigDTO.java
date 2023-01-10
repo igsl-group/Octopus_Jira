@@ -40,7 +40,8 @@ public abstract class JiraConfigDTO {
 	
 	// Methods not to be included in getMap(), i.e. display
 	private static final List<String> MAP_EXCLUDE_METHODS = Arrays.asList(
-			"getClass",
+			// TODO Enable getClass
+			//"getClass",
 			"getJiraObject",
 			"isSelected",
 			"getUniqueKey",

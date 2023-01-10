@@ -1,4 +1,4 @@
-package com.igsl.configmigration.status;
+package com.igsl.configmigration.version;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -10,28 +10,29 @@ import com.atlassian.jira.config.StatusCategoryManager;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
+import com.atlassian.jira.project.version.Version;
+import com.atlassian.jira.project.version.VersionManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class StatusUtil extends JiraConfigUtil {
+public class VersionUtil extends JiraConfigUtil {
 
-	private static final Logger LOGGER = Logger.getLogger(StatusUtil.class);
-	private static StatusManager MANAGER = ComponentAccessor.getComponent(StatusManager.class);
-	private static StatusCategoryManager CATEGORY_MANAGER = ComponentAccessor.getComponent(StatusCategoryManager.class);
+	private static final Logger LOGGER = Logger.getLogger(VersionUtil.class);
+	private static VersionManager MANAGER = ComponentAccessor.getVersionManager();
 	
 	@Override
 	public String getName() {
-		return "Status";
+		return "Version";
 	}
 	
 	@Override
 	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (Status it : MANAGER.getStatuses()) {
-			StatusDTO item = new StatusDTO();
+		for (Version it : MANAGER.getAllVersions()) {
+			VersionDTO item = new VersionDTO();
 			item.setJiraObject(it);
 			result.put(item.getUniqueKey(), item);
 		}
@@ -40,9 +41,9 @@ public class StatusUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
-		Status s = MANAGER.getStatus(id);
+		Version s = MANAGER.getVersion(Long.parseLong(id));
 		if (s != null) {
-			StatusDTO item = new StatusDTO();
+			VersionDTO item = new VersionDTO();
 			item.setJiraObject(s);
 			return item;
 		}
@@ -51,9 +52,9 @@ public class StatusUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		for (Status it : MANAGER.getStatuses()) {
+		for (Version it : MANAGER.getAllVersions()) {
 			if (uniqueKey.equals(it.getName())) {
-				StatusDTO item = new StatusDTO();
+				VersionDTO item = new VersionDTO();
 				item.setJiraObject(it);
 				return item;
 			}
@@ -63,27 +64,32 @@ public class StatusUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		StatusDTO original = null;
+		VersionDTO original = null;
 		if (oldItem != null) {
-			original = (StatusDTO) oldItem;
+			original = (VersionDTO) oldItem;
 		} else {
-			original = (StatusDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
+			original = (VersionDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
 		}
-		Status originalJira = (original != null)? (Status) original.getJiraObject(): null;
-		StatusDTO src = (StatusDTO) newItem;
-		String name = src.getName();
-		String description = src.getDescription();
-		StatusCategoryDTO category = src.getStatusCategoryConfigItem();
-		StatusCategory cat = CATEGORY_MANAGER.getStatusCategoryByKey(category.getKey());
-		final String DUMMY_ICON_URL = ".";
+		Version originalJira = (original != null)? (Version) original.getJiraObject(): null;
+		VersionDTO src = (VersionDTO) newItem;
 		if (original != null) {
 			// Update
-			MANAGER.editStatus(originalJira, name, description, DUMMY_ICON_URL, cat);
-			return findByInternalId(originalJira.getId());
+			originalJira = MANAGER.editVersionDetails(originalJira, src.getName(), src.getDescription());
+			originalJira = MANAGER.editVersionReleaseDate(originalJira, src.getReleaseDate());
+			originalJira = MANAGER.editVersionStartDate(originalJira, src.getStartDate());
+			MANAGER.update(originalJira);
+			return findByInternalId(Long.toString(originalJira.getId()));
 		} else {
 			// Create
-			Status createdJira = MANAGER.createStatus(name, description, DUMMY_ICON_URL, cat);
-			StatusDTO created = new StatusDTO();
+			Version createdJira = MANAGER.createVersion(
+					src.getName(),
+					src.getStartDate(),
+					src.getReleaseDate(),
+					src.getDescription(),
+					src.getProjectId(),	// TODO Map project ID
+					null,	// TODO Find previous version
+					src.isReleased());
+			VersionDTO created = new VersionDTO();
 			created.setJiraObject(createdJira);
 			return created;
 		}
@@ -91,12 +97,12 @@ public class StatusUtil extends JiraConfigUtil {
 	
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
-		return StatusDTO.class;
+		return VersionDTO.class;
 	}
 
 	@Override
 	public boolean isVisible() {
-		return true;
+		return false;
 	}
 
 }

@@ -1,12 +1,10 @@
 package com.igsl.configmigration.issuetype;
 
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import com.atlassian.jira.avatar.Avatar;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.IssueTypeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
@@ -14,7 +12,6 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
 

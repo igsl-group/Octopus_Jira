@@ -1,5 +1,6 @@
 package com.igsl.configmigration;
 
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.CodeSource;
@@ -29,8 +30,11 @@ import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
 import com.igsl.configmigration.plugin.PluginUtil;
 import com.igsl.configmigration.priority.PriorityUtil;
+import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
 import com.igsl.configmigration.resolution.ResolutionUtil;
 import com.igsl.configmigration.status.StatusUtil;
+import com.igsl.configmigration.workflow.WorkflowUtil;
+import com.igsl.configmigration.workflowscheme.WorkflowSchemeUtil;
 
 @SuppressWarnings("unchecked")
 public class JiraConfigTypeRegistry {
@@ -51,7 +55,10 @@ public class JiraConfigTypeRegistry {
 			PluginUtil.class,
 			CustomFieldUtil.class,
 			FieldScreenUtil.class,
-			IssueTypeSchemeUtil.class
+			IssueTypeSchemeUtil.class,
+			WorkflowUtil.class,
+			WorkflowSchemeUtil.class,
+			ProjectCategoryUtil.class
 			);
 	private static List<String> orderedList = new ArrayList<>();
 	private static List<String> unorderedList = new ArrayList<>();
@@ -230,15 +237,17 @@ public class JiraConfigTypeRegistry {
 										.replaceAll("/", ".");
 								try {
 									Class<?> cls = cloader.loadClass(className);
-									if (configItemClass.isAssignableFrom(cls) && 
-										!className.equals(JiraConfigDTO.class.getCanonicalName())) {
-										ITEM_NAMES.add(cls.getCanonicalName());
-										logger.debug("Registry added DTO: " + cls);
-									} else if (
-										utilClass.isAssignableFrom(cls) && 
-										!className.equals(JiraConfigUtil.class.getCanonicalName())) {
-										UTIL_NAMES.add(cls.getCanonicalName());
-										logger.debug("Registry added Util: " + cls);
+									if (!Modifier.isAbstract(cls.getModifiers())) {
+										if (configItemClass.isAssignableFrom(cls) && 
+											!className.equals(JiraConfigDTO.class.getCanonicalName())) {
+											ITEM_NAMES.add(cls.getCanonicalName());
+											logger.debug("Registry added DTO: " + cls);
+										} else if (
+											utilClass.isAssignableFrom(cls) && 
+											!className.equals(JiraConfigUtil.class.getCanonicalName())) {
+											UTIL_NAMES.add(cls.getCanonicalName());
+											logger.debug("Registry added Util: " + cls);
+										}
 									}
 								} catch (Throwable ex) {
 									// Ignore
