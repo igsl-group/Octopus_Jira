@@ -3,6 +3,7 @@ package com.igsl.customapproval.delegation;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,11 +11,15 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 
 import com.atlassian.crowd.embedded.api.Group;
+import com.atlassian.jira.application.ApplicationRoleManager;
 import com.atlassian.jira.bc.user.search.UserSearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.user.UserDetails;
+import com.atlassian.jira.user.util.UserManager;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
+import com.atlassian.jira.web.bean.UserBrowserFilter;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
 
@@ -89,8 +94,16 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	private void refreshData(boolean cleanup) {
 		if (isAdmin()) {
 			this.settings = new ArrayList<>();
-			for (ApplicationUser user : USER_SEARCH_SERVICE.findUsersAllowEmptyQuery(getJiraServiceContext(), null)) {
-				this.settings.addAll(DelegationUtil.loadData(user.getKey(), true));
+			ApplicationRoleManager arm = ComponentAccessor.getComponent(ApplicationRoleManager.class);
+			UserBrowserFilter filter = new UserBrowserFilter(Locale.getDefault(), arm);
+			try {
+				List<ApplicationUser> list = filter.getFilteredUsers();
+				for (ApplicationUser user : list) {
+					this.settings.addAll(DelegationUtil.loadData(user.getKey(), true));
+				}
+				LOGGER.debug("User list size: " + list.size());
+			} catch (Exception ex) {
+				LOGGER.error("Failed to get user list", ex);
 			}
 		} else {
 			this.settings = DelegationUtil.loadData(getLoggedInUser().getKey(), cleanup);
