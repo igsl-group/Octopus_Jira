@@ -33,6 +33,7 @@ import com.atlassian.jira.security.groups.GroupManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
 import com.atlassian.jira.web.bean.PagerFilter;
+import com.atlassian.jira.workflow.IssueWorkflowManager;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.TransitionOptions;
 import com.atlassian.jira.workflow.TransitionOptions.Builder;
@@ -61,8 +62,8 @@ import com.igsl.customapproval.exception.InvalidApprovalException;
 import com.igsl.customapproval.exception.InvalidApproverException;
 import com.igsl.customapproval.exception.InvalidWorkflowException;
 import com.igsl.customapproval.exception.LockException;
-import com.igsl.customapproval.panel.ApprovalPanelHistory;
 import com.igsl.customapproval.panel.ApprovalPanelData;
+import com.igsl.customapproval.panel.ApprovalPanelHistory;
 import com.opensymphony.workflow.loader.ActionDescriptor;
 import com.opensymphony.workflow.loader.StepDescriptor;
 
@@ -554,12 +555,34 @@ public class CustomApprovalUtil {
 		return result;
 	}
 	
-	private static String getActionTarget(JiraWorkflow wf, ActionDescriptor actionDesc) {
-		int targetStepId = actionDesc.getUnconditionalResult().getStep();
-		StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
-		Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
-		return linkedStatus.getId();
+	private static Integer getActionToStatus(Issue issue, JiraWorkflow wf, String statusKey) {
+		// TODO
+		// What if there are multiple actions between current and target status?
+		// Need to let user choose which action to use in initialize function
+		Integer result = null;
+		IssueWorkflowManager iwm = ComponentAccessor.getComponent(IssueWorkflowManager.class);
+		TransitionOptions options = new TransitionOptions.Builder().skipConditions().build();
+		for (ActionDescriptor ad : iwm.getAvailableActions(issue, options, getCurrentUser())) {
+			LOGGER.debug("Checking available actions: " + ad.getName());
+			int targetStepId = ad.getUnconditionalResult().getStep();
+			StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
+			Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
+			if (linkedStatus.getId().equals(statusKey)) {
+				LOGGER.debug("Action with matching status found");
+				result = ad.getId();
+				break;
+			}
+		}
+		return result;
 	}
+	
+	// Replaced by getActionToStatus()
+//	private static String getActionTarget(JiraWorkflow wf, ActionDescriptor actionDesc) {
+//		int targetStepId = actionDesc.getUnconditionalResult().getStep();
+//		StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
+//		Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
+//		return linkedStatus.getId();
+//	}
 	
 	/**
 	 * Approve/reject current approval. Transit status is condition is matched.
@@ -690,10 +713,7 @@ public class CustomApprovalUtil {
 					}
 				}
 			}
-			// Save ApprovalData
-			issue.setCustomFieldValue(approvalDataCustomField, approvalData.toString());
-			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
-			return transitIssueWithoutLock(issue, user);
+			return transitIssueWithoutLock(issue, user, approvalData);
 		} finally {
 			if (lockId != null) {
 				CustomApprovalUtil.unlockApproval(issue, lockId);
@@ -715,7 +735,7 @@ public class CustomApprovalUtil {
 //			if (lockId == null) {
 //				throw new LockException();
 //			}
-			return transitIssueWithoutLock(issue, user);
+			return transitIssueWithoutLock(issue, user, getApprovalData(issue));
 //		} finally {
 //			if (lockId != null) {
 //				CustomApprovalUtil.unlockApproval(issue, lockId);
@@ -723,9 +743,9 @@ public class CustomApprovalUtil {
 //		}
 	}
 	
-	private static boolean transitIssueWithoutLock(MutableIssue issue, ApplicationUser user)
+	private static boolean transitIssueWithoutLock(MutableIssue issue, ApplicationUser user, ApprovalData approvalData)
 			throws LockException, InvalidWorkflowException, WorkflowException {
-		ApprovalData approvalData = getApprovalData(issue);
+		//ApprovalData approvalData = getApprovalData(issue);
 		ApprovalSettings approvalSettings = getApprovalSettings(issue);
 		if (approvalSettings != null) {
 			Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
@@ -735,6 +755,8 @@ public class CustomApprovalUtil {
 			WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
 			JiraWorkflow wf = wfMan.getWorkflow(issue);
 			if (wf != null) {
+				/*
+				// Actions linked to current status
 				List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
 				for (Object a : actions) {
 					ActionDescriptor desc = (ActionDescriptor) a;
@@ -747,6 +769,11 @@ public class CustomApprovalUtil {
 						LOGGER.debug("Reject action found: " + rejectAction);
 					}
 				}
+				*/
+				approveAction = getActionToStatus(issue, wf, approvalSettings.getApprovedStatus());
+				LOGGER.debug("approve action found: " + approveAction);
+				rejectAction = getActionToStatus(issue, wf, approvalSettings.getRejectedStatus());
+				LOGGER.debug("reject action found: " + rejectAction);
 			} else {
 				throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());
 			}
@@ -760,16 +787,18 @@ public class CustomApprovalUtil {
 			double approveCount = 0;
 			double rejectCount = 0;
 			// Find history where the user or on behalf of user is still an approver
-			for (ApprovalHistory historyItem : historyList.values()) {
-				boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
-				if (!isApprover) {
-					isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
-				}
-				if (isApprover) {
-					if (historyItem.getApproved()) {
-						approveCount++;
-					} else {
-						rejectCount++;
+			if (historyList != null) {
+				for (ApprovalHistory historyItem : historyList.values()) {
+					boolean isApprover = CustomApprovalUtil.isApprover(historyItem.getApprover(), approverList);
+					if (!isApprover) {
+						isApprover = (CustomApprovalUtil.isDelegate(historyItem.getApprover(), approverList) != null);
+					}
+					if (isApprover) {
+						if (historyItem.getApproved()) {
+							approveCount++;
+						} else {
+							rejectCount++;
+						}
 					}
 				}
 			}
@@ -797,9 +826,7 @@ public class CustomApprovalUtil {
 				as.setFinalApproveCountTarget(approveCountTarget);
 				as.setFinalRejectCountTarget(rejectCountTarget);
 				as.getFinalApproverList().addAll(approverList.keySet());
-				issue.setCustomFieldValue(CustomApprovalSetup.getApprovalDataCustomField(), approvalData.toString());
 				LOGGER.debug("Locking in approval: " + as.getApprovalName() + ": " + approvalData.toString());
-				ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.ISSUE_UPDATED, false);
 				
 				TransitionOptions.Builder builder = new Builder();
 				// There should be a hide from user condition on the transition, so need to skip condition
@@ -828,8 +855,12 @@ public class CustomApprovalUtil {
 					throw new WorkflowException(sb.toString());
 				}
 				LOGGER.debug("Issue " + issue.getKey() + " transited");
-				return true;
 			}
+			
+			issue.setCustomFieldValue(CustomApprovalSetup.getApprovalDataCustomField(), approvalData.toString());
+			ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.ISSUE_UPDATED, false);
+			LOGGER.debug("Issue " + issue.getKey() + " approval data updated");
+			return true;
 		}
 		return false;
 	}
@@ -940,16 +971,19 @@ public class CustomApprovalUtil {
 	public static List<String> getDelegationAdminGroups() {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
+		List<String> list = new ArrayList<>();
 		try {
-			return OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
+			list = OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
 					new TypeReference<List<String>>() {});
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation admin groups", ex);
 		}
-		List<String> list = new ArrayList<>();
-		Group adminGroup = checkGroupName(DEFAULT_ADMIN_GROUP);
-		if (adminGroup != null) {
-			list.add(adminGroup.getName());
+		if (list.isEmpty()) {
+			// Add default
+			Group adminGroup = checkGroupName(DEFAULT_ADMIN_GROUP);
+			if (adminGroup != null) {
+				list.add(adminGroup.getName());
+			}
 		}
 		return list;
 	}

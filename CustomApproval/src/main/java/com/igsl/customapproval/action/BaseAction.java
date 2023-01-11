@@ -50,8 +50,7 @@ public abstract class BaseAction extends JiraWebActionSupport {
 			}
 			ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
 			try {
-				CustomApprovalUtil.approve(issue, settings, user, approve);
-				return true;
+				return CustomApprovalUtil.approve(issue, settings, user, approve);
 			} catch (Exception ex) {
 				LOGGER.error("Failed to approve/reject issue", ex);
 				this.addErrorMessage(ex.getMessage());

@@ -3,7 +3,6 @@ package com.igsl.customapproval.delegation;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -76,7 +75,7 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 	
 	public boolean isAdmin() {
 		List<String> groups = CustomApprovalUtil.getDelegationAdminGroups();
-		if (getHttpRequest().getParameter(PARAM_ADMIN) != null) {
+		if (getHttpRequest().getParameter(PARAM_ADMIN) != null && groups != null) {
 			for (String s : groups) {
 				Group g = GM.getGroup(s);
 				if (GM.isUserInGroup(getLoggedInUser(), g)) {
