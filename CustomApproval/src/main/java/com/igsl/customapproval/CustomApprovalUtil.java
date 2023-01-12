@@ -66,6 +66,7 @@ import com.igsl.customapproval.panel.ApprovalPanelData;
 import com.igsl.customapproval.panel.ApprovalPanelHistory;
 import com.opensymphony.workflow.loader.ActionDescriptor;
 import com.opensymphony.workflow.loader.StepDescriptor;
+import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
 public class CustomApprovalUtil {
 	
@@ -238,6 +239,31 @@ public class CustomApprovalUtil {
 			if (userPicker.equals(cf.getCustomFieldType()) || 
 				userPickerMulti.equals(cf.getCustomFieldType())) {
 				result.put(cf.getName(), cf);
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Get list of transitions
+	 * @param wfDesc WorkflowDescriptor
+	 * @return Map. Key is action ID (Long), value is action name.
+	 */
+	public static Map<Integer, String> getTransitions(WorkflowDescriptor wfDesc) {
+		Map<Integer, String> result = new HashMap<>();
+		if (wfDesc != null) {
+			// Global actions
+			for (Object a : wfDesc.getGlobalActions()) {
+				ActionDescriptor action = (ActionDescriptor) a;
+				result.put(action.getId(), action.getName() + " (Global)");
+			}
+			// Step actions
+			for (Object o : wfDesc.getSteps()) {
+				StepDescriptor step = (StepDescriptor) o;
+				for (Object a : step.getActions()) {
+					ActionDescriptor action = (ActionDescriptor) a;
+					result.put(action.getId(), action.getName());
+				}
 			}
 		}
 		return result;
@@ -555,34 +581,42 @@ public class CustomApprovalUtil {
 		return result;
 	}
 	
-	private static Integer getActionToStatus(Issue issue, JiraWorkflow wf, String statusKey) {
-		// TODO
-		// What if there are multiple actions between current and target status?
-		// Need to let user choose which action to use in initialize function
+	private static Integer getActionToStatus(
+			ApplicationUser user,
+			Issue issue, 
+			String actionId, 
+			JiraWorkflow wf, 
+			String statusKey) {
+		LOGGER.debug("getActionToStatus() starts");
 		Integer result = null;
-		IssueWorkflowManager iwm = ComponentAccessor.getComponent(IssueWorkflowManager.class);
-		TransitionOptions options = new TransitionOptions.Builder().skipConditions().build();
-		for (ActionDescriptor ad : iwm.getAvailableActions(issue, options, getCurrentUser())) {
-			LOGGER.debug("Checking available actions: " + ad.getName());
-			int targetStepId = ad.getUnconditionalResult().getStep();
-			StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
-			Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
-			if (linkedStatus.getId().equals(statusKey)) {
-				LOGGER.debug("Action with matching status found");
-				result = ad.getId();
-				break;
+		if (actionId != null && !actionId.isEmpty()) {
+			LOGGER.debug("Configured mode: [" + actionId + "]");
+			try {
+				result = Integer.parseInt(actionId);
+				LOGGER.debug("Using configured transition: " + result);
+			} catch (NumberFormatException nfex) {
+				LOGGER.error("Configured transition [" + actionId + "] is invalid");
+			}
+		} else {
+			LOGGER.debug("Auto mode");
+			// Locate the transition
+			IssueWorkflowManager iwm = ComponentAccessor.getComponent(IssueWorkflowManager.class);
+			TransitionOptions options = new TransitionOptions.Builder().skipConditions().build();
+			for (ActionDescriptor ad : iwm.getAvailableActions(issue, options, user)) {
+				LOGGER.debug("Checking available actions: " + ad.getName());
+				int targetStepId = ad.getUnconditionalResult().getStep();
+				StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
+				Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
+				if (linkedStatus.getId().equals(statusKey)) {
+					LOGGER.debug("Action with matching status found: " + ad.getId());
+					result = ad.getId();
+					break;
+				}
 			}
 		}
+		LOGGER.debug("getActionToStatus() ends: " + result);
 		return result;
 	}
-	
-	// Replaced by getActionToStatus()
-//	private static String getActionTarget(JiraWorkflow wf, ActionDescriptor actionDesc) {
-//		int targetStepId = actionDesc.getUnconditionalResult().getStep();
-//		StepDescriptor targetStepDesc = wf.getDescriptor().getStep(targetStepId);
-//		Status linkedStatus = wf.getLinkedStatus(targetStepDesc);
-//		return linkedStatus.getId();
-//	}
 	
 	/**
 	 * Approve/reject current approval. Transit status is condition is matched.
@@ -755,24 +789,13 @@ public class CustomApprovalUtil {
 			WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
 			JiraWorkflow wf = wfMan.getWorkflow(issue);
 			if (wf != null) {
-				/*
-				// Actions linked to current status
-				List<?> actions = wf.getLinkedStep(issue.getStatus()).getActions();
-				for (Object a : actions) {
-					ActionDescriptor desc = (ActionDescriptor) a;
-					String targetStatus = getActionTarget(wf, desc);
-					if (approvalSettings.getApprovedStatus().equals(targetStatus)) {
-						approveAction = desc.getId();
-						LOGGER.debug("Approve action found: " + approveAction);
-					} else if (approvalSettings.getRejectedStatus().equals(targetStatus)) {
-						rejectAction = desc.getId();
-						LOGGER.debug("Reject action found: " + rejectAction);
-					}
-				}
-				*/
-				approveAction = getActionToStatus(issue, wf, approvalSettings.getApprovedStatus());
+				approveAction = getActionToStatus(
+						user,
+						issue, approvalSettings.getApproveTransition(), wf, approvalSettings.getApprovedStatus());
 				LOGGER.debug("approve action found: " + approveAction);
-				rejectAction = getActionToStatus(issue, wf, approvalSettings.getRejectedStatus());
+				rejectAction = getActionToStatus(
+						user,
+						issue, approvalSettings.getRejectTransition(), wf, approvalSettings.getRejectedStatus());
 				LOGGER.debug("reject action found: " + rejectAction);
 			} else {
 				throw new InvalidWorkflowException("Workflow cannot be found for issue " + issue.getKey());

@@ -34,8 +34,10 @@ public class ApprovalDataBuilder {
 			settings.setApproverGroupField(src.getApproverGroupField());
 			settings.setApproverUserField(src.getApproverUserField());
 			settings.setApprovedStatus(src.getApprovedStatus());
+			settings.setApproveTransition(src.getApproveTransition());
 			settings.setRejectCount(src.getRejectCount());
 			settings.setRejectedStatus(src.getRejectedStatus());
+			settings.setRejectTransition(src.getRejectTransition());
 			settings.setStartingStatus(src.getStartingStatus());
 			this.data.getSettings().put(entry.getKey(), settings);
 			this.data.getHistory().put(entry.getKey(), new HashMap<String, ApprovalHistory>());
@@ -47,13 +49,15 @@ public class ApprovalDataBuilder {
 	 * @param approvalName Name of approval
 	 * @param startingStatus Starting status key
 	 * @param approveStatus Approve status key
+	 * @param approveTransition Approve transition ID
 	 * @param rejectStatus Reject status key
+	 * @param rejectTransition Reject transition ID
 	 * @return ApprovalDataBuilder
 	 * @throws Exception If approval already exists or status is not valid
 	 */
 	public ApprovalDataBuilder addApproval(
-			String approvalName, String startingStatus, 
-			String approveStatus, String rejectStatus
+			String approvalName, String startingStatus, String approveTransition,
+			String approveStatus, String rejectStatus, String rejectTransition
 			) throws Exception {
 		if (data.getSettings().containsKey(approvalName)) {
 			throw new Exception("Approval \"" + approvalName + "\" already exists");
@@ -71,7 +75,9 @@ public class ApprovalDataBuilder {
 			settings.setApprovalName(approvalName);
 			settings.setStartingStatus(startingStatus);
 			settings.setApprovedStatus(approveStatus);
+			settings.setApproveTransition(approveTransition);
 			settings.setRejectedStatus(rejectStatus);
+			settings.setRejectTransition(rejectTransition);
 			data.getSettings().put(approvalName, settings);
 		}
 		return this;

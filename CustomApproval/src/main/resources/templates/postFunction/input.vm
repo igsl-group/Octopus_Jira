@@ -15,6 +15,10 @@
 	table.CustomApproval td input, select {
 		width: 100%;
 	}
+	
+	table.CustomApproval th {
+		text-align: center;
+	}
 </style>
 <table id="template" style="display: none">
 	<tr id="">
@@ -26,7 +30,7 @@
 				<span class="aui-icon aui-icon-small aui-iconfont-close-dialog"></span>
 			</button>
 		</td>
-		<td><input disabled type="text" name="approvalName" value="$!{item.key}" /></td>
+		<td><input disabled required type="text" name="approvalName" value="$!{item.key}" /></td>
 		<td>
 			<select disabled name="approverUsersField">
 				<option value="">N/A</option>
@@ -44,29 +48,45 @@
 			</select>
 		</td>
 		<td>
-			<select disabled name="startingStatus">
+			<select disabled name="startingStatus" required>
 				#foreach ($item in $statusList.values())
 					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 				#end
 			</select>
 		</td>
 		<td>
-			<select disabled name="approvedStatus">
+			<select disabled name="approvedStatus" required>
 				#foreach ($item in $statusList.values())
 					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 				#end
 			</select>
 		</td>
 		<td>
-			<select disabled name="rejectedStatus">
+			<select disabled name="approveTransition">
+				<option value="">Auto</option>
+				#foreach ($item in $transitionList.entrySet())
+					<option value="${item.getKey()}">${item.getValue()} (${item.getKey()})</option>
+				#end
+			</select>
+		</td>
+		<td>
+			<select disabled name="rejectedStatus" required>
 				#foreach ($item in $statusList.values())
 					<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 				#end
 			</select>
 		</td>
-		<td><input disabled type="text" name="approveCount" value="" /></td>
-		<td><input disabled type="text" name="rejectCount" value="" /></td>
-		<td><select disabled name="allowChangeDecision">
+		<td>
+			<select disabled name="rejectTransition">
+				<option value="">Auto</option>
+				#foreach ($item in $transitionList.entrySet())
+					<option value="${item.getKey()}">${item.getValue()} (${item.getKey()})</option>
+				#end
+			</select>
+		</td>
+		<td><input disabled type="text" name="approveCount" value="0" pattern="0|[0-9]+|0.[0-9]+" required /></td>
+		<td><input disabled type="text" name="rejectCount" value="0" pattern="0|[0-9]+|0.[0-9]+" required /></td>
+		<td><select disabled name="allowChangeDecision" required>
 				<option value="Allow">Allow</option>
 				<option value="Deny">Deny</option>
 		</select></td>
@@ -77,18 +97,23 @@
 	<thead>
 		<tr>
 			<th rowspan="2" style="width:3%"/>
-			<th rowspan="2" style="width:12%">Approval Name</th>
-			<th style="width:25%" colspan="2">Approvers</th>
+			<th rowspan="2" style="width:7%">Approval Name</th>
+			<th style="width:20%" colspan="2">Approvers</th>
 			<th rowspan="2" style="width:10%">Starting Status</th>
-			<th style="width:20%" colspan="2">Target Status</th>
-			<th style="width:20%" colspan="2">Count</th>
+			<th style="width:30%" colspan="4">Target Status</th>
+			<th style="width:20%" colspan="2">
+				Count
+				(Number of approvers required. 0 for all approvers, fraction for percentage of approvers)
+			</th>
 			<th rowspan="2" style="width:10%">Allow Change Decision</th>
 		</tr>
 		<tr>
 			<th>Users Field</th>
 			<th>Groups Field</th>
 			<th>Approved</th>
+			<th>Approve Transition</th>
 			<th>Rejected</th>
+			<th>Reject Transition</th>
 			<th>Approve</th>
 			<th>Reject</th>
 		</tr>
@@ -131,7 +156,9 @@
 			'approverGroupsField': '$approverGroupsField.get($idx)',
 			'startingStatus': '$startingStatus.get($idx)',
 			'approvedStatus': '$approvedStatus.get($idx)',
+			'approveTransition': '$approveTransition.get($idx)',
 			'rejectedStatus': '$rejectedStatus.get($idx)',
+			'rejectTransition': '$rejectTransition.get($idx)',
 			'approveCount': '$approveCount.get($idx)',
 			'rejectCount': '$rejectCount.get($idx)',
 			'allowChangeDecision': '$allowChangeDecision.get($idx)'

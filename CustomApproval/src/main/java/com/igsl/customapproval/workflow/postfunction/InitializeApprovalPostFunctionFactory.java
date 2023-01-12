@@ -1,5 +1,6 @@
 package com.igsl.customapproval.workflow.postfunction;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.FunctionDescriptor;
+import com.opensymphony.workflow.loader.StepDescriptor;
+import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
 public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunctionPluginFactory {
 
@@ -24,6 +27,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	public static final String VELOCITY_USER_FIELD_LIST = "userFieldList";
 	public static final String VELOCITY_GROUP_FIELD_LIST = "groupFieldList";
 	public static final String VELOCITY_STATUS_LIST = "statusList";
+	public static final String VELOCITY_TRANSITION_LIST = "transitionList";
 	
 	// Form data in Velocity template
 	public static final String PARAM_APPROVAL_NAME = "approvalName";
@@ -31,17 +35,21 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	public static final String PARAM_GROUPS_FIELD = "approverGroupsField";
 	public static final String PARAM_STATUS_STARING = "startingStatus";
 	public static final String PARAM_STATUS_APPROVED = "approvedStatus";
+	public static final String PARAM_APPROVE_TRANSITION = "approveTransition";
 	public static final String PARAM_STATUS_REJECTED = "rejectedStatus";
+	public static final String PARAM_REJECT_TRANSITION = "rejectTransition";
 	public static final String PARAM_APPROVE_COUNT = "approveCount";
 	public static final String PARAM_REJECT_COUNT = "rejectCount";
 	public static final String PARAM_ALLOW_CHANGE_DECISION = "allowChangeDecision";
 	public static final String[] PARAMETERS_LIST = {
-			PARAM_APPROVAL_NAME,	// This must go first
+			PARAM_APPROVAL_NAME,
 			PARAM_USERS_FIELD,
 			PARAM_GROUPS_FIELD,
 			PARAM_STATUS_STARING,
 			PARAM_STATUS_APPROVED,
+			PARAM_APPROVE_TRANSITION,
 			PARAM_STATUS_REJECTED,
+			PARAM_REJECT_TRANSITION,
 			PARAM_APPROVE_COUNT,
 			PARAM_REJECT_COUNT,
 			PARAM_ALLOW_CHANGE_DECISION
@@ -70,28 +78,63 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		velocityParams.put(VELOCITY_STATUS_LIST, CustomApprovalUtil.getStatusList());
 	}
 
+	protected WorkflowDescriptor getWorkflowDescriptor(AbstractDescriptor descriptor) {
+		AbstractDescriptor topDesc = descriptor;
+		do {
+			if (topDesc.getParent() != null) {
+				topDesc = topDesc.getParent();
+			} else {
+				break;
+			}
+		} while (true);
+		if (topDesc instanceof WorkflowDescriptor) {
+			return (WorkflowDescriptor) topDesc;
+		}
+		return null;
+	}
+	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
     protected void getVelocityParamsForEdit(Map velocityParams, AbstractDescriptor descriptor) {
+		WorkflowDescriptor wfDesc = getWorkflowDescriptor(descriptor);
+		if (wfDesc == null) {
+			throw new IllegalArgumentException("Unable to locate Workflow Descriptor");
+		}
+		velocityParams.put(VELOCITY_TRANSITION_LIST, CustomApprovalUtil.getTransitions(wfDesc));
 		getVelocityParamsForInput(velocityParams);
 		// The settings is stored in FunctionDescriptor.getArgs().
 		// Transfer them to velocityParams for display
 		if (descriptor instanceof FunctionDescriptor) {
 			FunctionDescriptor fd = (FunctionDescriptor) descriptor;
 			Map map = fd.getArgs();
+			int listSize = 0;
 			for (String s : PARAMETERS_LIST) {
 				Object o = map.get(s);
 				LOGGER.debug("getVelocityParamsForEdit <" + s + "> = <" + o + ">(" + ((o != null)?o.getClass():"N/A") + ")");
-				if (o instanceof String) {
-					List list = null;
-					try {
-						list = OM.readValue((String) o, List.class);
-					} catch (Exception ex) {
-						LOGGER.error("Failed to deserialize " + s, ex);
+				if (o != null) {
+					if (o instanceof String) {
+						List list = null;
+						try {
+							list = OM.readValue((String) o, List.class);
+							listSize = list.size();
+						} catch (Exception ex) {
+							LOGGER.error("Failed to deserialize " + s, ex);
+						}
+						velocityParams.put(s, list);
+					} else {
+						throw new IllegalArgumentException("Unsupported data type " + ((o != null)?o.getClass():"N/A") + " for " + s);
 					}
-					velocityParams.put(s, list);
-				} else {
-					throw new IllegalArgumentException("Unsupported data type " + ((o != null)?o.getClass():"N/A") + " for " + s);
+				}
+			}
+			// For null values, add empty values matching other lists
+			List list = new ArrayList<>();
+			for (int i = 0; i < listSize; i++) {
+				list.add("");
+			}
+			for (String s : PARAMETERS_LIST) {
+				Object o = map.get(s);
+				if (o == null) {
+					map.put(s, list);
 				}
 			}
 		} else {
@@ -110,14 +153,15 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	@SuppressWarnings("rawtypes")
 	@Override
     public Map<String, Object> getDescriptorParams(Map params) {
-		// conditionParams contains form data submitted by input/edit page.
+		// params contains form data submitted by input/edit page.
 		// Values are string arrays
-		
+
 		// The return value is used to construct FunctionDescriptor 
 		// for getVelocityParamsForEdit and getVelocityParamsForView
 		
 		// The goal here is get the velocity template parameters from params
 		// and convert them to Strings in a map
+		// The map is provided to post function for execution
 		Map<String, Object> result = new HashMap<>();
 		for (String s : PARAMETERS_LIST) {
 			String value = null;

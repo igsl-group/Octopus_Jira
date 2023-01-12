@@ -26,9 +26,19 @@ public class ApprovalSettings {
 	 */
 	private String approvedStatus;
 	/**
+	 * Use this transition for approvedStatus
+	 * If null, code will attempt to locate it automatically
+	 */
+	private String approveTransition;
+	/**
 	 * If rejected, transit to this status
 	 */
 	private String rejectedStatus;
+	/**
+	 * Use this transition for rejectedStatus.
+	 * If null, code will attempt to locate it automatically
+	 */
+	private String rejectTransition;
 	/**
 	 * Required no. of approves to approve
 	 * 
@@ -176,5 +186,17 @@ public class ApprovalSettings {
 	}
 	public void setFinalApproverList(List<String> finalApproverList) {
 		this.finalApproverList = finalApproverList;
+	}
+	public String getApproveTransition() {
+		return approveTransition;
+	}
+	public void setApproveTransition(String approveTransition) {
+		this.approveTransition = approveTransition;
+	}
+	public String getRejectTransition() {
+		return rejectTransition;
+	}
+	public void setRejectTransition(String rejectTransition) {
+		this.rejectTransition = rejectTransition;
 	}
 }

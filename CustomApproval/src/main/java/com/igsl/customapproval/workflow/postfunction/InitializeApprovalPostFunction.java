@@ -43,10 +43,12 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 					String approvalName = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME)[i];
 					String startingStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING)[i];
 					String approvedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED)[i];
+					String approveTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_TRANSITION)[i];
 					String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
+					String rejectTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_TRANSITION)[i];
 					builder.addApproval(
-							approvalName, startingStatus, 
-							approvedStatus, rejectedStatus);
+							approvalName, startingStatus, approveTransition, 
+							approvedStatus, rejectedStatus, rejectTransition);
 					// Approve count
 					String approveCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_COUNT)[i];
 					builder.setApproveCount(approvalName, Float.parseFloat(approveCount));
