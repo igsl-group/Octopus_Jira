@@ -79,7 +79,7 @@ function customApproval_addPanelData() {
 							 	'</thead>' + 
 							 	'<tbody></tbody>' + 
 							 '</table>');
-						var history = panelData[i].history;
+						var history = panelData[i].sortedHistory;
 						if (history.length == 0) {
 							AJS.$(table).find('tbody').append(
 								'<tr><td colspan="100%">No approvals yet</td></tr>'

@@ -1,7 +1,11 @@
 package com.igsl.customapproval.panel;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -20,7 +24,9 @@ public class ApprovalPanelData {
 	private int rejectCountTarget;
 	private int approveCount = 0;
 	private int rejectCount = 0;
-	private List<ApprovalPanelHistory> history = new ArrayList<>();
+	
+	private Map<String, ApprovalPanelHistory> history = new HashMap<>();
+	private List<ApprovalPanelHistory> sortedHistory = new ArrayList<>();
 	
 	public ApprovalPanelData(ApprovalSettings settings) {
 		this.approvalName = settings.getApprovalName();
@@ -39,6 +45,15 @@ public class ApprovalPanelData {
 			this.approveCount = 0;
 			this.rejectCount = 0;
 		}
+	}
+	
+	public Collection<ApprovalPanelHistory> getSortedHistory() {
+		this.sortedHistory.clear();
+		for (ApprovalPanelHistory item : history.values()) {
+			this.sortedHistory.add(item);
+		}
+		Collections.sort(this.sortedHistory, new ApprovalPanelHistoryComparator());
+		return this.sortedHistory;
 	}
 	
 	public int getApproveCountTarget() {
@@ -77,7 +92,7 @@ public class ApprovalPanelData {
 	public boolean isApproved() {
 		return approved;
 	}
-	public List<ApprovalPanelHistory> getHistory() {
+	public Map<String, ApprovalPanelHistory> getHistory() {
 		return history;
 	}
 }

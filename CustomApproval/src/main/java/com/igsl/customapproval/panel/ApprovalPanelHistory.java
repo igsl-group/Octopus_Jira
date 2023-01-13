@@ -60,8 +60,14 @@ public class ApprovalPanelHistory {
 		}
 		if (this.approvedDate != null) {
 			this.approvedDateString = SDF.format(this.approvedDate);
+		} else {
+			this.approvedDateString = "";
 		}
-		this.decision = (this.approved)? "Approved" : "Rejected";
+		if (this.approvedDate != null) {
+			this.decision = (this.approved)? "Approved" : "Rejected";
+		} else {
+			this.decision = "Pending";
+		}
 		Map<String, ApplicationUser> approverList = CustomApprovalUtil.getApproverList(issue, settings);
 		for (String s : approverList.keySet()) {
 			LOGGER.debug("Approver list: " + s);

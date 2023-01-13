@@ -400,7 +400,7 @@ public class CustomApprovalUtil {
 	/**
 	 * Get list of delegates for provided approver list.
 	 * @param approverList From getApproverList().
-	 * @return Map. Key is user key, value is ApplicationUser.
+	 * @return Map. Key is delegator user key, value is delegated ApplicationUser.
 	 */
 	public static Map<String, ApplicationUser> getDelegates(Map<String, ApplicationUser> approverList) {
 		Map<String, ApplicationUser> result = new HashMap<>();
@@ -409,7 +409,7 @@ public class CustomApprovalUtil {
 				List<DelegationSetting> delegateList = DelegationUtil.loadData(approverKey, false);
 				for (DelegationSetting setting : delegateList) {
 					ApplicationUser delegate = setting.getDelegateToUserObject();
-					result.put(delegate.getKey(), delegate);
+					result.put(approverKey, delegate);
 				}
 			}
 		}
@@ -707,13 +707,15 @@ public class CustomApprovalUtil {
 				// For user
 				if (historyList.containsKey(user.getKey())) {
 					// Already approved, update decision
-					ApprovalHistory historyItem = historyList.get(user.getKey());
-					historyItem.setApprovedDate(new Date());
-					historyItem.setApproved(approve);
-					historyItem.setDelegated(null);
-					// Remove and add to put item at the bottom of the list
-					historyList.remove(user.getKey());
-					historyList.put(user.getKey(), historyItem);
+					if (settings.isAllowChangeDecision()) {
+						ApprovalHistory historyItem = historyList.get(user.getKey());
+						historyItem.setApprovedDate(new Date());
+						historyItem.setApproved(approve);
+						historyItem.setDelegated(null);
+						// Remove and add to put item at the bottom of the list
+						historyList.remove(user.getKey());
+						historyList.put(user.getKey(), historyItem);
+					}
 				} else {
 					// Add new record
 					ApprovalHistory historyItem = new ApprovalHistory();
@@ -728,14 +730,16 @@ public class CustomApprovalUtil {
 				// Set decision for each delegator
 				for (String delegator : delegatorList) {
 					if (historyList.containsKey(delegator)) {
-						// Already approved, update decision
-						ApprovalHistory historyItem = historyList.get(delegator);
-						historyItem.setApprovedDate(new Date());
-						historyItem.setApproved(approve);
-						historyItem.setDelegated(user.getKey());
-						// Remove and add to put item at the bottom of the list
-						historyList.remove(delegator);
-						historyList.put(delegator, historyItem);
+						if (settings.isAllowChangeDecision()) {
+							// Already approved, update decision
+							ApprovalHistory historyItem = historyList.get(delegator);
+							historyItem.setApprovedDate(new Date());
+							historyItem.setApproved(approve);
+							historyItem.setDelegated(user.getKey());
+							// Remove and add to put item at the bottom of the list
+							historyList.remove(delegator);
+							historyList.put(delegator, historyItem);
+						}
 					} else {
 						// Add new record
 						ApprovalHistory historyItem = new ApprovalHistory();
@@ -1213,12 +1217,12 @@ public class CustomApprovalUtil {
 						}
 					}
 					// Insert history and update counts
-					List<ApprovalPanelHistory> list = data.getHistory();
+					Map<String, ApprovalPanelHistory> historyMap = data.getHistory();
 					int approveCount = 0;
 					int rejectCount = 0;
 					for (ApprovalHistory historyItem : entry.getValue().values()) {
 						ApprovalPanelHistory displayHistory = new ApprovalPanelHistory(historyItem, issue, settings);
-						list.add(displayHistory);
+						historyMap.put(displayHistory.getApprover(), displayHistory);
 						if (displayHistory.isValid() && !settings.isCompleted()) {
 							if (displayHistory.getApproved()) {
 								approveCount++;
@@ -1230,6 +1234,29 @@ public class CustomApprovalUtil {
 					if (!settings.isCompleted()) {
 						data.setApproveCount(approveCount);
 						data.setRejectCount(rejectCount);
+					}
+					if (!settings.isCompleted()) {
+						// Add pending approvers
+						for (Map.Entry<String, ApplicationUser> approver : approverList.entrySet()) {
+							if (!historyMap.containsKey(approver.getKey())) {
+								ApprovalHistory newHistory = new ApprovalHistory();
+								newHistory.setApprovedDate(null);
+								newHistory.setApproved(false);
+								newHistory.setApprover(approver.getKey());
+								newHistory.setDelegated(null);
+								ApprovalPanelHistory pendingItem = new ApprovalPanelHistory(newHistory, issue, settings);
+								historyMap.put(approver.getKey(), pendingItem);
+								for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), false)) {
+									ApprovalHistory newDelegateHistory = new ApprovalHistory();
+									newDelegateHistory.setApprovedDate(null);
+									newDelegateHistory.setApproved(false);
+									newDelegateHistory.setApprover(approver.getKey());
+									newDelegateHistory.setDelegated(delegate.getDelegateToUser());
+									ApprovalPanelHistory pendingDelegateItem = new ApprovalPanelHistory(newDelegateHistory, issue, settings);
+									historyMap.put(approver.getKey() + "." + delegate.getDelegateToUser(), pendingDelegateItem);
+								}
+							}
+						}
 					}
 				}
 				// Add data for current approval that has no history yet
@@ -1243,6 +1270,26 @@ public class CustomApprovalUtil {
 							CustomApprovalUtil.getApproveCountTarget(currentApprovalSettings, approverList));
 					newData.setRejectCountTarget(
 							CustomApprovalUtil.getRejectCountTarget(currentApprovalSettings, approverList));
+					// Add pending approvers
+					Map<String, ApprovalPanelHistory> historyMap = newData.getHistory();
+					for (Map.Entry<String, ApplicationUser> approver : approverList.entrySet()) {
+						ApprovalHistory newHistory = new ApprovalHistory();
+						newHistory.setApprovedDate(null);
+						newHistory.setApproved(false);
+						newHistory.setApprover(approver.getKey());
+						newHistory.setDelegated(null);
+						ApprovalPanelHistory pendingItem = new ApprovalPanelHistory(newHistory, issue, currentApprovalSettings);
+						historyMap.put(approver.getKey(), pendingItem);
+						for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), false)) {
+							ApprovalHistory newDelegateHistory = new ApprovalHistory();
+							newDelegateHistory.setApprovedDate(null);
+							newDelegateHistory.setApproved(false);
+							newDelegateHistory.setApprover(approver.getKey());
+							newDelegateHistory.setDelegated(delegate.getDelegateToUser());
+							ApprovalPanelHistory pendingDelegateItem = new ApprovalPanelHistory(newDelegateHistory, issue, currentApprovalSettings);
+							historyMap.put(approver.getKey() + "." + delegate.getDelegateToUser(), pendingDelegateItem);
+						}
+					}
 					result.put(currentApprovalName, newData);
 				}
 			}
