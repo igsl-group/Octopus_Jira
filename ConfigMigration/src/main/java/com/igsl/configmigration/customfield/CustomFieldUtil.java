@@ -120,11 +120,14 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		CustomFieldDTO src = (CustomFieldDTO) newItem;
 		CustomFieldTypeDTO fieldType = (CustomFieldTypeDTO) CUSTOM_FIELD_TYPE_UTIL.findByDTO(
 				src.getCustomFieldType());
-		src.getCustomFieldSearcher().setJiraObject(null, (CustomFieldType<?, ?>) fieldType.getJiraObject());		
 		LOGGER.debug("CustomFieldType: " + fieldType);
-		CustomFieldSearcherDTO fieldSearcher = (CustomFieldSearcherDTO) CUSTOM_FIELD_SEARCHER_UTIL.findByDTO(
-				src.getCustomFieldSearcher());
-		LOGGER.debug("CustomFieldSearcher: " + fieldSearcher);
+		CustomFieldSearcherDTO fieldSearcher = null;
+		if (src.getCustomFieldSearcher() != null) {
+			src.getCustomFieldSearcher().setJiraObject(null, (CustomFieldType<?, ?>) fieldType.getJiraObject());		
+			fieldSearcher = (CustomFieldSearcherDTO) CUSTOM_FIELD_SEARCHER_UTIL.findByDTO(
+					src.getCustomFieldSearcher());
+			LOGGER.debug("CustomFieldSearcher: " + fieldSearcher);
+		}
 		List<JiraContextNode> context = Arrays.asList(GlobalIssueContext.getInstance());
 		LOGGER.debug("JiraContextNode: " + context);
 		List<IssueType> issueTypes = new ArrayList<>();
@@ -144,7 +147,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					original.getIdAsLong(),
 					src.getName(), 
 					src.getDescription(), 
-					(CustomFieldSearcher) fieldSearcher.getJiraObject());
+					(fieldSearcher == null)? null : (CustomFieldSearcher) fieldSearcher.getJiraObject());
 			// TODO Options
 			// TODO Default value
 			return findByDTO(original);
@@ -154,7 +157,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					src.getName(), 
 					src.getDescription(), 
 					(CustomFieldType<?, ?>) fieldType.getJiraObject(),
-					(CustomFieldSearcher) fieldSearcher.getJiraObject(), 
+					(fieldSearcher == null)? null : (CustomFieldSearcher) fieldSearcher.getJiraObject(), 
 					context, 
 					issueTypes);
 			FieldConfigScheme scheme = createdJira.getConfigurationSchemes().get(0);
@@ -180,7 +183,11 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				LOGGER.debug("Source default: " + OM.writeValueAsString(def));
 				Object defaultValue = getRawValue(src.getOptions().getAllOptions(), def);
 				LOGGER.debug("defaultValue: " + defaultValue);
-				createdJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
+				if (defaultValue != null) {
+					createdJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
+				} else {
+					createdJira.getDefaultValueOperations().setDefaultValue(config, null);
+				}
 			}
 			CustomFieldDTO created = new CustomFieldDTO();
 			created.setJiraObject(createdJira);
@@ -217,7 +224,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			return ((GeneralDTO) o).getValue(); 
 		} else {
 			// We have basic types like Timestamp, String, etc.
-			return o;
+			GeneralDTO dto = new GeneralDTO();
+			dto.setJiraObject(o);
+			return dto;
 		}
 		// TODO What else?
 	}

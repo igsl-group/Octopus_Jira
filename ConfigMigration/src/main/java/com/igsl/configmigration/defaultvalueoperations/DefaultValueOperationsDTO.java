@@ -62,7 +62,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 			dto.setJiraObject(o, fieldConfig, parentId);
 			return dto;
 		} 
-		return null;
+		return new GeneralDTO();
 	}
 	
 	// Recursively turn objects into JiraConfigDTO so they serialize and deserialize properly
@@ -122,7 +122,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 				this.valueType = ValueType.OBJECT;
 			}
 		} else {
-			this.defaultValue = null;
+			this.defaultValue = new GeneralDTO();
 			this.valueClass = null;
 			this.valueType = ValueType.OBJECT;
 		}

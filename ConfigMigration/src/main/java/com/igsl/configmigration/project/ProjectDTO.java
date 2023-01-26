@@ -73,8 +73,10 @@ public class ProjectDTO extends JiraConfigDTO {
 		this.leadUserName = o.getLeadUserName();
 		this.name = o.getName();
 		this.originalKey = o.getOriginalKey();
-		this.category = new ProjectCategoryDTO();
-		this.category.setJiraObject(o.getProjectCategory());
+		if (o.getProjectCategory() != null) {
+			this.category = new ProjectCategoryDTO();
+			this.category.setJiraObject(o.getProjectCategory());
+		}
 		this.projectTypeKey = new ProjectTypeKeyDTO();
 		this.projectTypeKey.setJiraObject(o.getProjectTypeKey());
 		this.url = o.getUrl();

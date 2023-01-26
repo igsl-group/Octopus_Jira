@@ -17,6 +17,7 @@ import com.igsl.configmigration.JiraConfigUtil;
 public class GeneralDTO extends JiraConfigDTO {
 
 	private Object value;
+	private String valueClass;
 	
 	@Override
 	protected List<String> getCompareMethods() {
@@ -36,17 +37,34 @@ public class GeneralDTO extends JiraConfigDTO {
 
 	@Override
 	public String getUniqueKey() {
-		return Integer.toString(value.hashCode());
+		if (value != null) {
+			return Integer.toString(value.hashCode());
+		}
+		return null;
 	}
 
 	@Override
 	public String getInternalId() {
-		return Integer.toString(value.hashCode());
+		if (value != null) {
+			return Integer.toString(value.hashCode());
+		}
+		return null;
 	}
 
 	@Override
 	protected void fromJiraObject(Object obj) throws Exception {
 		this.value = obj;
+		if (this.value != null) {
+			this.valueClass = this.value.getClass().getCanonicalName();
+		}
+	}
+
+	public String getValueClass() {
+		return valueClass;
+	}
+
+	public void setValueClass(String valueClass) {
+		this.valueClass = valueClass;
 	}
 
 	public Object getValue() {

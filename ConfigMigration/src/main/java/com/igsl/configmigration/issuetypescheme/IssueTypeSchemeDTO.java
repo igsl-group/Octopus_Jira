@@ -7,8 +7,12 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.fields.config.FieldConfigItem;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.config.manager.IssueTypeSchemeManager;
+import com.atlassian.jira.issue.fields.option.Option;
+import com.atlassian.jira.issue.fields.option.OptionSet;
+import com.atlassian.jira.issue.fields.option.OptionSetManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -24,7 +28,8 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 
 	private static final Logger LOGGER = Logger.getLogger(IssueTypeSchemeDTO.class);
 	private static IssueTypeSchemeManager MANAGER = ComponentAccessor.getComponent(IssueTypeSchemeManager.class);
-	
+	private static final OptionSetManager OSM = ComponentAccessor.getComponent(OptionSetManager.class);
+
 	private Long id;
 	private String name;
 	private String description;
@@ -58,6 +63,15 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 		this.description = obj.getDescription();
 		this.fieldConfig = new FieldConfigDTO();
 		this.fieldConfig.setJiraObject(obj.getOneAndOnlyConfig());
+		
+		LOGGER.debug("IssueTypeScheme FieldConfig.getConfigItems(): ");
+		for (FieldConfigItem item : obj.getOneAndOnlyConfig().getConfigItems()) {
+			LOGGER.debug("Display Name: " + item.getDisplayName());
+			LOGGER.debug("Display Name Key: " + item.getDisplayNameKey());
+			LOGGER.debug("Object Key: " + item.getObjectKey());
+			LOGGER.debug("Type: " + item.getType());
+		}
+
 	}
 
 	@Override

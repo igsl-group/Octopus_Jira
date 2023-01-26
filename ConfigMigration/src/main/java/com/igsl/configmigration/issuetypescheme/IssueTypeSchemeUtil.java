@@ -1,6 +1,7 @@
 package com.igsl.configmigration.issuetypescheme;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -11,15 +12,22 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.config.manager.IssueTypeSchemeManager;
 import com.atlassian.jira.issue.fields.option.OptionSet;
+import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
+import com.igsl.configmigration.issuetype.IssueTypeDTO;
+import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.optionset.OptionSetDTO;
 import com.igsl.configmigration.optionset.OptionSetUtil;
+import com.igsl.configmigration.project.ProjectDTO;
+import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueTypeSchemeUtil extends JiraConfigUtil {
@@ -73,27 +81,51 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		final OptionSetUtil OPTION_SET_UTIL = 
 				(OptionSetUtil) JiraConfigTypeRegistry.getConfigUtil(OptionSetUtil.class);
+		final FieldConfigUtil FIELD_CONFIG_UTIL = 
+				(FieldConfigUtil) JiraConfigTypeRegistry.getConfigUtil(FieldConfigUtil.class);
+		final IssueTypeUtil ISSUE_TYPE_UTIL = 
+				(IssueTypeUtil) JiraConfigTypeRegistry.getConfigUtil(IssueTypeUtil.class);
 		IssueTypeSchemeDTO original = null;
 		if (oldItem != null) {
 			original = (IssueTypeSchemeDTO) oldItem;
 		} else {
 			original = (IssueTypeSchemeDTO) findByDTO(newItem);
 		}
+		ProjectUtil projectUtil = (ProjectUtil) JiraConfigTypeRegistry.getConfigUtil(ProjectUtil.class); 
 		IssueTypeSchemeDTO src = (IssueTypeSchemeDTO) newItem;
+		List<Project> projects = new ArrayList<>();
+		for (ProjectDTO p : src.getAssociatedProjects()) {
+			ProjectDTO dto = (ProjectDTO) projectUtil.findByUniqueKey(p.getUniqueKey());
+			if (dto != null) {
+				projects.add((Project) dto.getJiraObject());
+			}
+		}
 		if (original != null) {
-			OptionSetDTO optionSetDTO = 
-					(OptionSetDTO) OPTION_SET_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
-			OptionSet optionSet = (OptionSet) optionSetDTO.getJiraObject();
+			FIELD_CONFIG_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
+			List<String> optionIds = new ArrayList<>();
+			for (IssueTypeDTO issueType : src.getAssociatedIssueTypes()) {
+				IssueTypeDTO dto = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(issueType);
+				if (dto != null) {
+					optionIds.add(dto.getId());
+				}
+			}
 			FieldConfigScheme.Builder b = new FieldConfigScheme.Builder((FieldConfigScheme) src.getJiraObject());
-			MANAGER.update(b.toFieldConfigScheme(), optionSet.getOptionIds());
+			FieldConfigScheme updatedJira = MANAGER.update(b.toFieldConfigScheme(), optionIds);
+			MANAGER.addProjectAssociations(updatedJira, projects);
 			return null;
 		} else {
-			OptionSetDTO optionSetDTO = 
-					(OptionSetDTO) OPTION_SET_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
-			OptionSet optionSet = (OptionSet) optionSetDTO.getJiraObject();
+			FieldConfigDTO fc = src.getFieldConfig();
+			FIELD_CONFIG_UTIL.merge(null, src.getFieldConfig());
 			List<String> optionIds = new ArrayList<>();
-			optionIds.addAll(optionSet.getOptionIds());
+			for (IssueTypeDTO issueType : src.getAssociatedIssueTypes()) {
+				IssueTypeDTO dto = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(issueType);
+				if (dto != null) {
+					optionIds.add(dto.getId());
+				}
+			}
 			FieldConfigScheme createdJira = MANAGER.create(src.getName(), src.getDescription(), optionIds);
+			MANAGER.getIssueTypesForScheme(createdJira);
+			MANAGER.addProjectAssociations(createdJira, projects);
 			FieldConfigSchemeDTO created = new FieldConfigSchemeDTO();
 			created.setJiraObject(createdJira);
 			return created;

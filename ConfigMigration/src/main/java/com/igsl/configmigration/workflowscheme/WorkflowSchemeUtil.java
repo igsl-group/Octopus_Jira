@@ -1,5 +1,7 @@
 package com.igsl.configmigration.workflowscheme;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -7,13 +9,18 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.bc.workflow.WorkflowSchemeService;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.project.Project;
+import com.atlassian.jira.scheme.Scheme;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.AssignableWorkflowScheme;
 import com.atlassian.jira.workflow.WorkflowSchemeManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.project.ProjectDTO;
+import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class WorkflowSchemeUtil extends JiraConfigUtil {
@@ -64,6 +71,7 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		ProjectUtil projectUtil = (ProjectUtil) JiraConfigTypeRegistry.getConfigUtil(ProjectUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		AssignableWorkflowSchemeDTO original = null;
 		if (oldItem != null) {
@@ -77,6 +85,14 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 			String s = src.getMappings().remove(AssignableWorkflowSchemeDTO.NULL_KEY);
 			src.getMappings().put(null, s);
 		}
+		// Remap projects
+		List<Project> projects = new ArrayList<>();
+		for (ProjectDTO dto : src.getProjects()) {
+			ProjectDTO p = (ProjectDTO) projectUtil.findByDTO(dto);
+			if (p != null) {
+				projects.add((Project) p.getJiraObject());
+			}
+		}
 		if (original != null) {
 			// Update
 			AssignableWorkflowScheme scheme = (AssignableWorkflowScheme) original.getJiraObject();
@@ -86,6 +102,11 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				.setMappings(src.getMappings())
 				.setName(src.getName()).build();
 			scheme = MANAGER.updateWorkflowScheme(scheme);
+			Scheme sch = MANAGER.getSchemeObject(scheme.getId());
+			for (Project p : projects) {
+				MANAGER.addSchemeToProject(p, sch);
+			}
+			MANAGER.clearWorkflowCache();
 			return findByUniqueKey(Long.toString(scheme.getId()));
 		} else {
 			AssignableWorkflowScheme scheme = SERVICE.assignableBuilder()
@@ -95,6 +116,11 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				.setName(src.getName())
 				.build();
 			scheme = MANAGER.createScheme(scheme);
+			Scheme sch = MANAGER.getSchemeObject(scheme.getId());
+			for (Project p : projects) {
+				MANAGER.addSchemeToProject(p, sch);
+			}
+			MANAGER.clearWorkflowCache();
 			AssignableWorkflowSchemeDTO created = new AssignableWorkflowSchemeDTO();
 			created.setJiraObject(scheme);
 			return created;

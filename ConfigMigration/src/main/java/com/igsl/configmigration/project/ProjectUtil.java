@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.atlassian.jira.avatar.AvatarUrls;
 import com.atlassian.jira.bc.project.ProjectCreationData;
 import com.atlassian.jira.bc.project.ProjectService;
 import com.atlassian.jira.bc.project.ProjectService.CreateProjectValidationResult;
@@ -26,6 +27,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.avatar.AvatarDTO;
+import com.igsl.configmigration.avatar.AvatarUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryDTO;
 import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
 
@@ -82,6 +85,9 @@ public class ProjectUtil extends JiraConfigUtil {
 
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+		AvatarUtil avatarUtil = (AvatarUtil) JiraConfigTypeRegistry.getConfigUtil(AvatarUtil.class);
+		ProjectCategoryUtil categoryUtil = (ProjectCategoryUtil) 
+				JiraConfigTypeRegistry.getConfigUtil(ProjectCategoryUtil.class);
 		ProjectDTO original = null;
 		if (oldItem != null) {
 			original = (ProjectDTO) oldItem;
@@ -94,12 +100,19 @@ public class ProjectUtil extends JiraConfigUtil {
 			// Update
 			UpdateProjectParameters data = UpdateProjectParameters.forProject(p.getId());
 			data.assigneeType(src.getAssigneeType());
-			data.avatarId(src.getAvatar().getId());
+			AvatarDTO avatar = (AvatarDTO) avatarUtil.findByUniqueKey(src.getAvatar().getUniqueKey());
+			if (avatar != null) {
+				data.avatarId(avatar.getId());
+			}
 			data.description(src.getDescription());
 			data.key(src.getKey());
-			data.leadUserKey(src.getLeadUserKey());
+			data.leadUserKey(src.getLeadUserKey());	// TODO Translate user key using username
 			data.name(src.getName());
-			data.projectCategoryId(src.getCategory().getId());
+			ProjectCategoryDTO cat = (ProjectCategoryDTO) 
+					categoryUtil.findByUniqueKey(src.getCategory().getUniqueKey());
+			if (cat != null) {
+				data.projectCategoryId(cat.getId());
+			}
 			data.projectType(src.getProjectTypeKey().getKey());
 			data.url(src.getUrl());
 			MANAGER.updateProject(data);
@@ -111,6 +124,9 @@ public class ProjectUtil extends JiraConfigUtil {
 					typeKey = pt.getKey();
 				}
 			}
+			if (typeKey == null) {
+				throw new Exception("Project Type Key \"" + src.getProjectTypeKey().getKey() + "\" does not exist");
+			}
 			LOGGER.debug("Project Type Key: " + typeKey.getKey());
 			// Create
 			ProjectCreationData data = new ProjectCreationData.Builder()
@@ -118,7 +134,8 @@ public class ProjectUtil extends JiraConfigUtil {
 					.withAvatarId(src.getAvatar().getId())
 					.withDescription(src.getDescription())
 					.withKey(src.getKey())
-					.withLead(USER_MANAGER.getUserByKey(src.getLeadUserKey()))
+					//.withLead(USER_MANAGER.getUserByKey(src.getLeadUserKey()))
+					.withLead(USER_MANAGER.getUserByName(src.getLeadUserName()))
 					.withName(src.getName())
 					.withType(typeKey)
 					.withUrl(src.getUrl())
@@ -142,10 +159,12 @@ public class ProjectUtil extends JiraConfigUtil {
 				throw new Exception("Project creation data validation failed: " + sb.toString());
 			}
 			Project p = SERVICE.createProject(result);
-			ProjectCategoryUtil catUtil = (ProjectCategoryUtil) 
-					JiraConfigTypeRegistry.getConfigUtil(ProjectCategoryUtil.class);
-			ProjectCategoryDTO cat = (ProjectCategoryDTO) catUtil.findByUniqueKey(src.getCategory().getUniqueKey());
-			MANAGER.setProjectCategory(p, (ProjectCategory) cat.getJiraObject());
+			if (src.getCategory() != null) {
+				ProjectCategoryUtil catUtil = (ProjectCategoryUtil) 
+						JiraConfigTypeRegistry.getConfigUtil(ProjectCategoryUtil.class);
+				ProjectCategoryDTO cat = (ProjectCategoryDTO) catUtil.findByUniqueKey(src.getCategory().getUniqueKey());
+				MANAGER.setProjectCategory(p, (ProjectCategory) cat.getJiraObject());
+			}
 			ProjectDTO dto = new ProjectDTO();
 			dto.setJiraObject(p);
 			return dto;

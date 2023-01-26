@@ -78,22 +78,23 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		IssueSecurityLevelSchemeDTO src = (IssueSecurityLevelSchemeDTO) newItem;
 		IssueSecurityLevelSchemeDTO result = null;
 		Scheme scheme = null;
+		Long id;
 		if (original != null) {
 			// Update
 			Scheme s = new Scheme(original.getId(), src.getName(), src.getDescription(), null);	
 			// TODO last parameter, what is it
 			SCHEME_MANAGER.updateScheme(s);
-			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(original.getId()));
+			id = original.getId();
 		} else {
 			// Create
 			scheme = SCHEME_MANAGER.createSchemeObject(src.getName(), src.getDescription());
-			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(scheme.getId()));
+			id = scheme.getId();
 		}
 		Long defaultLevel = null;
-		if (result != null) {
+		if (id != null) {
 			// Merge levels
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
-				item.setSchemeId(result.getId());
+				item.setSchemeId(id);
 				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) LEVEL_UTIL.merge(null, item);
 				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
 					defaultLevel = level.getId();
@@ -102,9 +103,12 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		}
 		// Set default level, no choice but to use deprecated APIs
 		if (defaultLevel != null) {
-			GenericValue gv = SCHEME_MANAGER.getScheme(result.getId());
+			GenericValue gv = SCHEME_MANAGER.getScheme(id);
 			gv.set("defaultlevel", defaultLevel);
 			SCHEME_MANAGER.updateScheme(scheme);
+		}
+		if (id != null) {
+			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
 		}
 		return result;
 	}

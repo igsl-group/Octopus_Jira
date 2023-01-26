@@ -3,7 +3,10 @@ package com.igsl.configmigration.fieldconfig;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.issue.fields.config.FieldConfig;
+import com.atlassian.jira.issue.fields.config.FieldConfigItem;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -12,6 +15,8 @@ import com.igsl.configmigration.JiraConfigUtil;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldConfigDTO extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(FieldConfigDTO.class);
+	
 	private Long id;
 	private String name;
 	private String description;
@@ -24,7 +29,6 @@ public class FieldConfigDTO extends JiraConfigDTO {
 		this.name = o.getName();
 		this.description = o.getDescription();
 		this.fieldId = o.getFieldId();
-		//o.getConfigItems();
 		//o.getConfigurableField();
 	}
 

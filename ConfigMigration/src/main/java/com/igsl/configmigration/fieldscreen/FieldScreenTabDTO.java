@@ -48,7 +48,7 @@ public class FieldScreenTabDTO extends JiraConfigDTO {
 
 	@Override
 	public String getUniqueKey() {
-		return Long.toString(this.getId());
+		return this.getName();
 	}
 
 	@Override

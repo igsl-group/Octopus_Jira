@@ -76,8 +76,6 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		}
 		FieldScreen originalJira = (original != null)? (FieldScreen) original.getJiraObject(): null;
 		FieldScreenDTO src = (FieldScreenDTO) newItem;
-		String name = src.getName();
-		String description = src.getDescription();
 		FieldScreen createdJira = null;
 		if (original != null) {
 			// Update

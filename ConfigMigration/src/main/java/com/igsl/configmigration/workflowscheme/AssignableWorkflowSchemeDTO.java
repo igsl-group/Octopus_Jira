@@ -1,16 +1,23 @@
 package com.igsl.configmigration.workflowscheme;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.workflow.AssignableWorkflowScheme;
 import com.atlassian.jira.workflow.WorkflowScheme;
+import com.atlassian.jira.workflow.WorkflowSchemeManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.project.ProjectDTO;
 
 /**
  * Status wrapper.
@@ -19,12 +26,15 @@ import com.igsl.configmigration.JiraConfigUtil;
 public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 	
 	public static final String NULL_KEY = "null";
+	private static final Logger LOGGER = Logger.getLogger(AssignableWorkflowSchemeDTO.class);
+	private static final WorkflowSchemeManager MANAGER = ComponentAccessor.getWorkflowSchemeManager();
 	
 	private String configuredDefaultWorkflow;
 	private String description;
 	private Long id;
 	private Map<String, String> mappings;
 	private String name;
+	private List<ProjectDTO> projects;
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
@@ -41,6 +51,14 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 			}
 		}
 		this.name = wf.getName();
+		this.projects = new ArrayList<>();
+		LOGGER.debug("Projects associated with workflow scheme: " + wf.getName());
+		for (Project p : MANAGER.getProjectsUsing(wf)) {
+			LOGGER.debug("Project Key: " + p.getKey() + " Name: " + p.getName());
+			ProjectDTO dto = new ProjectDTO();
+			dto.setJiraObject(p);
+			this.projects.add(dto);
+		}
 	}
 
 	@Override
@@ -110,6 +128,14 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public List<ProjectDTO> getProjects() {
+		return projects;
+	}
+
+	public void setProjects(List<ProjectDTO> projects) {
+		this.projects = projects;
 	}
 
 }

@@ -30,6 +30,7 @@ import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
 import com.igsl.configmigration.plugin.PluginUtil;
 import com.igsl.configmigration.priority.PriorityUtil;
+import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
 import com.igsl.configmigration.resolution.ResolutionUtil;
 import com.igsl.configmigration.status.StatusUtil;
@@ -55,10 +56,11 @@ public class JiraConfigTypeRegistry {
 			PluginUtil.class,
 			CustomFieldUtil.class,
 			FieldScreenUtil.class,
-			IssueTypeSchemeUtil.class,
 			WorkflowUtil.class,
-			WorkflowSchemeUtil.class,
-			ProjectCategoryUtil.class
+			ProjectCategoryUtil.class,
+			ProjectUtil.class,
+			IssueTypeSchemeUtil.class,
+			WorkflowSchemeUtil.class
 			);
 	private static List<String> orderedList = new ArrayList<>();
 	private static List<String> unorderedList = new ArrayList<>();

@@ -37,7 +37,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
 			FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
-			item.setJiraObject(it);
+			item.setJiraObject(it, tab);
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
@@ -49,7 +49,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
 			if (Long.toString(it.getId()).equals(id)) {
 				FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
-				item.setJiraObject(it);
+				item.setJiraObject(it, tab);
 				return item;
 			}
 		}
@@ -75,20 +75,24 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		FieldScreenLayoutItem createdJira = null;
 		FieldUtil fieldUtil = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
 		FieldDTO field = (FieldDTO) fieldUtil.findByDTO(src.getField());
-		if (original != null) {
-			// Update
-			originalJira.setFieldId(field.getId());
-			originalJira.setFieldScreenTab(tab);
-			originalJira.setPosition(src.getPosition());
-			MANAGER.updateFieldScreenLayoutItem(originalJira);
-			createdJira = originalJira;
+		if (field != null) {
+			if (original != null) {
+				// Update
+				originalJira.setFieldId(field.getId());
+				originalJira.setFieldScreenTab(tab);
+				originalJira.setPosition(src.getPosition());
+				MANAGER.updateFieldScreenLayoutItem(originalJira);
+				createdJira = originalJira;
+			} else {
+				// Create
+				createdJira = new FieldScreenLayoutItemImpl(MANAGER, FIELD_MANAGER);
+				createdJira.setFieldId(field.getId());
+				createdJira.setFieldScreenTab(tab);
+				createdJira.setPosition(src.getPosition());
+				MANAGER.createFieldScreenLayoutItem(createdJira);
+			}
 		} else {
-			// Create
-			createdJira = new FieldScreenLayoutItemImpl(MANAGER, FIELD_MANAGER);
-			createdJira.setFieldId(field.getId());
-			createdJira.setFieldScreenTab(tab);
-			createdJira.setPosition(src.getPosition());
-			MANAGER.createFieldScreenLayoutItem(createdJira);
+			LOGGER.error("Field " + src.getField().getUniqueKey() + " cannot be found, excluded from tab " + tab.getName());
 		}
 		FieldScreenLayoutItemDTO created = new FieldScreenLayoutItemDTO();
 		created.setJiraObject(createdJira, tab);

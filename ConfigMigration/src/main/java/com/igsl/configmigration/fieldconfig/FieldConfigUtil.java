@@ -71,9 +71,9 @@ public class FieldConfigUtil extends JiraConfigUtil {
 					src.getDescription(), 
 					null, 
 					src.getFieldId());
-			FieldConfig createdJira = MANAGER.createFieldConfig(null, null);
+			FieldConfig createdJira = MANAGER.createFieldConfig(newFC, null);
 			FieldConfigDTO created = new FieldConfigDTO();
-			created.setJiraObject(created);
+			created.setJiraObject(createdJira);
 			return created;
 		}
 	}

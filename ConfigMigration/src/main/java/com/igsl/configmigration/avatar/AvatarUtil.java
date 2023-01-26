@@ -52,7 +52,7 @@ public class AvatarUtil extends JiraConfigUtil {
  		}
 		// Find among custom avatars of owner
 		String avatarOwner = null;
-		if (params.length == 1) {
+		if (params != null && params.length == 1) {
 			avatarOwner = (String) params[0];
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();

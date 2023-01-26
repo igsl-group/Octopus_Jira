@@ -75,7 +75,6 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		}
 		FieldScreenTab originalJira = (original != null)? (FieldScreenTab) original.getJiraObject(): null;
 		FieldScreenTabDTO src = (FieldScreenTabDTO) newItem;
-		String name = src.getName();
 		FieldScreenTab createdJira = null;
 		if (original != null) {
 			// Update
@@ -100,7 +99,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 				itemUtil.merge(null, item);
 			}
 			FieldScreenTabDTO created = new FieldScreenTabDTO();
-			created.setJiraObject(createdJira);
+			created.setJiraObject(createdJira, src.getObjectParameters());
 			return created;
 		}
 		return null;
