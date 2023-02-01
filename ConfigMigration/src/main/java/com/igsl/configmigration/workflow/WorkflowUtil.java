@@ -1,9 +1,29 @@
 package com.igsl.configmigration.workflow;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
+
 import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.status.Status;
@@ -17,6 +37,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.status.StatusDTO;
+import com.igsl.configmigration.status.StatusUtil;
 import com.opensymphony.workflow.Workflow;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.ActionDescriptor;
@@ -91,6 +113,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		LOGGER.debug("merge starts");
+		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		WorkflowDTO2 original = null;
 		if (oldItem != null) {
@@ -99,7 +122,67 @@ public class WorkflowUtil extends JiraConfigUtil {
 			original = (WorkflowDTO2) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
 		}
 		WorkflowDTO2 src = (WorkflowDTO2) newItem;
-		// TODO Remap data in XML
+		// Remap data in XML
+		// status
+		// //workflow/steps/step[name]
+		// //workflow/steps/step/meta[name='jira.status.id']
+		try {
+			LOGGER.debug("Workflow XML: " + src.getXml());
+			ByteArrayInputStream bais = new ByteArrayInputStream(src.getXml().getBytes());
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			// Ignore DTD
+			factory.setAttribute("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+			DocumentBuilder builder = factory.newDocumentBuilder();
+			Document doc = builder.parse(bais);
+			LOGGER.debug("Workflow XML parsed");
+			XPath xpath = XPathFactory.newInstance().newXPath();
+			NodeList nodes = (NodeList) 
+				xpath.evaluate("/workflow/steps/step", doc, XPathConstants.NODESET);
+			LOGGER.debug("Step count: " + nodes.getLength());
+			for (int idx = 0; idx < nodes.getLength(); idx++) {
+				Node step = nodes.item(idx);
+				Node statusNameNode = (Node)
+					xpath.evaluate("@name", step, XPathConstants.NODE);
+				Node statusIdNode = (Node) 
+					xpath.evaluate("meta[@name='jira.status.id']", nodes.item(idx), XPathConstants.NODE);
+				if (statusNameNode != null && statusIdNode != null) {
+					String statusName = statusNameNode.getTextContent();
+					String statusId = statusIdNode.getTextContent();
+					LOGGER.debug("Status: " + statusName);
+					LOGGER.debug("Status ID: " + statusId);
+					StatusDTO statusFound = (StatusDTO) statusUtil.findByUniqueKey(statusName);
+					if (statusFound != null) {
+						LOGGER.debug("Remapping status " + statusName + " ID from " + statusId + " to " + statusFound.getId());
+						statusIdNode.setTextContent(statusFound.getId());
+					} else {
+						LOGGER.warn("Status " + statusName + " is not found on current instance");
+					}
+				} else {
+					LOGGER.error("Step is missing data");
+				}
+			}
+			// Convert back to string
+			DOMSource domSource = new DOMSource(doc);
+			StringWriter writer = new StringWriter();
+		    StreamResult result = new StreamResult(writer);
+		    TransformerFactory tf = TransformerFactory.newInstance();
+		    Transformer transformer = tf.newTransformer();
+		    transformer.transform(domSource, result);
+		    // Attach DTD
+		    String newXML = writer.toString();
+		    String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+		    String dtd = "<!DOCTYPE workflow PUBLIC \"-//OpenSymphony Group//DTD OSWorkflow 2.8//EN\" \"http://www.opensymphony.com/osworkflow/workflow_2_8.dtd\">";
+		    int index = newXML.indexOf(header);
+		    if (index != -1) {
+		    	newXML = newXML.substring(0, index + header.length()) + dtd + newXML.substring(index + header.length());
+		    }
+		    src.setXml(newXML);
+		    LOGGER.debug("Workflow XML updated: " + src.getXml());
+		} catch (Exception ex) {
+			LOGGER.error("Error updating Status in Workflow XML", ex);
+		}
+		
+		// TODO custom fields?
 		if (original != null) {
 			// Update
 			WorkflowDescriptor wfDesc = 
