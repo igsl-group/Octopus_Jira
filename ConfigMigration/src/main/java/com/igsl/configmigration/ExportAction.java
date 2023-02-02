@@ -13,6 +13,7 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.internal.LinkedTreeMap;
+import com.igsl.configmigration.licensedapplication.LicensedApplicationUtil;
 
 @Named
 public class ExportAction extends JiraWebActionSupport {
@@ -169,6 +170,16 @@ public class ExportAction extends JiraWebActionSupport {
 				}
 			}
 			if (export.size() != 0) {
+				
+				// Add application
+				LicensedApplicationUtil appUtil = (LicensedApplicationUtil) 
+						JiraConfigTypeRegistry.getConfigUtil(LicensedApplicationUtil.class);
+				SessionData appData = new SessionData(appUtil);
+				for (Map.Entry<String, JiraConfigDTO> appEntry : appUtil.findAll().entrySet()) {
+					appData.getExportData().put(appEntry.getKey(), appEntry.getValue());
+				}
+				export.put(appUtil.getClass().getCanonicalName(), appData);
+				
 				LOGGER.debug("Start of serialization");
 				exportData = OM.writeValueAsString(export);
 				LOGGER.debug("Data serialized");

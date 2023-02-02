@@ -73,6 +73,7 @@
 		</script>
 	</head>
 	<body>
+		<h3 style="color: red">$!{warning}</h3>
 		<form action="ImportAction.jspa" method="post" id="importForm" enctype="application/x-www-form-urlencoded">
 			<input type="hidden" id="section" name="section" value=""/> 
 			<input type="hidden" id="action" name="action" value=""/>

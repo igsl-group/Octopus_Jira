@@ -1,14 +1,25 @@
 package com.igsl.configmigration;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -16,6 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.gson.internal.LinkedTreeMap;
 import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.licensedapplication.LicensedApplicationDTO;
+import com.igsl.configmigration.licensedapplication.LicensedApplicationUtil;
 
 import webwork.action.ServletActionContext;
 import webwork.multipart.MultiPartRequestWrapper;
@@ -50,6 +63,11 @@ public class ImportAction extends JiraWebActionSupport {
 	private String debug;
 	public String getDebug() {
 		return debug;
+	}
+	
+	private String warning;
+	public String getWarning() {
+		return warning;
 	}
 	
 	private void initSessionData() throws Exception {
@@ -97,7 +115,7 @@ public class ImportAction extends JiraWebActionSupport {
 		if (action == null || sessionData == null) {
 			initSessionData();
 		}
-
+		
 		// Save selection
 		for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 			SessionData data = sessionData.get(entry.getKey());
@@ -149,6 +167,25 @@ public class ImportAction extends JiraWebActionSupport {
 					}
 				}
 			}
+			// Compare applications
+			SessionData apps = imported.get(LicensedApplicationUtil.class.getCanonicalName());
+			Set<String> importKeys = apps.getExportData().keySet();
+			LicensedApplicationUtil appUtil = (LicensedApplicationUtil) 
+					JiraConfigTypeRegistry.getConfigUtil(LicensedApplicationUtil.class);
+			Set<String> currentKeys = new HashSet<>();
+			for (JiraConfigDTO item : appUtil.findAll().values()) {
+				LicensedApplicationDTO dto = (LicensedApplicationDTO) item;
+				currentKeys.add(dto.getValue());
+			}
+			LOGGER.debug("importKeys: " + importKeys);
+			LOGGER.debug("currentKeys: " + currentKeys);
+			if (!currentKeys.containsAll(importKeys)) {
+				// Warning message
+				this.warning = "Missing applications detected. Please ensure applications are synchronized before importing.";
+			} else {
+				this.warning = "";
+			}
+			
 			this.debug += "Data: " + OM.writeValueAsString(this.sessionData) + "\n";
 		} else {
 			if (FORM_ACTION_CLEAR.equals(action)) {
