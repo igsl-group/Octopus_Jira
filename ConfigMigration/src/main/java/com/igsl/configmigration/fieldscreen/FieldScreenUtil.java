@@ -1,19 +1,14 @@
 package com.igsl.configmigration.fieldscreen;
 
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.config.StatusCategoryManager;
-import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
 import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
-import com.atlassian.jira.issue.status.Status;
-import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -36,7 +31,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (FieldScreen it : MANAGER.getFieldScreens()) {
 			FieldScreenDTO item = new FieldScreenDTO();
-			item.setJiraObject(it);
+			item.setJiraObject(it, params);
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
@@ -48,7 +43,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		FieldScreen s = MANAGER.getFieldScreen(idAsLong);
 		if (s != null) {
 			FieldScreenDTO item = new FieldScreenDTO();
-			item.setJiraObject(s);
+			item.setJiraObject(s, params);
 			return item;
 		}
 		return null;
@@ -59,7 +54,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		for (FieldScreen it : MANAGER.getFieldScreens()) {
 			if (uniqueKey.equals(it.getName())) {
 				FieldScreenDTO item = new FieldScreenDTO();
-				item.setJiraObject(it);
+				item.setJiraObject(it, params);
 				return item;
 			}
 		}

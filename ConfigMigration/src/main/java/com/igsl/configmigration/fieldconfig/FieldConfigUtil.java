@@ -40,7 +40,7 @@ public class FieldConfigUtil extends JiraConfigUtil {
 		FieldConfig fc = MANAGER.getFieldConfig(idAsLong);
 		if (fc != null) {
 			FieldConfigDTO dto = new FieldConfigDTO();
-			dto.setJiraObject(fc);
+			dto.setJiraObject(fc, params);
 			return dto;
 		}
 		return null;

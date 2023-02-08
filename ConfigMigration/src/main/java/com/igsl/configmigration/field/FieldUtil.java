@@ -29,12 +29,12 @@ public class FieldUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Field f : MANAGER.getAllAvailableNavigableFields()) {
 			FieldDTO dto = new FieldDTO();
-			dto.setJiraObject(f);
+			dto.setJiraObject(f, params);
 			result.put(f.getId(), dto);
 		}
 		for (Field f : MANAGER.getAllSearchableFields()) {
 			FieldDTO dto = new FieldDTO();
-			dto.setJiraObject(f);
+			dto.setJiraObject(f, params);
 			result.put(f.getId(), dto);
 		}
 		// TODO The no. of fields found here is way larger than those offered on UI.
@@ -50,7 +50,7 @@ public class FieldUtil extends JiraConfigUtil {
 		Field f = MANAGER.getField(id);
 		if (f != null) {
 			FieldDTO dto = new FieldDTO();
-			dto.setJiraObject(f);
+			dto.setJiraObject(f, params);
 			return dto;
 		}
 		return null;
@@ -64,14 +64,14 @@ public class FieldUtil extends JiraConfigUtil {
 		for (Field f : MANAGER.getAllAvailableNavigableFields()) {
 			if (f.getName().equals(uniqueKey)) {
 				FieldDTO dto = new FieldDTO();
-				dto.setJiraObject(f);
+				dto.setJiraObject(f, params);
 				return dto;
 			}
 		}
 		for (Field f : MANAGER.getAllSearchableFields()) {
 			if (f.getName().equals(uniqueKey)) {
 				FieldDTO dto = new FieldDTO();
-				dto.setJiraObject(f);
+				dto.setJiraObject(f, params);
 				return dto;
 			}
 		}

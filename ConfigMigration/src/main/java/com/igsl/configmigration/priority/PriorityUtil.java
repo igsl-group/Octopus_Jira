@@ -1,6 +1,9 @@
 package com.igsl.configmigration.priority;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -8,11 +11,12 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.PriorityManager;
 import com.atlassian.jira.issue.priority.Priority;
+import com.atlassian.jira.issue.resolution.Resolution;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
+import com.igsl.configmigration.resolution.ResolutionDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PriorityUtil extends JiraConfigUtil {
@@ -26,12 +30,71 @@ public class PriorityUtil extends JiraConfigUtil {
 	}
 	
 	@Override
+	public boolean isPostSequenced() {
+		return true;
+	}
+	
+	@Override
+	public void updateSequence(List<JiraConfigDTO> items) throws Exception {
+		// Move each item up and down
+		for (JiraConfigDTO item : items) {
+			LOGGER.debug("Reordering item: " + item.getUniqueKey());
+			PriorityDTO dto = (PriorityDTO) item;
+			PriorityDTO jiraItem = (PriorityDTO) findByDTO(dto);
+			if (jiraItem != null) {
+				Long startSeq = jiraItem.getSequence();
+				Long targetSeq = dto.getSequence();
+				Long currentSeq = startSeq;
+				LOGGER.debug("From " + currentSeq + " to " + targetSeq);
+				// Move up or down
+				int compare = startSeq.compareTo(targetSeq);
+				LOGGER.debug("Compare: " + compare);
+				// Until targetSeq is reached
+				while (!currentSeq.equals(targetSeq)) {
+					LOGGER.debug(currentSeq + " vs " + targetSeq);
+					if (compare == -1) {
+						LOGGER.debug("Moving down");
+						PRIORITY_MANAGER.movePriorityDown(jiraItem.getId());
+					} else if (compare == 1) {
+						LOGGER.debug("Moving up");
+						PRIORITY_MANAGER.movePriorityUp(jiraItem.getId());
+					}
+					// Check new value
+					int size = PRIORITY_MANAGER.getPriorities().size();
+					LOGGER.debug("Size: " + size);
+					jiraItem = (PriorityDTO) findByDTO(dto);
+					Long newSeq = jiraItem.getSequence();
+					LOGGER.debug("NewSeq: " + newSeq);
+					if (newSeq != targetSeq) {
+						// Break if not possible
+						if (compare == 1 && newSeq <= 1) {
+							// Move up and reached the top
+							LOGGER.debug("Reached top");
+							break;
+						} else if (compare == -1 && newSeq >= size) {
+							// Move down and reached the bottom
+							LOGGER.debug("Reached bottom");
+							break;
+						}
+					}
+					currentSeq = newSeq;
+				}
+			}
+		}
+	}
+	
+	@Override
 	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new HashMap<>();
+		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
+		List<PriorityDTO> list = new ArrayList<>();
 		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
 			PriorityDTO item = new PriorityDTO();
-			item.setJiraObject(p);
-			result.put(item.getUniqueKey(), item);
+			item.setJiraObject(p, params);
+			list.add(item);
+		}
+		list.sort(new PriorityComparator());
+		for (PriorityDTO p : list) {
+			result.put(p.getUniqueKey(), p);
 		}
 		return result;
 	}
@@ -41,7 +104,7 @@ public class PriorityUtil extends JiraConfigUtil {
 		Priority p = PRIORITY_MANAGER.getPriority(id);
 		if (p != null) {
 			PriorityDTO dto = new PriorityDTO();
-			dto.setJiraObject(p);
+			dto.setJiraObject(p, params);
 			return dto;
 		}
 		return null;
@@ -52,7 +115,7 @@ public class PriorityUtil extends JiraConfigUtil {
 		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
 			if (p.getName().equals(uniqueKey)) {
 				PriorityDTO dto = new PriorityDTO();
-				dto.setJiraObject(p);
+				dto.setJiraObject(p, params);
 				return dto;
 			}
 		}

@@ -33,7 +33,7 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
 			ApplicationUserDTO item = new ApplicationUserDTO();
-			item.setJiraObject(user);
+			item.setJiraObject(user, params);
 			result.put(item.getUniqueKey(), item);					
 		}
 		return result;
@@ -45,7 +45,7 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		Optional<ApplicationUser> user = MANAGER.getUserById(idAsLong);
 		if (user != null && user.isPresent()) {
 			ApplicationUserDTO dto = new ApplicationUserDTO();
-			dto.setJiraObject(user.get());
+			dto.setJiraObject(user.get(), params);
 			return dto;
 		}
 		return null;
@@ -56,7 +56,7 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		ApplicationUser user = MANAGER.getUserByKey(uniqueKey);
 		if (user != null) {
 			ApplicationUserDTO dto = new ApplicationUserDTO();
-			dto.setJiraObject(user);
+			dto.setJiraObject(user, params);
 			return dto;
 		}
 		return null;

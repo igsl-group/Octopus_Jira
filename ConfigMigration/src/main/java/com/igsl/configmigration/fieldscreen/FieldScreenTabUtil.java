@@ -34,7 +34,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
 			FieldScreenTabDTO item = new FieldScreenTabDTO();
-			item.setJiraObject(it);
+			item.setJiraObject(it, params);
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
@@ -46,7 +46,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		FieldScreenTab s = MANAGER.getFieldScreenTab(idAsLong);
 		if (s != null) {
 			FieldScreenTabDTO item = new FieldScreenTabDTO();
-			item.setJiraObject(s);
+			item.setJiraObject(s, params);
 			return item;
 		}
 		return null;
@@ -58,7 +58,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
 			if (uniqueKey.equals(it.getName())) {
 				FieldScreenTabDTO item = new FieldScreenTabDTO();
-				item.setJiraObject(it);
+				item.setJiraObject(it, params);
 				return item;
 			}
 		}

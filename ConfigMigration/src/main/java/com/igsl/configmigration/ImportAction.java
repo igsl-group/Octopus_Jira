@@ -2,9 +2,11 @@ package com.igsl.configmigration;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -29,6 +31,8 @@ import com.google.gson.internal.LinkedTreeMap;
 import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.licensedapplication.LicensedApplicationDTO;
 import com.igsl.configmigration.licensedapplication.LicensedApplicationUtil;
+import com.igsl.configmigration.priority.PriorityUtil;
+import com.igsl.configmigration.resolution.ResolutionUtil;
 
 import webwork.action.ServletActionContext;
 import webwork.multipart.MultiPartRequestWrapper;
@@ -200,16 +204,35 @@ public class ImportAction extends JiraWebActionSupport {
 					SessionData data = entry.getValue();
 					JiraConfigUtil util = data.getUtil();
 					Map<String, ImportData> itemList = new HashMap<>();
+					List<JiraConfigDTO> listToSort = new ArrayList<>();
 					for (Map.Entry<String, ImportData> item : data.getImportData().entrySet()) {
 						if (item.getValue().getData().isSelected()) {
 							itemList.put(item.getKey(), item.getValue());
+							listToSort.add(item.getValue().getData());
+							LOGGER.debug("Sort item: " + item.getValue().getData());
 						}
 					}
 					if (itemList.size() != 0) {
 						this.debug += util.getName() + " importing: " + OM.writeValueAsString(itemList) + "\n";
-						util.merge(itemList);
+						try {
+							util.merge(itemList);
+						} catch (Exception ex) {
+							this.debug += JiraConfigUtil.printException(ex);
+						}
 					} else {
 						this.debug += "Nothing to import for " + util.getName() + "\n";
+					}
+					if (util.isPostSequenced()) {
+						LOGGER.debug("Update sequence");
+						util.updateSequence(listToSort);
+						// Refresh export data
+						data.getExportData().clear();
+						for (Map.Entry<String, ImportData> item : data.getImportData().entrySet()) {
+							if (item.getValue().getData().isSelected()) {
+								JiraConfigDTO updateItem = util.findByDTO(item.getValue().getData());
+								item.getValue().setServer(updateItem);
+							}
+						}
 					}
 				}
 			}

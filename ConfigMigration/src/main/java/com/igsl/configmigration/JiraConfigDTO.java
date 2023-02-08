@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
@@ -40,10 +42,10 @@ public abstract class JiraConfigDTO {
 	
 	// Methods not to be included in getMap(), i.e. display
 	private static final List<String> MAP_EXCLUDE_METHODS = Arrays.asList(
-			// TODO Enable getClass
-			//"getClass",
+			"getClass",
 			"getJiraObject",
 			"isSelected",
+			"isReferenced",
 			"getUniqueKey",
 			"getInternalId",
 			"getImplementation",
@@ -54,6 +56,11 @@ public abstract class JiraConfigDTO {
 			"getObjectParameters"
 		);
 	
+	/**
+	 * Return list of method names to be used for comparing JiraConfigDTO.
+	 * MAP_EXCLUDE_METHODS contains method names that are excluded by default.
+	 * @return List of String
+	 */
 	protected abstract List<String> getCompareMethods();
 	
 	private static final String DIFFERENCE_DELIMITER = ".";
@@ -110,6 +117,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Get differences between two maps from JiraConfigDTO.getMap()
+	 */
 	public static final List<String> getDifferences(String title, Map<?, ?> m1, Map<?, ?> m2) {
 		List<String> result = new ArrayList<>();
 		if (m1 != null && m2 != null) {
@@ -130,6 +140,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Get differences between two object arrays
+	 */
 	public static final List<String> getDifferences(String title, Object[] o1, Object[] o2) {
 		List<String> result = new ArrayList<>();
 		if (o1 != null && o2 != null) {
@@ -146,6 +159,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Get differences between two collections
+	 */
 	public static final List<String> getDifferences(String title, Collection<?> c1, Collection<?> c2) {
 		List<String> result = new ArrayList<>();
 		if (c1 != null && c2 != null) {
@@ -165,6 +181,11 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Get differences between two objects.
+	 * This is the generic entry point for getDifferences() methods, 
+	 * it will delegate to overloaded versions according to object class
+	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static final List<String> getDifferences(String title, Object o1, Object o2) {
 		List<String> result = new ArrayList<>();
@@ -227,7 +248,7 @@ public abstract class JiraConfigDTO {
 		return Collections.emptyList();
 	}
 	
-	/*
+	/**
 	 * Get all object properties as a TreeMap.
 	 * Recurse into nested objects. 
 	 * 
@@ -250,6 +271,9 @@ public abstract class JiraConfigDTO {
 		return JiraConfigDTO.getMap("", this);
 	}
 	
+	/**
+	 * Overloaded version of getMap() for collection
+	 */
 	public static final Map<String, String> getMap(String title, Collection<?> o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
@@ -265,6 +289,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 
+	/**
+	 * Overloaded version of getMap() for map
+	 */
 	public static final Map<String, String> getMap(String title, Map<?, ?> o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
@@ -285,6 +312,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Overloaded version of getMap() for object array
+	 */
 	public static final Map<String, String> getMap(String title, Object[] o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
@@ -298,6 +328,9 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 	
+	/**
+	 * Overloaded version of getMap() for JiraConfigDTO
+	 */
 	public static final Map<String, String> getMap(String title, JiraConfigDTO o) {
 		Map<String, String> result = new TreeMap<>();
 		if (o != null) {
@@ -325,6 +358,10 @@ public abstract class JiraConfigDTO {
 		return result;
 	}
 
+	/**
+	 * Generic entry point for getMap()
+	 * Delegates to overloaded version according to object class
+	 */
 	public static final Map<String, String> getMap(String title, Object o1) {
 		Map<String, String> result = new TreeMap<>();
 		if (o1 != null) {
@@ -364,6 +401,7 @@ public abstract class JiraConfigDTO {
 	
 	/**
 	 * Override this if implementation requires additional parameters. 
+	 * This is used to perform integrity check on no. of parameters received in setJiraObject().
 	 * @return No. of parameters.
 	 */
 	@JsonIgnore
@@ -371,6 +409,10 @@ public abstract class JiraConfigDTO {
 		return 0;
 	}
 	
+	/**
+	 * Object parameter. Some Jira objects cannot retrieve a full list without supplying parent object(s).
+	 * objectParameters stores the parent objects if needed.
+	 */
 	@JsonIgnore
 	protected Object[] objectParameters;
 	public final Object[] getObjectParameters() {
@@ -399,6 +441,7 @@ public abstract class JiraConfigDTO {
 	public final Object getJiraObject() throws Exception {
 		return jiraObject;
 	}
+	
 	/**
 	 * Stores Jira object and search parameters. 
 	 * @param obj Jira object. Can be null.
@@ -424,6 +467,36 @@ public abstract class JiraConfigDTO {
 		}
 	}
 	
+	/**
+	 * To store mapping between import and export JiraConfigDTOs. 
+	 * 
+	 * Only used for import. 
+	 * JiraConfigDTO deserialized from file will be mapped to new or existing JiraConfigDTO from current instance.
+	 * We need an object for new items so the new items can be referenced.
+	 */
+	@JsonIgnore
+	protected JiraConfigDTO mappedObject;
+	public final void setMappedObject(JiraConfigDTO dto) {
+		this.mappedObject = dto;
+	}
+	public final JiraConfigDTO getMappedObject() {
+		return this.mappedObject;
+	}
+	
+	/**
+	 * To store JiraConfigDTO referencer (the parent, while this object is the child)
+	 */
+	protected Set<JiraConfigRef> references = new HashSet<>();
+	public final void addReference(JiraConfigRef ref) {
+		this.references.add(ref);
+	}
+	public final void removeReference(JiraConfigRef ref) {
+		this.references.remove(ref);
+	}
+	
+	/**
+	 * Selection status
+	 */
 	@JsonIgnore
 	protected boolean selected;
 	public final boolean isSelected() {
@@ -440,13 +513,13 @@ public abstract class JiraConfigDTO {
 		return this.getClass().getCanonicalName();
 	}
 	
-	/*
+	/**
 	 * Return a string-based unique key (e.g. issue key, project key) that is not internal ID (which can change across environments)
 	 */
 	@JsonIgnore
 	public abstract String getUniqueKey();
 	
-	/*
+	/**
 	 * Return a string-based internal ID that is specific to a server instance. 
 	 */
 	@JsonIgnore

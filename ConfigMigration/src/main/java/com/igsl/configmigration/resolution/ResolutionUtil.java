@@ -1,5 +1,8 @@
 package com.igsl.configmigration.resolution;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -25,12 +28,71 @@ public class ResolutionUtil extends JiraConfigUtil {
 	}
 	
 	@Override
+	public boolean isPostSequenced() {
+		return true;
+	}
+	
+	@Override
+	public void updateSequence(List<JiraConfigDTO> items) throws Exception {
+		// Move each item up and down
+		for (JiraConfigDTO item : items) {
+			LOGGER.debug("Reordering item: " + item.getUniqueKey());
+			ResolutionDTO dto = (ResolutionDTO) item;
+			ResolutionDTO jiraItem = (ResolutionDTO) findByDTO(dto);
+			if (jiraItem != null) {
+				Long startSeq = jiraItem.getSequence();
+				Long targetSeq = dto.getSequence();
+				Long currentSeq = startSeq;
+				LOGGER.debug("From " + currentSeq + " to " + targetSeq);
+				// Move up or down
+				int compare = startSeq.compareTo(targetSeq);
+				LOGGER.debug("Compare: " + compare);
+				// Until targetSeq is reached
+				while (!currentSeq.equals(targetSeq)) {
+					LOGGER.debug(currentSeq + " vs " + targetSeq);
+					if (compare == -1) {
+						LOGGER.debug("Moving down");
+						RESOLUTION_MANAGER.moveResolutionDown(jiraItem.getId());
+					} else if (compare == 1) {
+						LOGGER.debug("Moving up");
+						RESOLUTION_MANAGER.moveResolutionUp(jiraItem.getId());
+					}
+					// Check new value
+					int size = RESOLUTION_MANAGER.getResolutions().size();
+					LOGGER.debug("Size: " + size);
+					jiraItem = (ResolutionDTO) findByDTO(dto);
+					Long newSeq = jiraItem.getSequence();
+					LOGGER.debug("NewSeq: " + newSeq);
+					if (newSeq != targetSeq) {
+						// Break if not possible
+						if (compare == 1 && (newSeq <= 1 || newSeq < targetSeq)) {
+							// Move up and reached the top
+							LOGGER.debug("Reached top or is impossible");
+							break;
+						} else if (compare == -1 && (newSeq >= size || newSeq > targetSeq)) {
+							// Move down and reached the bottom
+							LOGGER.debug("Reached bottom or is impossible");
+							break;
+						}
+					}
+					currentSeq = newSeq;
+				}
+			}
+		}
+	}
+	
+	@Override
 	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
+		List<ResolutionDTO> list = new ArrayList<>();
 		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
 			ResolutionDTO item = new ResolutionDTO();
 			item.setJiraObject(r);
-			result.put(item.getUniqueKey(), item);
+			list.add(item);
+		}
+		list.sort(new ResolutionComparator());
+		for (ResolutionDTO dto : list) {
+			result.put(dto.getUniqueKey(), dto);
 		}
 		return result;
 	}
@@ -60,6 +122,7 @@ public class ResolutionUtil extends JiraConfigUtil {
 	}
 	
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		ResolutionDTO result = null;
 		ResolutionDTO original = null;
 		if (oldItem != null) {
 			original = (ResolutionDTO) oldItem;
@@ -71,14 +134,15 @@ public class ResolutionUtil extends JiraConfigUtil {
 			// Update
 			Resolution res = (Resolution) original.getJiraObject();
 			RESOLUTION_MANAGER.editResolution(res, src.getName(), src.getDescription());
-			return findByInternalId(res.getId());
+			result = (ResolutionDTO) findByInternalId(res.getId());
 		} else {
 			// Create
 			Resolution createdJira = RESOLUTION_MANAGER.createResolution(src.getName(), src.getDescription());
 			ResolutionDTO created = new ResolutionDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result = created;
 		}
+		return result;
 	}
 	
 	@Override

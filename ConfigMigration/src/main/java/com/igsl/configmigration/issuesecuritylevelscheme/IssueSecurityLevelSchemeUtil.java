@@ -1,5 +1,6 @@
 package com.igsl.configmigration.issuesecuritylevelscheme;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -81,8 +82,9 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		Long id;
 		if (original != null) {
 			// Update
-			Scheme s = new Scheme(original.getId(), src.getName(), src.getDescription(), null);	
-			// TODO last parameter, what is it
+			Scheme s = new Scheme(
+					original.getId(), "type", src.getName(), src.getDescription(), Collections.emptyList());
+			// Note: In Jira source code, only the Long id is used to locate the existing object
 			SCHEME_MANAGER.updateScheme(s);
 			id = original.getId();
 		} else {
@@ -105,7 +107,7 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		if (defaultLevel != null) {
 			GenericValue gv = SCHEME_MANAGER.getScheme(id);
 			gv.set("defaultlevel", defaultLevel);
-			SCHEME_MANAGER.updateScheme(scheme);
+			SCHEME_MANAGER.updateScheme(gv);
 		}
 		if (id != null) {
 			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));

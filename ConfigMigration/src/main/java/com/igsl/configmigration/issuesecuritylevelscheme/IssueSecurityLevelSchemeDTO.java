@@ -23,6 +23,7 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 	private String description;
 	private String name;
 	private Long defaultSecurityLevelId;
+	private String defaultSecurityLevelName;	// Constructed item to compare defaultSecurityLevelId
 	private List<IssueSecurityLevelDTO> issueSecurityLevels;
 	
 	@Override
@@ -37,6 +38,9 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
 			item.setJiraObject(level);
 			this.issueSecurityLevels.add(item);
+			if (this.defaultSecurityLevelId != null && this.defaultSecurityLevelId.equals(item.getId())) {
+				this.defaultSecurityLevelName = item.getName();
+			}
 		}
 	}
 
@@ -55,7 +59,8 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 		return Arrays.asList(
 				"getName",
 				"getDescription",
-				"getIssueSecurityLevels");
+				"getIssueSecurityLevels",
+				"getDefaultSecurityLevelName");
 	}
 
 	public Long getId() {
@@ -106,6 +111,14 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 	@Override
 	public Class<?> getJiraClass() {
 		return IssueSecurityLevelScheme.class;
+	}
+
+	public String getDefaultSecurityLevelName() {
+		return defaultSecurityLevelName;
+	}
+
+	public void setDefaultSecurityLevelName(String defaultSecurityLevelName) {
+		this.defaultSecurityLevelName = defaultSecurityLevelName;
 	}
 
 }

@@ -38,7 +38,7 @@ public class CustomFieldSearcherDTO extends JiraConfigDTO {
 //		obj.getSearchInputTransformer();
 //		obj.getSearchRenderer();
 	}
-
+	
 	@Override
 	public String getUniqueKey() {
 		return this.getCompleteKey();

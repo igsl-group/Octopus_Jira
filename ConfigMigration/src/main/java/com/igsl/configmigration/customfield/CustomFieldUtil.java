@@ -70,7 +70,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (!isLocked(cf)) {
 				CustomFieldDTO item = new CustomFieldDTO();
-				item.setJiraObject(cf);
+				item.setJiraObject(cf, params);
 				result.put(item.getUniqueKey(), item);
 			}
 		}
@@ -82,7 +82,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (cf.getId().equals(id) && !isLocked(cf)) {
 				CustomFieldDTO item = new CustomFieldDTO();
-				item.setJiraObject(cf);
+				item.setJiraObject(cf, params);
 				return item;
 			}
 		}
@@ -94,7 +94,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (cf.getName().equals(uniqueKey) && !isLocked(cf)) {
 				CustomFieldDTO item = new CustomFieldDTO();
-				item.setJiraObject(cf);
+				item.setJiraObject(cf, params);
 				return item;
 			}
 		}

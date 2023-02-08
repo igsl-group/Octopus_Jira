@@ -29,7 +29,7 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
 			CustomFieldTypeDTO item = new CustomFieldTypeDTO();
-			item.setJiraObject(p);
+			item.setJiraObject(p, params);
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
@@ -45,7 +45,7 @@ public class CustomFieldTypeUtil extends JiraConfigUtil {
 		for (CustomFieldType<?, ?> p : CF_MANAGER.getCustomFieldTypes()) {
 			if (p.getKey().equals(uniqueKey)) {
 				CustomFieldTypeDTO dto = new CustomFieldTypeDTO();
-				dto.setJiraObject(p);
+				dto.setJiraObject(p, params);
 				return dto;
 			}
 		}

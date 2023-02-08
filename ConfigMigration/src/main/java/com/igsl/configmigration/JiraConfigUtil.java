@@ -1,5 +1,8 @@
 package com.igsl.configmigration;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -14,6 +17,7 @@ import com.igsl.configmigration.SessionData.ImportData;
 public abstract class JiraConfigUtil {
 	
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+	private static final String NEWLINE = "\r\n";
 
 	/**
 	 * Return true if this JiraConfigUtil is to be included in user interface.
@@ -21,6 +25,26 @@ public abstract class JiraConfigUtil {
 	 */
 	@JsonIgnore
 	public abstract boolean isVisible();
+	
+	/**
+	 * Override and return true if the objects need to be reordered after create/update.
+	 * Default is false.
+	 * @return
+	 */
+	@JsonIgnore
+	public boolean isPostSequenced() {
+		return false;
+	}
+	
+	/**
+	 * Update object sequence according to provided list.
+	 * Override and implement reorder logic. 
+	 * Default is do nothing.
+	 * @param list Import items to be reordered.
+	 */
+	public void updateSequence(List<JiraConfigDTO> list) throws Exception {
+		// Do nothing
+	}
 	
 	/**
 	 * Return implementation name. This is used to identify the JiraConfigUtil to be used.
@@ -60,6 +84,28 @@ public abstract class JiraConfigUtil {
 	public abstract JiraConfigDTO findByInternalId(String id, Object... params) throws Exception;
 	
 	/**
+	 * Search Jira object with partial match
+	 * @param filter String for partial match with unique key or id. If empty, find all.
+	 * @param params Parameters. Depends on implementation. 
+	 * @return Map<String, JiraConfigDTO> as search result
+	 * @throws Exception
+	 */
+	// TODO Should be abstract after all implementations are updated
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		Map<String, JiraConfigDTO> result = new HashMap<>();
+		if (filter == null || filter.isEmpty()) {
+			return findAll(params);
+		} else {
+			// TODO Perform partial match
+			JiraConfigDTO dto = findByUniqueKey(filter, params);
+			if (dto != null) {
+				result.put(dto.getUniqueKey(), dto);
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * Find Jira object
 	 * @param uniqueKey JiraConfigDTO.getUniqueKey().
 	 * @param params Parameters. Depends on implementation.
@@ -85,6 +131,30 @@ public abstract class JiraConfigUtil {
 	 */
 	public abstract JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception;
 	
+	public static final String printException(Throwable t) {
+		StringBuilder sb = new StringBuilder();
+		if (t != null) {
+			sb.append("Exception: " + t.getClass().getCanonicalName()).append(NEWLINE);
+			sb.append("Message: [" + t.getMessage() + "]").append(NEWLINE);
+			for (StackTraceElement e : t.getStackTrace()) {
+				sb	.append(e.getClassName())
+					.append(".")
+					.append(e.getMethodName())
+					.append("(")
+					.append(e.getFileName())
+					.append("@")
+					.append(e.getLineNumber())
+					.append(")")
+					.append(NEWLINE);
+			}
+			if (t.getCause() != null) {
+				sb.append("Caused by").append(NEWLINE);
+				sb.append(printException(t.getCause()));
+			}
+		}
+		return sb.toString();
+	}
+	
 	/**
 	 * Merge items. 
 	 * ImportData.getServer() will be updated.
@@ -100,7 +170,7 @@ public abstract class JiraConfigUtil {
 					data.setServer(result);
 					data.setImportResult("Updated");
 				} catch (Exception ex) {
-					data.setImportResult(ex.getClass().getCanonicalName() + ": " + ex.getMessage());
+					data.setImportResult(printException(ex));
 					throw ex;
 				}
 			}

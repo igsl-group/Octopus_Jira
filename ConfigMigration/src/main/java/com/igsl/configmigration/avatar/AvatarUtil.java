@@ -37,17 +37,17 @@ public class AvatarUtil extends JiraConfigUtil {
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av);
+			item.setJiraObject(av, params);
 			result.put(item.getUniqueKey(), item); 
  		}
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.PROJECT_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av);
+			item.setJiraObject(av, params);
 			result.put(item.getUniqueKey(), item); 
  		}
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.USER_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av);
+			item.setJiraObject(av, params);
 			result.put(item.getUniqueKey(), item); 
  		}
 		// Find among custom avatars of owner
@@ -56,17 +56,17 @@ public class AvatarUtil extends JiraConfigUtil {
 			avatarOwner = (String) params[0];
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av);
+				item.setJiraObject(av, params);
 				result.put(item.getUniqueKey(), item); 
 			}
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.PROJECT_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av);
+				item.setJiraObject(av, params);
 				result.put(item.getUniqueKey(), item); 
 			}
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.USER_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av);
+				item.setJiraObject(av, params);
 				result.put(item.getUniqueKey(), item); 
 			}
 		}

@@ -1,5 +1,6 @@
 package com.igsl.configmigration;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -71,8 +72,8 @@ public class SessionData {
 	}
 	
 	private JiraConfigUtil util;
-	private Map<String, JiraConfigDTO> exportData = new TreeMap<>();
-	private Map<String, ImportData> importData = new TreeMap<>();
+	private Map<String, JiraConfigDTO> exportData = new LinkedHashMap<>();
+	private Map<String, ImportData> importData = new LinkedHashMap<>();
 	
 	public SessionData() {
 	}
