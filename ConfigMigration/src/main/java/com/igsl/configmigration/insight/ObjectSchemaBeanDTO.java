@@ -19,7 +19,7 @@ public class ObjectSchemaBeanDTO extends JiraConfigDTO {
 	private ObjectSchemaPropertyBeanDTO objectSchemaPropertyBean;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		ObjectSchemaBean o = (ObjectSchemaBean) obj;
 		this.description = o.getDescription();
 		this.id = o.getId();

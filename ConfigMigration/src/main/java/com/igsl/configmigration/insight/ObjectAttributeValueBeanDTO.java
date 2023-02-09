@@ -25,7 +25,7 @@ public class ObjectAttributeValueBeanDTO extends JiraConfigDTO {
 	private Object value;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		ObjectAttributeValueBean o = (ObjectAttributeValueBean) obj;
 		this.additionalValue = o.getAdditionalValue();
 		this.booleanValue = o.getBooleanValue();

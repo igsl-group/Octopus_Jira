@@ -20,7 +20,7 @@ public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 	private List<ObjectAttributeValueBeanDTO> objectAttributeValueBeans;
 	
 	@Override
-	public void fromJiraObject(Object obj, Object... params) throws Exception {
+	public void fromJiraObject(Object obj) throws Exception {
 		ObjectAttributeBean o = (ObjectAttributeBean) obj;
 		this.id = o.getId();
 		this.objectAttributeValueBeans = new ArrayList<>();

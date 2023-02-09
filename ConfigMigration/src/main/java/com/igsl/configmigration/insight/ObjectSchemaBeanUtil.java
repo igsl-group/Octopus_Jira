@@ -111,8 +111,7 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
-		// Referenced by other DTOs
+	public boolean isVisible() {
 		return false;
 	}
 

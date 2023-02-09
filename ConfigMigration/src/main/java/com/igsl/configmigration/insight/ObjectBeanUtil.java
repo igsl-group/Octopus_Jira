@@ -17,6 +17,11 @@ import com.riadalabs.jira.plugins.insight.channel.external.api.facade.IQLFacade;
 import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectFacade;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectBean;
 
+/*
+ * REST API to export Insight objects and schema
+ * https://community.atlassian.com/t5/Jira-Service-Management/Automation-of-Object-schema-export/td-p/750997
+ */
+
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ObjectBeanUtil extends JiraConfigUtil {
 
@@ -26,7 +31,8 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	private static IQLFacade IQL_FACADE; 
 			
 	static {
-		Logger logger = Logger.getLogger("com.igsl.configmigration.insight.InsightUtil");
+		Logger logger = Logger.getLogger("com.igsl.configmigration.insight.ObjectBeanUtil");
+		logger.debug("static block for ObjectBeanUtil");
 		try {
 			IQL_FACADE_CLASS = 
 					ComponentAccessor.getPluginAccessor().getClassLoader()
@@ -123,8 +129,7 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public boolean isPublic() {
-		// Referenced by other DTOs
+	public boolean isVisible() {
 		return false;
 	}
 
