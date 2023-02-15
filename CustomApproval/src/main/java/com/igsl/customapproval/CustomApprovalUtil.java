@@ -858,6 +858,8 @@ public class CustomApprovalUtil {
 				TransitionOptions.Builder builder = new Builder();
 				// There should be a hide from user condition on the transition, so need to skip condition
 				builder.skipConditions();
+				// User could be without application access, so need to skip permission
+				builder.skipPermissions();
 				IssueService iService = ComponentAccessor.getIssueService();
 				TransitionValidationResult tvr = iService.validateTransition(
 						user, 
