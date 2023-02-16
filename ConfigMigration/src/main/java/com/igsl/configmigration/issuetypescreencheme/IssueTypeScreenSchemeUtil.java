@@ -118,7 +118,7 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 			MANAGER.updateIssueTypeScreenScheme(existing);
 			// Re-associate with projects
 			for (GenericValue gv : existing.getProjects()) {
-				String projectId = (String) gv.getAllFields().get(IssueTypeScreenSchemeDTO.GENERIC_VALUE_PROJECT_ID);
+				String projectId = String.valueOf(gv.getAllFields().get(IssueTypeScreenSchemeDTO.GENERIC_VALUE_PROJECT_ID));
 				Project p = PROJECT_MANAGER.getProjectObj(Long.parseLong(projectId));
 				MANAGER.removeSchemeAssociation(p, existing);
 			}

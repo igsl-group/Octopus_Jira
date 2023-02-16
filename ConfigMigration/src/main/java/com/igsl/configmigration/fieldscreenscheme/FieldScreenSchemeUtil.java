@@ -94,9 +94,9 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 			// Update
 			originalJira.setDescription(src.getDescription());
 			originalJira.setName(src.getName());
-			originalJira.getFieldScreenSchemeItems().clear();
 			MANAGER.updateFieldScreenScheme(originalJira);
 			// Update items
+			MANAGER.removeFieldSchemeItems(originalJira);
 			for (FieldScreenSchemeItemDTO dto : src.getFieldScreenSchemeItems()) {
 				FieldScreenSchemeItem item = new FieldScreenSchemeItemImpl(MANAGER, SCREEN_MANAGER);
 				FieldScreenDTO fs = (FieldScreenDTO) fieldScreenUtil.findByDTO(dto.getFieldScreen());
@@ -123,7 +123,10 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 			// Create items
 			for (FieldScreenSchemeItemDTO item : src.getFieldScreenSchemeItems()) {
 				FieldScreenSchemeItem it = new FieldScreenSchemeItemImpl(MANAGER, SCREEN_MANAGER);
+				LOGGER.debug("Create FieldScreenSchemeItem: " + item);
+				LOGGER.debug("Find field screen: " + item.getFieldScreen().getUniqueKey());
 				FieldScreenDTO fs = (FieldScreenDTO) fieldScreenUtil.findByDTO(item.getFieldScreen());
+				LOGGER.debug("FieldScreen: " + fs);
 				it.setFieldScreen((FieldScreen) fs.getJiraObject());
 				it.setFieldScreenScheme(scheme);
 				ScreenableIssueOperationDTO op = (ScreenableIssueOperationDTO) 

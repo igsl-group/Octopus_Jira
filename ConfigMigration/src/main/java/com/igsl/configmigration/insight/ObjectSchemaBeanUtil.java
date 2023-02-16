@@ -18,37 +18,6 @@ import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaBean;
 public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(ObjectSchemaBeanUtil.class);
-	private static ObjectSchemaFacade OBJECT_SCHEMA_FACADE;
-	private static final String OBJECT_SCHEMA_FACADE_CLASS_NAME = 
-			"com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectSchemaFacade";
-	
-	static {
-		Logger logger = Logger.getLogger("com.igsl.configmigration.insight.ObjectSchemaBeanUtil");
-		Class<?> cls1 = null;
-		Class<?> cls2 = null;
-		try {
-			cls1 = ComponentAccessor.getPluginAccessor().getClassLoader()
-					.loadClass(OBJECT_SCHEMA_FACADE_CLASS_NAME);
-		} catch (Exception ex) {
-			logger.error("Failed to initialize InsightUtil", ex);
-		}
-		try {
-			logger.debug("Insight class from plugin accessor cloader: " + cls1);
-			cls2 = ObjectSchemaBeanUtil.class.getClassLoader()
-					.loadClass(OBJECT_SCHEMA_FACADE_CLASS_NAME);
-			logger.debug("Insight class from class cloader: " + cls2);
-		} catch (Exception ex) {
-			logger.error("Failed to initialize InsightUtil", ex);
-		}
-		try {
-			OBJECT_SCHEMA_FACADE = 
-					(ObjectSchemaFacade) ComponentAccessor.getOSGiComponentInstanceOfType(
-					cls2);
-			logger.debug("OBJECT_FACADE: " + OBJECT_SCHEMA_FACADE);
-		} catch (Exception ex) {
-			logger.error("Failed to initialize InsightUtil", ex);
-		}
-	}
 	
 	@Override
 	public String getName() {
@@ -58,8 +27,8 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		List<ObjectSchemaBean> objects = OBJECT_SCHEMA_FACADE.findObjectSchemaBeans();
-		for (ObjectSchemaBean ob : objects) {
+		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
+		for (Object ob : objects) {
 			ObjectSchemaBeanDTO item = new ObjectSchemaBeanDTO();
 			item.setJiraObject(ob);
 			result.put(item.getUniqueKey(), item);
@@ -69,10 +38,11 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
-		List<ObjectSchemaBean> objects = OBJECT_SCHEMA_FACADE.findObjectSchemaBeans();
+		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
 		Integer idAsInt = Integer.parseInt(id);
-		for (ObjectSchemaBean ob : objects) {
-			if (idAsInt.equals(ob.getId())) {
+		for (Object ob : objects) {
+			int obid = ObjectBeanUtil.getObjectSchemaId(ob);
+			if (idAsInt.equals(obid)) {
 				ObjectSchemaBeanDTO dto = new ObjectSchemaBeanDTO();
 				dto.setJiraObject(ob);
 				return dto;
@@ -83,9 +53,10 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		List<ObjectSchemaBean> objects = OBJECT_SCHEMA_FACADE.findObjectSchemaBeans();
-		for (ObjectSchemaBean ob : objects) {
-			if (uniqueKey.equals(ob.getName())) {
+		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
+		for (Object ob : objects) {
+			String key = ObjectBeanUtil.getObjectSchemaKey(ob);
+			if (uniqueKey.equals(key)) {
 				ObjectSchemaBeanDTO dto = new ObjectSchemaBeanDTO();
 				dto.setJiraObject(ob);
 				return dto;

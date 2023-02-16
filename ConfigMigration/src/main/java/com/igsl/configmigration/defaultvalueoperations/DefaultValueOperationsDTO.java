@@ -44,6 +44,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	private JiraConfigDTO parseValueHelper(Object o, FieldConfig fieldConfig) throws Exception {
 		if (o != null) {
 			Class<?> cls = o.getClass();
+			LOGGER.debug("parseValueHelper: " + cls.getCanonicalName());
 			Class<? extends JiraConfigDTO> dtoClass = JiraConfigTypeRegistry.getDTOClass(cls);
 			JiraConfigDTO dto;
 			if (dtoClass != null) {

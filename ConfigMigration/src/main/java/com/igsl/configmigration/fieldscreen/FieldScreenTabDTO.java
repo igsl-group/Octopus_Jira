@@ -41,7 +41,7 @@ public class FieldScreenTabDTO extends JiraConfigDTO {
 		this.fieldScreenLayoutItems = new ArrayList<>();
 		for (FieldScreenLayoutItem item : o.getFieldScreenLayoutItems()) {
 			FieldScreenLayoutItemDTO dto = new FieldScreenLayoutItemDTO();
-			dto.setJiraObject(item, this);
+			dto.setJiraObject(item, o);
 			fieldScreenLayoutItems.add(dto);
 		}
 	}

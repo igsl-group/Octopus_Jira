@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
+import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -24,6 +25,9 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 	
 	private Long id;
 	private int position;
+
+	private String fieldName;
+	private String tabName;
 	
 	/**
 	 * #0: FieldScreenTab
@@ -44,11 +48,15 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 		// Resolve field ID into something searchable
 		FieldUtil util = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
 		this.field = (FieldDTO) util.findByInternalId(this.fieldId);
+		
+		this.fieldName = this.field.getUniqueKey();
+		FieldScreenTab tab = (FieldScreenTab) this.objectParameters[0];
+		this.tabName = tab.getName();
 	}
 
 	@Override
 	public String getUniqueKey() {
-		return Long.toString(this.getId());
+		return this.tabName + "." + this.fieldName;
 	}
 
 	@Override
@@ -60,12 +68,14 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
 				"getPosition",
-				"getField");
+				"getField",
+				"getFieldName",
+				"getTabName");
 	}
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return FieldScreenUtil.class;	// TODO
+		return FieldScreenLayoutItemUtil.class;
 	}
 
 	@Override
@@ -103,6 +113,22 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 
 	public void setField(FieldDTO field) {
 		this.field = field;
+	}
+
+	public String getFieldName() {
+		return fieldName;
+	}
+
+	public void setFieldName(String fieldName) {
+		this.fieldName = fieldName;
+	}
+
+	public String getTabName() {
+		return tabName;
+	}
+
+	public void setTabName(String tabName) {
+		this.tabName = tabName;
 	}
 
 }

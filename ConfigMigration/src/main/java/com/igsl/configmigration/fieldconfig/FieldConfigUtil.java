@@ -2,6 +2,8 @@ package com.igsl.configmigration.fieldconfig;
 
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigImpl;
@@ -11,6 +13,7 @@ import com.igsl.configmigration.JiraConfigUtil;
 
 public class FieldConfigUtil extends JiraConfigUtil {
 
+	private static final Logger LOGGER = Logger.getLogger(FieldConfigUtil.class);
 	private static final FieldConfigManager MANAGER = 
 			ComponentAccessor.getComponent(FieldConfigManager.class);
 	
@@ -56,15 +59,18 @@ public class FieldConfigUtil extends JiraConfigUtil {
 		FieldConfigDTO original = null;
 		if (oldItem != null) {
 			original = (FieldConfigDTO) oldItem;
-		} 
+		}
 		FieldConfigDTO src = (FieldConfigDTO) newItem;
 		if (original != null) {
+			LOGGER.debug("Update FieldConfigDTO: " + original.getDescription() + ", " + original.getFieldId() + ", " + original.getName());
 			original.setDescription(src.getDescription());
 			original.setFieldId(src.getFieldId());
 			original.setName(src.getName());
+			// TODO Field may not be custom field and thus has no field config...?
 			MANAGER.updateFieldConfig((FieldConfig) original.getJiraObject());
 			return original;
 		} else {
+			LOGGER.debug("Create FieldConfigDTO: " + src.getDescription() + ", " + src.getFieldId() + ", " + src.getName());
 			FieldConfig newFC = new FieldConfigImpl(
 					null, 
 					src.getName(), 

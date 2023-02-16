@@ -91,12 +91,20 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 			MANAGER.createFieldScreenTab(createdJira);
 		}
 		if (createdJira != null) {
+			LOGGER.debug("Merging fields");
 			FieldScreenLayoutItemUtil itemUtil = (FieldScreenLayoutItemUtil)
 					JiraConfigTypeRegistry.getConfigUtil(FieldScreenLayoutItemUtil.class);
 			// Create Field Screen Layout items
 			for (FieldScreenLayoutItemDTO item : src.getFieldScreenLayoutItems()) {
+				LOGGER.debug("merging field from: " + item + ", " + item.getField().getName());
 				item.setJiraObject(null, createdJira);
-				itemUtil.merge(null, item);
+				FieldScreenLayoutItemDTO originalItem = (FieldScreenLayoutItemDTO) itemUtil.findByDTO(item);
+				LOGGER.debug("merging field to: " + originalItem + ", " + 
+						((originalItem != null)? originalItem.getField().getName() : ""));
+				if (originalItem != null) {
+					originalItem.setJiraObject(null, createdJira);
+				}
+				itemUtil.merge(originalItem, item);
 			}
 			FieldScreenTabDTO created = new FieldScreenTabDTO();
 			created.setJiraObject(createdJira, src.getObjectParameters());

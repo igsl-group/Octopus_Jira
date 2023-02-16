@@ -50,7 +50,8 @@ public class FieldScreenSchemeDTO extends JiraConfigDTO {
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
 				"getName",
-				"getDescription");
+				"getDescription",
+				"getFieldScreenSchemeItems");
 	}
 
 	@Override

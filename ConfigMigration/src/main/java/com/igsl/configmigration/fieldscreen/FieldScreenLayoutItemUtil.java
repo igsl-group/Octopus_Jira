@@ -58,7 +58,15 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		return findByInternalId(uniqueKey, params);
+		FieldScreenTab tab = (FieldScreenTab) params[0];
+		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
+			FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
+			item.setJiraObject(it, tab);
+			if (item.getUniqueKey().equals(uniqueKey)) {
+				return item;
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -81,6 +89,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 				originalJira.setFieldId(field.getId());
 				originalJira.setFieldScreenTab(tab);
 				originalJira.setPosition(src.getPosition());
+				LOGGER.debug("Update Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.updateFieldScreenLayoutItem(originalJira);
 				createdJira = originalJira;
 			} else {
@@ -89,6 +98,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 				createdJira.setFieldId(field.getId());
 				createdJira.setFieldScreenTab(tab);
 				createdJira.setPosition(src.getPosition());
+				LOGGER.debug("Create Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.createFieldScreenLayoutItem(createdJira);
 			}
 		} else {

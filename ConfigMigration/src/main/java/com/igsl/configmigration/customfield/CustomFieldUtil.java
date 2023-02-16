@@ -33,7 +33,11 @@ import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.general.GeneralDTO;
+import com.igsl.configmigration.insight.ObjectBeanDTO;
+import com.igsl.configmigration.insight.ObjectBeanUtil;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.options.OptionDTO;
@@ -49,7 +53,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	private static final ManagedConfigurationItemService CONFIG_ITEM_SERVICE = 
 			ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
 	private static final OptionsManager OPTIONS_MANAGER = ComponentAccessor.getOptionsManager();
-
+	
 	@Override
 	public String getName() {
 		return "Custom Field";
@@ -142,14 +146,38 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		}
 		LOGGER.debug("IssueType: " + issueTypes);
 		if (original != null) {
+			CustomField updatedJira = (CustomField) original.getJiraObject();
 			// Update
 			CUSTOM_FIELD_MANAGER.updateCustomField(
 					original.getIdAsLong(),
 					src.getName(), 
 					src.getDescription(), 
 					(fieldSearcher == null)? null : (CustomFieldSearcher) fieldSearcher.getJiraObject());
-			// TODO Options
-			// TODO Default value
+			FieldConfigScheme scheme = updatedJira.getConfigurationSchemes().get(0);
+			FieldConfig config = scheme.getOneAndOnlyConfig();
+			// Options
+			if (src.getOptions() != null && src.getOptions().getRootOptions() != null) {
+				for (OptionDTO opt : src.getOptions().getRootOptions()) {
+					// Update option's FieldConfig
+					opt.setJiraObject(null, config, null);
+					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt);
+					LOGGER.debug("merged option raw: " + createdOption.getJiraObject());
+					opt.setJiraObject(createdOption.getJiraObject(), config, null);
+					// TODO The option objects are not updated
+				}
+			}
+			// Default value
+			DefaultValueOperationsDTO def = src.getDefaultValueOperations();
+			if (def != null) {
+				LOGGER.debug("Source default: " + OM.writeValueAsString(def));
+				Object defaultValue = getRawValue(src.getOptions().getAllOptions(), def);
+				LOGGER.debug("defaultValue: " + defaultValue);
+				if (defaultValue != null) {
+					updatedJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
+				} else {
+					updatedJira.getDefaultValueOperations().setDefaultValue(config, null);
+				}
+			}
 			return findByDTO(original);
 		} else {
 			// Create
@@ -218,6 +246,19 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					return item.getJiraObject();
 				}
 			}
+			// No match
+			return null;
+		} else if (o instanceof ObjectBeanDTO) {
+			// Find existing object bean
+			ObjectBeanDTO data = (ObjectBeanDTO) o;
+			LOGGER.debug("Insight from data: " + data.getUniqueKey() + " name: " + data.getLabel());
+			ObjectBeanUtil insightUtil = 
+					(ObjectBeanUtil) JiraConfigTypeRegistry.getConfigUtil(ObjectBeanUtil.class);
+			ObjectBeanDTO dto = (ObjectBeanDTO) insightUtil.findByDTO(data);
+			if (dto != null) {
+				LOGGER.debug("Insight found: " + data.getUniqueKey() + " name: " + dto.getLabel());
+				return dto.getJiraObject();
+			} 
 			// No match
 			return null;
 		} else if (o instanceof GeneralDTO) {

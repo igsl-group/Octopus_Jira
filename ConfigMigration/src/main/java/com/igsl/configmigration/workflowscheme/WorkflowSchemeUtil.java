@@ -93,6 +93,9 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				projects.add((Project) p.getJiraObject());
 			}
 		}
+		
+		LOGGER.debug("src desc: [" + src.getDescription() + "]");
+		
 		if (original != null) {
 			// Update
 			AssignableWorkflowScheme scheme = (AssignableWorkflowScheme) original.getJiraObject();
@@ -101,13 +104,16 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				.setDescription(src.getDescription())
 				.setMappings(src.getMappings())
 				.setName(src.getName()).build();
+			
+			LOGGER.debug("Update desc: [" + scheme.getDescription() + "]");
+			
 			scheme = MANAGER.updateWorkflowScheme(scheme);
 			Scheme sch = MANAGER.getSchemeObject(scheme.getId());
 			for (Project p : projects) {
 				MANAGER.addSchemeToProject(p, sch);
 			}
 			MANAGER.clearWorkflowCache();
-			return findByUniqueKey(Long.toString(scheme.getId()));
+			return findByUniqueKey(src.getUniqueKey());
 		} else {
 			AssignableWorkflowScheme scheme = SERVICE.assignableBuilder()
 				.setDefaultWorkflow(src.getConfiguredDefaultWorkflow())
@@ -115,6 +121,9 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				.setMappings(src.getMappings())
 				.setName(src.getName())
 				.build();
+			
+			LOGGER.debug("Create desc: [" + scheme.getDescription() + "]");
+			
 			scheme = MANAGER.createScheme(scheme);
 			Scheme sch = MANAGER.getSchemeObject(scheme.getId());
 			for (Project p : projects) {
