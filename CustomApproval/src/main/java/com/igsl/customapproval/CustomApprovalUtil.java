@@ -1007,7 +1007,10 @@ public class CustomApprovalUtil {
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation admin groups", ex);
 		}
-		if (list.isEmpty()) {
+		if (list == null || list.isEmpty()) {
+			if (list == null) {
+				list = new ArrayList<>();
+			}
 			// Add default
 			Group adminGroup = checkGroupName(DEFAULT_ADMIN_GROUP);
 			if (adminGroup != null) {
