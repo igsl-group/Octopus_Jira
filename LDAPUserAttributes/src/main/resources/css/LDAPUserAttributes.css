@@ -3,10 +3,10 @@ table.LDAPUserAttributes {
 	border: 1 !important;
 }
 
-table.LDAPUserAttributes td,th {
+table.LDAPUserAttributes > td, table.LDAPUserAttributes > th {
 	text-align: left;
 }
 
-table.LDAPUserAttributes input {
+table.LDAPUserAttributes > input {
 	width: 95%
 }
