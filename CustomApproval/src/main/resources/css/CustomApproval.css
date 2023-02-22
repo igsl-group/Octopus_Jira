@@ -2,7 +2,7 @@ table.CustomApprovalCustomerPortal {
 	width: 100%;
 }
 
-table.CustomApprovalCustomerPortal > td, table.CustomApprovalCustomerPortal > th {
+table.CustomApprovalCustomerPortal td, table.CustomApprovalCustomerPortal th {
 	font-size: 0.8em;
 	table-layout: fixed;
 }
