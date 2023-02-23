@@ -33,11 +33,6 @@ public class FieldConfigUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		throw new Exception("FieldConfigManager cannot find all items");
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
 		FieldConfig fc = MANAGER.getFieldConfig(idAsLong);
@@ -82,6 +77,17 @@ public class FieldConfigUtil extends JiraConfigUtil {
 			created.setJiraObject(createdJira);
 			return created;
 		}
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		throw new Exception("Search is impossible for FieldConfig");
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

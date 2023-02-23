@@ -24,24 +24,6 @@ public class FieldUtil extends JiraConfigUtil {
 		return "Field";
 	}
 	
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (Field f : MANAGER.getAllAvailableNavigableFields()) {
-			FieldDTO dto = new FieldDTO();
-			dto.setJiraObject(f, params);
-			result.put(f.getId(), dto);
-		}
-		for (Field f : MANAGER.getAllSearchableFields()) {
-			FieldDTO dto = new FieldDTO();
-			dto.setJiraObject(f, params);
-			result.put(f.getId(), dto);
-		}
-		// TODO The no. of fields found here is way larger than those offered on UI.
-		// What is Jira's filter criteria?
-		return result;
-	}
-
 	/**
 	 * #0: owner as String, optional
 	 */
@@ -91,6 +73,31 @@ public class FieldUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter is ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (Field f : MANAGER.getAllAvailableNavigableFields()) {
+			FieldDTO dto = new FieldDTO();
+			dto.setJiraObject(f, params);
+			result.put(f.getId(), dto);
+		}
+		for (Field f : MANAGER.getAllSearchableFields()) {
+			FieldDTO dto = new FieldDTO();
+			dto.setJiraObject(f, params);
+			result.put(f.getId(), dto);
+		}
+		// TODO The no. of fields found here is way larger than those offered on UI.
+		// What is Jira's filter criteria?
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

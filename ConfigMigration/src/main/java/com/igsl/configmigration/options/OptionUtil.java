@@ -36,11 +36,6 @@ public class OptionUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		throw new Exception("Not implemented, Option is not searchable");
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		throw new Exception("Not implemented, Option is not searchable");
 	}
@@ -81,6 +76,17 @@ public class OptionUtil extends JiraConfigUtil {
 		}
 		tar.setJiraObject(created, fieldConfig, parentId);
 		return tar;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		throw new Exception("Not implemented, Option is not searchable");
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

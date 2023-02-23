@@ -35,7 +35,7 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		try {
 			return ComponentAccessor.getPluginAccessor().getClassLoader().loadClass(className);
 		} catch (Exception ex) {
-			LOGGER.error("Failed to load Insight class " + className, ex);
+			LOGGER.warn("Failed to load Insight class " + className, ex);
 			return null;
 		}
 	}
@@ -186,25 +186,13 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		List<?> objects = findObjectsByIQL("Name like \"\"");
-		for (Object ob : objects) {
-			ObjectBeanDTO item = new ObjectBeanDTO();
-			item.setJiraObject(ob);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-	
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		return findByUniqueKey(id, params);
 	}
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		Map<String, JiraConfigDTO> list = findAll(params);
+		Map<String, JiraConfigDTO> list = search(null, params);
 		return list.get(uniqueKey);
 	}
 
@@ -228,6 +216,32 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Visible only when ObjectFacade is available
 		return checkInsight();
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		List<?> objects = findObjectsByIQL("Name like \"\"");
+		for (Object ob : objects) {
+			ObjectBeanDTO item = new ObjectBeanDTO();
+			item.setJiraObject(ob);
+			String label = item.getLabel().toLowerCase();
+			if (filter != null) {
+				if (!label.contains(filter)) {
+					continue;
+				}
+			}
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on label";
 	}
 
 }

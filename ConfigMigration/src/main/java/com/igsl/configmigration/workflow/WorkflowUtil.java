@@ -77,17 +77,6 @@ public class WorkflowUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (JiraWorkflow wf : WORKFLOW_MANAGER.getWorkflows()) {
-			WorkflowDTO2 item = new WorkflowDTO2();
-			item.setJiraObject(wf);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		JiraWorkflow wf = WORKFLOW_MANAGER.getWorkflow(id);
 		if (wf != null) {
@@ -214,6 +203,35 @@ public class WorkflowUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (JiraWorkflow wf : WORKFLOW_MANAGER.getWorkflows()) {
+			String name = wf.getName().toLowerCase();
+			String desc = (wf.getDescription() == null)? "" : wf.getDescription().toLowerCase();
+			String displayName = (wf.getDisplayName() == null)? "" : wf.getDisplayName().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter) && 
+					!displayName.contains(filter)) {
+					continue;
+				}
+			}
+			WorkflowDTO2 item = new WorkflowDTO2();
+			item.setJiraObject(wf);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name, display name and description";
 	}
 
 }

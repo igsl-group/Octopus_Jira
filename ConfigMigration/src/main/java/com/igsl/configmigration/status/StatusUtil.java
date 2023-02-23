@@ -28,17 +28,6 @@ public class StatusUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (Status it : MANAGER.getStatuses()) {
-			StatusDTO item = new StatusDTO();
-			item.setJiraObject(it);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Status s = MANAGER.getStatus(id);
 		if (s != null) {
@@ -97,6 +86,33 @@ public class StatusUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (Status it : MANAGER.getStatuses()) {
+			String name = it.getName().toLowerCase();
+			String desc = (it.getDescription() == null)? "" : it.getDescription().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter)) {
+					continue;
+				}
+			}
+			StatusDTO item = new StatusDTO();
+			item.setJiraObject(it);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

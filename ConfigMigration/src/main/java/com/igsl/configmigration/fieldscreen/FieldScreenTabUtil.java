@@ -29,18 +29,6 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		FieldScreen fs = (FieldScreen) params[0];
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
-			FieldScreenTabDTO item = new FieldScreenTabDTO();
-			item.setJiraObject(it, params);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
 		FieldScreenTab s = MANAGER.getFieldScreenTab(idAsLong);
@@ -121,6 +109,25 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter is ignored
+		FieldScreen fs = (FieldScreen) params[0];
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
+			FieldScreenTabDTO item = new FieldScreenTabDTO();
+			item.setJiraObject(it, params);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

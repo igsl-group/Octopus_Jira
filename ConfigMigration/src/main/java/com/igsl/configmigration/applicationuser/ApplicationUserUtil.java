@@ -1,5 +1,6 @@
 package com.igsl.configmigration.applicationuser;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -28,17 +29,6 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		return "Application User";
 	}
 	
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
-			ApplicationUserDTO item = new ApplicationUserDTO();
-			item.setJiraObject(user, params);
-			result.put(item.getUniqueKey(), item);					
-		}
-		return result;
-	}
-
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
@@ -76,6 +66,35 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("Not implemented");
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
+			if (filter != null) {
+				String displayName = user.getDisplayName().toLowerCase();
+				String name = user.getName().toLowerCase();
+				String email = (user.getEmailAddress() == null)? "" : user.getEmailAddress().toLowerCase();
+				if (!displayName.contains(filter) && 
+					!name.contains(filter) && 
+					!email.contains(filter)) {
+					continue;
+				}
+			}
+			ApplicationUserDTO item = new ApplicationUserDTO();
+			item.setJiraObject(user, params);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search of user name, display name or email";
 	}
 
 }

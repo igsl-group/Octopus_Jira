@@ -59,6 +59,26 @@
 		<label key="Config Migration" />
 	</web-section>
 	
+	<!-- New -->
+	<web-item key="New"
+		name="New" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+		<description key="desc">New
+		</description>
+		<label key="new" />
+		<link linkId="NewLink">/secure/admin/plugins/handler/ExportAction2.jspa</link>
+	</web-item>
+	<webwork1 key="ExportAction2"
+		name="New" class="java.lang.Object">
+		<description>New</description>
+		<actions>
+			<action
+				name="com.igsl.configmigration.ExportAction2"
+				alias="ExportAction2">
+				<view name="input">templates/new.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
 	<!-- Export -->
 	<web-item key="Export"
 		name="Export" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">

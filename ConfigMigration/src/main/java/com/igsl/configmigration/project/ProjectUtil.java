@@ -50,17 +50,6 @@ public class ProjectUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new HashMap<>();
-		for (Project p : MANAGER.getProjects()) {
-			ProjectDTO item = new ProjectDTO();
-			item.setJiraObject(p);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Project p = MANAGER.getProjectObj(Long.parseLong(id));
 		if (p != null) {
@@ -179,6 +168,35 @@ public class ProjectUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new HashMap<>();
+		for (Project p : MANAGER.getProjects()) {
+			String name = p.getName().toLowerCase();
+			String desc = (p.getDescription() == null)? "" : p.getDescription().toLowerCase();
+			String key = p.getKey().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter) && 
+					!key.contains(filter)) {
+					continue;
+				}
+			}
+			ProjectDTO item = new ProjectDTO();
+			item.setJiraObject(p);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name, key and description";
 	}
 
 }

@@ -32,17 +32,6 @@ public class OptionSetUtil extends JiraConfigUtil {
 	public String getName() {
 		return "Option Set";
 	}
-	
-	/**
-	 * #0: FieldConfig
-	 */
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		JiraConfigDTO dto = findByInternalId(null, params);
-		Map<String, JiraConfigDTO> result = new HashMap<>();
-		result.put(dto.getUniqueKey(), dto);
-		return result;
-	}
 
 	/**
 	 * #0: FieldConfig
@@ -102,6 +91,21 @@ public class OptionSetUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced only
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		JiraConfigDTO dto = findByInternalId(null, params);
+		Map<String, JiraConfigDTO> result = new HashMap<>();
+		result.put(dto.getUniqueKey(), dto);
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

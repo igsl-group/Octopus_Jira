@@ -30,17 +30,6 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	public String getName() {
 		return "Issue Security Level";
 	}
-	
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
-			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
-			item.setJiraObject(s);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
 
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
@@ -99,6 +88,24 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced by IssueSecurityLevelSchemeDTO only
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
+			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
+			item.setJiraObject(s);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

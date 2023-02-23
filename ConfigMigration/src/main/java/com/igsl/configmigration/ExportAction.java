@@ -107,7 +107,7 @@ public class ExportAction extends JiraWebActionSupport {
 			// TODO Load all sections
 			for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 				SessionData data = sessionData.get(entry.getKey());
-				data.getExportData().putAll(data.getUtil().findAll());
+				data.getExportData().putAll(data.getUtil().search(null));
 			}
 		}
 		
@@ -134,11 +134,11 @@ public class ExportAction extends JiraWebActionSupport {
 			// Search all objects
 			if (section != null && !section.isEmpty()) {
 				SessionData data = sessionData.get(section);
-				data.getExportData().putAll(data.getUtil().findAll());
+				data.getExportData().putAll(data.getUtil().search(null));
 			} else {
 				for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
 					SessionData data = sessionData.get(entry.getKey());
-					data.getExportData().putAll(data.getUtil().findAll());
+					data.getExportData().putAll(data.getUtil().search(null));
 				}
 			}
 		} else if (FORM_ACTION_CLEAR.equals(action)) {
@@ -175,7 +175,7 @@ public class ExportAction extends JiraWebActionSupport {
 				LicensedApplicationUtil appUtil = (LicensedApplicationUtil) 
 						JiraConfigTypeRegistry.getConfigUtil(LicensedApplicationUtil.class);
 				SessionData appData = new SessionData(appUtil);
-				for (Map.Entry<String, JiraConfigDTO> appEntry : appUtil.findAll().entrySet()) {
+				for (Map.Entry<String, JiraConfigDTO> appEntry : appUtil.search(null).entrySet()) {
 					appData.getExportData().put(appEntry.getKey(), appEntry.getValue());
 				}
 				export.put(appUtil.getClass().getCanonicalName(), appData);

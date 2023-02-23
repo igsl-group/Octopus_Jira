@@ -33,21 +33,6 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	 * #0: CustomFieldTypeDTO
 	 */
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
-		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
-			CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
-			item.setJiraObject(s, params);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	/**
-	 * #0: CustomFieldTypeDTO
-	 */
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		return findByUniqueKey(id, params);
 	}
@@ -81,6 +66,25 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced from CustomField only
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter is ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
+		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
+			CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
+			item.setJiraObject(s, params);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

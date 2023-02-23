@@ -122,7 +122,7 @@ public class ProjectDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return ProjectUtil.class;
 	}
 
 	@Override

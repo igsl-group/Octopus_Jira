@@ -25,18 +25,6 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
-		for (Object ob : objects) {
-			ObjectSchemaBeanDTO item = new ObjectSchemaBeanDTO();
-			item.setJiraObject(ob);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
 		Integer idAsInt = Integer.parseInt(id);
@@ -84,6 +72,25 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		List<Object> objects = ObjectBeanUtil.findObjectSchemaBeans();
+		for (Object ob : objects) {
+			ObjectSchemaBeanDTO item = new ObjectSchemaBeanDTO();
+			item.setJiraObject(ob);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -25,23 +25,9 @@ public class GroupUtil extends JiraConfigUtil {
 	
 	@Override
 	public String getName() {
-		return "User Group (members not included)";
+		return "User Group";
 	}
 	
-	/**
-	 * No params
-	 */
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (Group grp : SERVICE.findGroups("")) {
-			GroupDTO item = new GroupDTO();
-			item.setJiraObject(grp);
-			result.put(item.getUniqueKey(), item);					
-		}
-		return result;
-	}
-
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Group grp = MANAGER.getGroup(id);
@@ -94,6 +80,31 @@ public class GroupUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (Group grp : SERVICE.findGroups("")) {
+			String name = grp.getName().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter)) {
+					continue;
+				}
+			}
+			GroupDTO item = new GroupDTO();
+			item.setJiraObject(grp);
+			result.put(item.getUniqueKey(), item);					
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on group name";
 	}
 
 }

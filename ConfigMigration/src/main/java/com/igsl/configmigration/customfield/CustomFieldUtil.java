@@ -69,19 +69,6 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
-			if (!isLocked(cf)) {
-				CustomFieldDTO item = new CustomFieldDTO();
-				item.setJiraObject(cf, params);
-				result.put(item.getUniqueKey(), item);
-			}
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (cf.getId().equals(id) && !isLocked(cf)) {
@@ -313,6 +300,35 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
+			if (!isLocked(cf)) {
+				String name = cf.getName().toLowerCase();
+				String desc = (cf.getDescription() == null)? "" : cf.getDescription().toLowerCase();
+				if (filter != null) {
+					if (!name.contains(filter) && 
+						!desc.contains(filter)) {
+						continue;
+					}
+				}
+				CustomFieldDTO item = new CustomFieldDTO();
+				item.setJiraObject(cf, params);
+				result.put(item.getUniqueKey(), item);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search of custom field name, description";
 	}
 
 }

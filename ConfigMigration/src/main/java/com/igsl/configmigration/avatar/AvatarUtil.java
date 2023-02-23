@@ -27,58 +27,13 @@ public class AvatarUtil extends JiraConfigUtil {
 	public String getName() {
 		return "Avatar";
 	}
-	
-	/**
-	 * #0: owner as String, optional
-	 */
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		// Find among system avatars
-		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
-			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
- 		}
-		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.PROJECT_ICON_TYPE)) {
-			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
- 		}
-		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.USER_ICON_TYPE)) {
-			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
- 		}
-		// Find among custom avatars of owner
-		String avatarOwner = null;
-		if (params != null && params.length == 1) {
-			avatarOwner = (String) params[0];
-			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
-				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
-			}
-			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.PROJECT_ICON_TYPE, avatarOwner)) {
-				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
-			}
-			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.USER_ICON_TYPE, avatarOwner)) {
-				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
-			}
-		}
-		return result;
-	}
 
 	/**
 	 * #0: owner as String, optional
 	 */
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
-		Map<String, JiraConfigDTO> all = findAll(params);
+		Map<String, JiraConfigDTO> all = search(null, params);
 		for (JiraConfigDTO item : all.values()) {
 			if (item.getInternalId().equals(id)) {
 				return item;
@@ -92,7 +47,7 @@ public class AvatarUtil extends JiraConfigUtil {
 	 */
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		Map<String, JiraConfigDTO> all = findAll(params);
+		Map<String, JiraConfigDTO> all = search(null, params);
 		if (all.containsKey(uniqueKey)) {
 			return all.get(uniqueKey);
 		}
@@ -145,6 +100,58 @@ public class AvatarUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Avatar is only referenced via other DTOs
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter is ignored
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		// Find among system avatars
+		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
+			AvatarDTO item = new AvatarDTO();
+			item.setJiraObject(av, params);
+			result.put(item.getUniqueKey(), item); 
+ 		}
+		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.PROJECT_ICON_TYPE)) {
+			AvatarDTO item = new AvatarDTO();
+			item.setJiraObject(av, params);
+			result.put(item.getUniqueKey(), item); 
+ 		}
+		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.USER_ICON_TYPE)) {
+			AvatarDTO item = new AvatarDTO();
+			item.setJiraObject(av, params);
+			result.put(item.getUniqueKey(), item); 
+ 		}
+		// Find among custom avatars of owner
+		String avatarOwner = null;
+		if (params != null && params.length == 1) {
+			avatarOwner = (String) params[0];
+			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
+				AvatarDTO item = new AvatarDTO();
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			}
+			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.PROJECT_ICON_TYPE, avatarOwner)) {
+				AvatarDTO item = new AvatarDTO();
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			}
+			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.USER_ICON_TYPE, avatarOwner)) {
+				AvatarDTO item = new AvatarDTO();
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

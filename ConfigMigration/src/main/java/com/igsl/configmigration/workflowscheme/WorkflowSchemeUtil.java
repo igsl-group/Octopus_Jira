@@ -36,17 +36,6 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (AssignableWorkflowScheme wf : MANAGER.getAssignableSchemes()) {
-			AssignableWorkflowSchemeDTO item = new AssignableWorkflowSchemeDTO();
-			item.setJiraObject(wf);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		AssignableWorkflowScheme wf = MANAGER.getWorkflowSchemeObj(Long.parseLong(id));
 		if (wf != null) {
@@ -144,6 +133,33 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (AssignableWorkflowScheme wf : MANAGER.getAssignableSchemes()) {
+			String name = wf.getName().toLowerCase();
+			String desc = (wf.getDescription() == null)? "" : wf.getDescription().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter)) {
+					continue;
+				}
+			}
+			AssignableWorkflowSchemeDTO item = new AssignableWorkflowSchemeDTO();
+			item.setJiraObject(wf);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

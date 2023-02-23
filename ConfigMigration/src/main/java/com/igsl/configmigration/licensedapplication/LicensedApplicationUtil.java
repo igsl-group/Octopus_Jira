@@ -26,19 +26,6 @@ public class LicensedApplicationUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new HashMap<>();
-		for (LicenseDetails details : MANAGER.getLicenses()) {
-			for (ApplicationKey key : details.getLicensedApplications().getKeys()) {
-				LicensedApplicationDTO dto = new LicensedApplicationDTO();
-				dto.setJiraObject(key);
-				result.put(dto.getUniqueKey(), dto);
-			}
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		for (LicenseDetails details : MANAGER.getLicenses()) {
 			for (ApplicationKey key : details.getLicensedApplications().getKeys()) {
@@ -70,6 +57,26 @@ public class LicensedApplicationUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		Map<String, JiraConfigDTO> result = new HashMap<>();
+		for (LicenseDetails details : MANAGER.getLicenses()) {
+			for (ApplicationKey key : details.getLicensedApplications().getKeys()) {
+				LicensedApplicationDTO dto = new LicensedApplicationDTO();
+				dto.setJiraObject(key);
+				result.put(dto.getUniqueKey(), dto);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

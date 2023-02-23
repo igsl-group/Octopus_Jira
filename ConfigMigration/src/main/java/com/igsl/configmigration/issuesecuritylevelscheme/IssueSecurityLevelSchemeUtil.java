@@ -29,18 +29,6 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	public String getName() {
 		return "Issue Security Scheme";
 	}
-	
-	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (IssueSecurityLevelScheme s : SCHEME_MANAGER.getIssueSecurityLevelSchemes()) {
-			IssueSecurityLevelSchemeDTO item = new IssueSecurityLevelSchemeDTO();
-			item.setJiraObject(s);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
 
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
@@ -123,6 +111,33 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (IssueSecurityLevelScheme s : SCHEME_MANAGER.getIssueSecurityLevelSchemes()) {
+			String name = s.getName().toLowerCase();
+			String desc = (s.getDescription() == null)? "" : s.getDescription().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter)) {
+					continue;
+				}
+			}
+			IssueSecurityLevelSchemeDTO item = new IssueSecurityLevelSchemeDTO();
+			item.setJiraObject(s);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name and description";
 	}
 
 

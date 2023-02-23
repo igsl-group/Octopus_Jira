@@ -3,7 +3,7 @@ table.ConfigMigration {
 	border: solid 1px !important;
 }
 
-table.ConfigMigration > td, table.ConfigMigration > th {
+table.ConfigMigration td, table.ConfigMigration th {
 	text-align: left;
 	border: solid 1px !important;
 	overflow: auto; 
@@ -15,7 +15,7 @@ span.sectionTitle {
 	font-weight: bold;
 }
 
-able.ConfigMigration > td.different {
+able.ConfigMigration td.different {
 	background-color: yellow;
 	font-weight: bold; 
 }

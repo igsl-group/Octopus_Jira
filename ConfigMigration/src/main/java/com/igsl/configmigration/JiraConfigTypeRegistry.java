@@ -46,7 +46,7 @@ public class JiraConfigTypeRegistry {
 	 * This list is to mandate the order of the utils during export and import.
 	 * Any Util class not listed here will be sorted to the bottom of the list in ascending alphabetical order.
 	 */
-	private static List<Class<? extends Object>> UTIL_ORDER = Arrays.asList(
+	private static List<Class<? extends JiraConfigUtil>> UTIL_ORDER = Arrays.asList(
 			GroupUtil.class,
 			StatusUtil.class,
 			IssueTypeUtil.class,
@@ -210,7 +210,7 @@ public class JiraConfigTypeRegistry {
 	static {
 		Logger logger = Logger.getLogger(LOGGER_NAME);
 		// Convert class objects into canonical names
-		for (Class<? extends Object> cls : UTIL_ORDER) {
+		for (Class<? extends JiraConfigUtil> cls : UTIL_ORDER) {
 			orderedList.add(cls.getCanonicalName());
 		}
 		// Get JiraConfigItme and JiraConfigUtil class list from JAR file

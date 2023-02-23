@@ -35,19 +35,6 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
-		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
-			IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
-			IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
-			item.setJiraObject(e, itss);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
 		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
@@ -126,6 +113,26 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
+		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
+			IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
+			IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
+			item.setJiraObject(e, itss);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

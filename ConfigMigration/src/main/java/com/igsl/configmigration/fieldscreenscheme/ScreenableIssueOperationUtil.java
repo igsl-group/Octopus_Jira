@@ -40,17 +40,6 @@ public class ScreenableIssueOperationUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (ScreenableIssueOperation item : IssueOperations.getIssueOperations()) {
-			ScreenableIssueOperationDTO dto = new ScreenableIssueOperationDTO();
-			dto.setJiraObject(item);
-			result.put(dto.getUniqueKey(), dto);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
 		for (ScreenableIssueOperation item : IssueOperations.getIssueOperations()) {
@@ -88,6 +77,24 @@ public class ScreenableIssueOperationUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter is ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (ScreenableIssueOperation item : IssueOperations.getIssueOperations()) {
+			ScreenableIssueOperationDTO dto = new ScreenableIssueOperationDTO();
+			dto.setJiraObject(item);
+			result.put(dto.getUniqueKey(), dto);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

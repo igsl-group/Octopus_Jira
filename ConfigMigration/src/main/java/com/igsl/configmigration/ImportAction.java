@@ -154,7 +154,7 @@ public class ImportAction extends JiraWebActionSupport {
 			for (Map.Entry<String, SessionData> entry : imported.entrySet()) {
 				SessionData sd = this.sessionData.get(entry.getKey());
 				if (sd != null) {
-					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().findAll();
+					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().search(null);
 					for (Map.Entry<String, ImportData> item : sd.getImportData().entrySet()) {
 						String itemKey = item.getValue().getData().getUniqueKey();
 						this.debug += "Looking for " + itemKey + "\n";
@@ -177,7 +177,7 @@ public class ImportAction extends JiraWebActionSupport {
 			LicensedApplicationUtil appUtil = (LicensedApplicationUtil) 
 					JiraConfigTypeRegistry.getConfigUtil(LicensedApplicationUtil.class);
 			Set<String> currentKeys = new HashSet<>();
-			for (JiraConfigDTO item : appUtil.findAll().values()) {
+			for (JiraConfigDTO item : appUtil.search(null).values()) {
 				LicensedApplicationDTO dto = (LicensedApplicationDTO) item;
 				currentKeys.add(dto.getValue());
 			}

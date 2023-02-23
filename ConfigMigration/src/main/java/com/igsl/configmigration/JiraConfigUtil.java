@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nonnull;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,14 +70,6 @@ public abstract class JiraConfigUtil {
 	public abstract Class<? extends JiraConfigDTO> getDTOClass();
 	
 	/**
-	 * Read all Jira objects in current environment and store them into JiraConfigItem.
-	 * @param params Parameters. Depends on implementation.
-	 * @throws Exception
-	 */
-	public abstract Map<String, JiraConfigDTO> findAll(Object... params) throws Exception;
-	
-	
-	/**
 	 * Find JiraConfigDTO by internal ID.
 	 * @param id String
 	 * @param params Parameters. Depends on implementation.
@@ -84,26 +78,22 @@ public abstract class JiraConfigUtil {
 	public abstract JiraConfigDTO findByInternalId(String id, Object... params) throws Exception;
 	
 	/**
-	 * Search Jira object with partial match
+	 * Search Jira object with partial match. 
+	 * The exact fields to be matched depends on the implementation.
 	 * @param filter String for partial match with unique key or id. If empty, find all.
 	 * @param params Parameters. Depends on implementation. 
-	 * @return Map<String, JiraConfigDTO> as search result
+	 * @return Non-null Map<String, JiraConfigDTO> as search result
 	 * @throws Exception
 	 */
-	// TODO Should be abstract after all implementations are updated
-	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new HashMap<>();
-		if (filter == null || filter.isEmpty()) {
-			return findAll(params);
-		} else {
-			// TODO Perform partial match
-			JiraConfigDTO dto = findByUniqueKey(filter, params);
-			if (dto != null) {
-				result.put(dto.getUniqueKey(), dto);
-			}
-		}
-		return result;
-	}
+	@Nonnull
+	public abstract Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception;
+	
+	/**
+	 * Required for implementations that returns true for isVisible().
+	 * Return description of filter in search().
+	 * @return String
+	 */
+	public abstract String getSearchHints();
 	
 	/**
 	 * Find Jira object

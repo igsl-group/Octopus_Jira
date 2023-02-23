@@ -29,17 +29,6 @@ public class VersionUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (Version it : MANAGER.getAllVersions()) {
-			VersionDTO item = new VersionDTO();
-			item.setJiraObject(it);
-			result.put(item.getUniqueKey(), item);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Version s = MANAGER.getVersion(Long.parseLong(id));
 		if (s != null) {
@@ -103,6 +92,24 @@ public class VersionUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		// Filter ignored
+		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		for (Version it : MANAGER.getAllVersions()) {
+			VersionDTO item = new VersionDTO();
+			item.setJiraObject(it);
+			result.put(item.getUniqueKey(), item);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

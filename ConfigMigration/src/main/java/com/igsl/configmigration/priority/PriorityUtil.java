@@ -84,22 +84,6 @@ public class PriorityUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public Map<String, JiraConfigDTO> findAll(Object... params) throws Exception {
-		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
-		List<PriorityDTO> list = new ArrayList<>();
-		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
-			PriorityDTO item = new PriorityDTO();
-			item.setJiraObject(p, params);
-			list.add(item);
-		}
-		list.sort(new PriorityComparator());
-		for (PriorityDTO p : list) {
-			result.put(p.getUniqueKey(), p);
-		}
-		return result;
-	}
-
-	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Priority p = PRIORITY_MANAGER.getPriority(id);
 		if (p != null) {
@@ -154,6 +138,38 @@ public class PriorityUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
+		if (filter != null) {
+			filter = filter.toLowerCase();
+		}
+		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
+		List<PriorityDTO> list = new ArrayList<>();
+		for (Priority p : PRIORITY_MANAGER.getPriorities()) {
+			String name = p.getName().toLowerCase();
+			String desc = (p.getDescription() == null)? "" : p.getDescription().toLowerCase();
+			if (filter != null) {
+				if (!name.contains(filter) && 
+					!desc.contains(filter)) {
+					continue;
+				}
+			}
+			PriorityDTO item = new PriorityDTO();
+			item.setJiraObject(p, params);
+			list.add(item);
+		}
+		list.sort(new PriorityComparator());
+		for (PriorityDTO p : list) {
+			result.put(p.getUniqueKey(), p);
+		}
+		return result;
+	}
+
+	@Override
+	public String getSearchHints() {
+		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

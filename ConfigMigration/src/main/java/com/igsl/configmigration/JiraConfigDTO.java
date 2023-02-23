@@ -81,6 +81,21 @@ public abstract class JiraConfigDTO {
 	public abstract Class<? extends JiraConfigUtil> getUtilClass();
 	
 	/**
+	 * Return name of JiraConfigUtil class associated with this DTO.
+	 * @return String
+	 */
+	@JsonIgnore
+	public final String getUtilName() {
+		if (getUtilClass() != null) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(getUtilClass());
+			if (util != null) {
+				return util.getName();
+			}
+		}
+		return getJiraClass().getName();
+	}
+	
+	/**
 	 * Get differences between two JiraConfigDTO objects.
 	 * Recursively compares nested objects. 
 	 * 
@@ -524,6 +539,16 @@ public abstract class JiraConfigDTO {
 	 */
 	@JsonIgnore
 	public abstract String getInternalId();
+	
+	/**
+	 * Display name for UI, defaults to unique key.
+	 * Override as needed.
+	 * @return String
+	 */
+	@JsonIgnore
+	public String getConfigName() {
+		return getUniqueKey();
+	}
 	
 	/**
 	 * Stores data from provided object.
