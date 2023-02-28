@@ -141,22 +141,14 @@ public class ResolutionUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
 		List<ResolutionDTO> list = new ArrayList<>();
 		for (Resolution r : RESOLUTION_MANAGER.getResolutions()) {
-			String name = r.getName().toLowerCase();
-			String desc = (r.getDescription() == null)? "" : r.getDescription().toLowerCase();
-			if (filter != null) {
-				if (!name.contains(filter) && 
-					!desc.contains(filter)) {
-					continue;
-				}
-			}
 			ResolutionDTO item = new ResolutionDTO();
 			item.setJiraObject(r);
+			if (!matchFilter(item, filter)) {
+				continue;
+			}
 			list.add(item);
 		}
 		list.sort(new ResolutionComparator());
@@ -164,11 +156,6 @@ public class ResolutionUtil extends JiraConfigUtil {
 			result.put(dto.getUniqueKey(), dto);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

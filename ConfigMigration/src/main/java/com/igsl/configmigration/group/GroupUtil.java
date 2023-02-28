@@ -84,27 +84,16 @@ public class GroupUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (Group grp : SERVICE.findGroups("")) {
-			String name = grp.getName().toLowerCase();
-			if (filter != null) {
-				if (!name.contains(filter)) {
-					continue;
-				}
-			}
 			GroupDTO item = new GroupDTO();
 			item.setJiraObject(grp);
+			if (!matchFilter(item, filter)) {
+				continue;
+			}
 			result.put(item.getUniqueKey(), item);					
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on group name";
 	}
 
 }

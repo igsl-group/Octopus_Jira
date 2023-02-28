@@ -1,5 +1,7 @@
 package com.igsl.configmigration.status;
 
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.priority.PriorityDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class StatusUtil extends JiraConfigUtil {
@@ -27,6 +30,60 @@ public class StatusUtil extends JiraConfigUtil {
 		return "Status";
 	}
 	
+	@Override
+	public boolean isPostSequenced() {
+		return true;
+	}
+	
+	@Override
+	public void updateSequence(List<JiraConfigDTO> items) throws Exception {
+		// Move each item up and down
+		for (JiraConfigDTO item : items) {
+			LOGGER.debug("Reordering item: " + item.getUniqueKey());
+			StatusDTO dto = (StatusDTO) item;
+			StatusDTO jiraItem = (StatusDTO) findByDTO(dto);
+			if (jiraItem != null) {
+				Long startSeq = jiraItem.getSequence();
+				Long targetSeq = dto.getSequence();
+				Long currentSeq = startSeq;
+				LOGGER.debug("From " + currentSeq + " to " + targetSeq);
+				// Move up or down
+				int compare = startSeq.compareTo(targetSeq);
+				LOGGER.debug("Compare: " + compare);
+				// Until targetSeq is reached
+				while (!currentSeq.equals(targetSeq)) {
+					LOGGER.debug(currentSeq + " vs " + targetSeq);
+					if (compare == -1) {
+						LOGGER.debug("Moving down");
+						MANAGER.moveStatusDown(jiraItem.getId());
+					} else if (compare == 1) {
+						LOGGER.debug("Moving up");
+						MANAGER.moveStatusUp(jiraItem.getId());
+					}
+					// Check new value
+					int size = MANAGER.getStatuses().size();
+					LOGGER.debug("Size: " + size);
+					jiraItem = (StatusDTO) findByDTO(dto);
+					Long newSeq = jiraItem.getSequence();
+					LOGGER.debug("NewSeq: " + newSeq);
+					if (newSeq != targetSeq) {
+						// Break if not possible
+						if (compare == 1 && newSeq <= 1) {
+							// Move up and reached the top
+							LOGGER.debug("Reached top");
+							break;
+						} else if (compare == -1 && newSeq >= size) {
+							// Move down and reached the bottom
+							LOGGER.debug("Reached bottom");
+							break;
+						}
+					}
+					currentSeq = newSeq;
+				}
+			}
+		}
+	}	
+
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Status s = MANAGER.getStatus(id);
@@ -90,29 +147,17 @@ public class StatusUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		LOGGER.debug("Filter: [" + filter + "]");
+		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
 		for (Status it : MANAGER.getStatuses()) {
-			String name = it.getName().toLowerCase();
-			String desc = (it.getDescription() == null)? "" : it.getDescription().toLowerCase();
-			if (filter != null) {
-				if (!name.contains(filter) && 
-					!desc.contains(filter)) {
-					continue;
-				}
-			}
 			StatusDTO item = new StatusDTO();
 			item.setJiraObject(it);
+			if (!matchFilter(item, filter)) {
+				continue;
+			}
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

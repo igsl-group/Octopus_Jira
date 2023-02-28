@@ -3,22 +3,18 @@ package com.igsl.configmigration.optionset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
-import com.atlassian.jira.issue.fields.config.FieldConfigImpl;
 import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.atlassian.jira.issue.fields.option.OptionSetManager;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 
@@ -100,12 +96,6 @@ public class OptionSetUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new HashMap<>();
 		result.put(dto.getUniqueKey(), dto);
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

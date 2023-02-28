@@ -10,12 +10,10 @@ import com.atlassian.jira.issue.security.IssueSecurityLevel;
 import com.atlassian.jira.issue.security.IssueSecurityLevelImpl;
 import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelUtil extends JiraConfigUtil {
@@ -100,12 +98,6 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

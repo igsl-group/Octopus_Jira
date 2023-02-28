@@ -106,10 +106,4 @@ public class VersionUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

@@ -89,29 +89,16 @@ public class IssueTypeUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (IssueType it : ISSUE_MANAGER.getIssueTypes()) {
-			String name = it.getName().toLowerCase();
-			String desc = (it.getDescription() == null)? "" : it.getDescription().toLowerCase();
-			if (filter != null) {
-				if (!name.contains(filter) && 
-					!desc.contains(filter)) {
-					continue;
-				}
-			}
 			IssueTypeDTO item = new IssueTypeDTO();
 			item.setJiraObject(it);
+			if (!matchFilter(item, filter)) {
+				continue;
+			}
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

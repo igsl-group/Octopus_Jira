@@ -105,9 +105,6 @@ public class AvatarUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter is ignored
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
@@ -146,12 +143,6 @@ public class AvatarUtil extends JiraConfigUtil {
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 }

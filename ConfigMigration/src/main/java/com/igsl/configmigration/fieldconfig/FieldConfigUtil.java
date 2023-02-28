@@ -84,10 +84,4 @@ public class FieldConfigUtil extends JiraConfigUtil {
 		throw new Exception("Search is impossible for FieldConfig");
 	}
 
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

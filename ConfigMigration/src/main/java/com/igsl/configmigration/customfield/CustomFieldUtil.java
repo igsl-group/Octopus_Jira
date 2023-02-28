@@ -304,31 +304,18 @@ public class CustomFieldUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (!isLocked(cf)) {
-				String name = cf.getName().toLowerCase();
-				String desc = (cf.getDescription() == null)? "" : cf.getDescription().toLowerCase();
-				if (filter != null) {
-					if (!name.contains(filter) && 
-						!desc.contains(filter)) {
-						continue;
-					}
+				CustomFieldDTO dto = new CustomFieldDTO();
+				dto.setJiraObject(cf, params);
+				if (!matchFilter(dto, filter)) {
+					continue;
 				}
-				CustomFieldDTO item = new CustomFieldDTO();
-				item.setJiraObject(cf, params);
-				result.put(item.getUniqueKey(), item);
+				result.put(dto.getUniqueKey(), dto);
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search of custom field name, description";
 	}
 
 }

@@ -106,9 +106,6 @@ public class PluginUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		PluginInfos infos = PLUGIN_INFO_PROVIDER.getUserPlugins();
 		Iterator<PluginInfo> it = infos.iterator();
@@ -116,31 +113,15 @@ public class PluginUtil extends JiraConfigUtil {
 			PluginInfo pi = it.next();
 			if (!IGNORED_VENDORS.contains(pi.getPluginInformation().getVendorName())) {
 				Plugin p = PLUGIN_MANAGER.getPlugin(pi.getKey());
-				String name = p.getName().toLowerCase();
-				String desc = (p.getPluginInformation().getDescription() == null)? 
-								"" : 
-								p.getPluginInformation().getDescription().toLowerCase();
-				String vendor = (p.getPluginInformation().getVendorName() == null)? 
-									"" : 
-									p.getPluginInformation().getVendorName().toLowerCase();	
-				if (filter != null) {
-					if (!name.contains(filter) && 
-						!desc.contains(filter) &&
-						!vendor.contains(filter)) {
-						continue;
-					}
- 				}
 				PluginDTO item = new PluginDTO();
 				item.setJiraObject(p);
+				if (!matchFilter(item, filter)) {
+					continue;
+				}
 				result.put(item.getUniqueKey(), item);
 			}
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on name, description and vendor name";
 	}
 
 }

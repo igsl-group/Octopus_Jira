@@ -83,10 +83,4 @@ public class OptionUtil extends JiraConfigUtil {
 		throw new Exception("Not implemented, Option is not searchable");
 	}
 
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

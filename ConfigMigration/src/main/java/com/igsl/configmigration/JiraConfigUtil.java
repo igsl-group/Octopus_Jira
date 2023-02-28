@@ -7,6 +7,8 @@ import java.util.Map;
 
 import javax.annotation.Nonnull;
 
+import org.apache.log4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +20,7 @@ import com.igsl.configmigration.SessionData.ImportData;
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigUtil {
 	
+	private static final Logger LOGGER = Logger.getLogger(JiraConfigUtil.class);
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	private static final String NEWLINE = "\r\n";
 
@@ -78,8 +81,28 @@ public abstract class JiraConfigUtil {
 	public abstract JiraConfigDTO findByInternalId(String id, Object... params) throws Exception;
 	
 	/**
+	 * Check if provided DTO matches filter.
+	 * Default implementation uses .getConfigName() for a case-insensitive wildcard match.
+	 * Override if necessary.
+	 * @param dto
+	 * @param filter
+	 * @return
+	 */
+	public boolean matchFilter(JiraConfigDTO dto, String filter) {
+		if (filter != null && !filter.isEmpty()) {
+			filter = filter.toLowerCase();
+			String name = dto.getConfigName().toLowerCase();
+			if (!name.contains(filter)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * Search Jira object with partial match. 
 	 * The exact fields to be matched depends on the implementation.
+	 * Implementations should put matching logic in matchFilter(). 
 	 * @param filter String for partial match with unique key or id. If empty, find all.
 	 * @param params Parameters. Depends on implementation. 
 	 * @return Non-null Map<String, JiraConfigDTO> as search result
@@ -91,9 +114,12 @@ public abstract class JiraConfigUtil {
 	/**
 	 * Required for implementations that returns true for isVisible().
 	 * Return description of filter in search().
+	 * Override if you override matchFilter().
 	 * @return String
 	 */
-	public abstract String getSearchHints();
+	public String getSearchHints() {
+		return "Case-insensitive wildcard match";
+	}
 	
 	/**
 	 * Find Jira object

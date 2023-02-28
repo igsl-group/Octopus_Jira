@@ -153,29 +153,16 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (IssueTypeScreenScheme scheme : MANAGER.getIssueTypeScreenSchemes()) {
-			String name = scheme.getName().toLowerCase();
-			String desc = (scheme.getDescription() == null)? "" : scheme.getDescription().toLowerCase();
-			if (filter != null) {
-				if (!name.contains(filter) && 
-					!desc.contains(filter)) {
-					continue;
-				}
-			}
 			IssueTypeScreenSchemeDTO item = new IssueTypeScreenSchemeDTO();
 			item.setJiraObject(scheme);
+			if (!matchFilter(item, filter)) {
+				continue;
+			}
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search on name and description";
 	}
 
 }

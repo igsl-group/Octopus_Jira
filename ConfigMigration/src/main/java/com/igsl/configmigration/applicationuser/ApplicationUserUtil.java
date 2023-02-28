@@ -70,31 +70,18 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		if (filter != null) {
-			filter = filter.toLowerCase();
-		}
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
+			ApplicationUserDTO dto = new ApplicationUserDTO();
+			dto.setJiraObject(user, params);
 			if (filter != null) {
-				String displayName = user.getDisplayName().toLowerCase();
-				String name = user.getName().toLowerCase();
-				String email = (user.getEmailAddress() == null)? "" : user.getEmailAddress().toLowerCase();
-				if (!displayName.contains(filter) && 
-					!name.contains(filter) && 
-					!email.contains(filter)) {
+				if (!matchFilter(dto, filter)) {
 					continue;
 				}
 			}
-			ApplicationUserDTO item = new ApplicationUserDTO();
-			item.setJiraObject(user, params);
-			result.put(item.getUniqueKey(), item);
+			result.put(dto.getUniqueKey(), dto);
 		}
 		return result;
-	}
-
-	@Override
-	public String getSearchHints() {
-		return "Case-insensitive wildcard search of user name, display name or email";
 	}
 
 }

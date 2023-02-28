@@ -19,12 +19,14 @@ public class StatusDTO extends JiraConfigDTO {
 	protected String name;
 	protected String description;
 	protected StatusCategoryDTO statusCategoryConfigItem;
+	protected Long sequence;
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
 		Status o = (Status) obj;
 		id = o.getId();
 		name = o.getName();
+		sequence = o.getSequence();
 		description = o.getDescription();
 		statusCategoryConfigItem = new StatusCategoryDTO();
 		statusCategoryConfigItem.setJiraObject(o.getStatusCategory());
@@ -88,6 +90,14 @@ public class StatusDTO extends JiraConfigDTO {
 	@Override
 	public Class<?> getJiraClass() {
 		return Status.class;
+	}
+
+	public Long getSequence() {
+		return sequence;
+	}
+
+	public void setSequence(Long sequence) {
+		this.sequence = sequence;
 	}
 
 }

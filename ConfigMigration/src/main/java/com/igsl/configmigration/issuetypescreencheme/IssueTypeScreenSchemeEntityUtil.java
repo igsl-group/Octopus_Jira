@@ -129,10 +129,4 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 		return result;
 	}
 
-	@Override
-	public String getSearchHints() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }
