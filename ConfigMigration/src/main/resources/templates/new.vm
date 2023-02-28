@@ -1,0 +1,246 @@
+<html>
+	<head>
+		<title>Export</title>
+		<meta content="admin" name="decorator" />
+		<script type="text/javascript">
+		
+			// Selected export/import objects for current selections.
+			// Actual state is stored in property of JiraConfigDTO items in DTOStore
+			// Key is from getSelectionKey()
+			// Value is from getSelectionItem()
+			var selectedImports = {};
+			var selectedExports = {};
+		
+			function submitForm(action) {
+				// Show loading panel
+				// TODO
+				// Submit
+				document.getElementById('action').value = action;
+				window.onbeforeunload = null;
+				document.forms['mainForm'].submit();
+			}
+			
+			var delayedSubmitId = null;
+			function delayedSubmitForm(delay, action) {
+				if (delayedSubmitId != null) {
+					clearTimeout(delayedSubmitId);
+				}
+				delayedSubmitId = setTimeout(function() {
+					submitForm(action);
+				}, delay);
+			}
+			
+			function getSelectionKey(util, uniqueKey) {
+				return util + '|' + uniqueKey;
+			}
+			
+			function getSelectionItem(selected, util, uniqueKey) {
+				var item = {
+					utilName: util,
+					uniqueKey: uniqueKey,
+					selected: selected
+				};
+				return item;
+			}
+			
+			function view(util, uniqueKey) {
+				var value = getSelectionItem(false, util, uniqueKey);
+				$('input#viewExport').val(JSON.stringify(value));
+				submitForm('viewExport');
+			}
+			
+			function updateSelection(exportMode, selected, util, uniqueKey, selectAllClass) {
+				var key = getSelectionKey(util, uniqueKey);
+				var value = getSelectionItem(selected, util, uniqueKey);
+				var list = (exportMode)? selectedExports : selectedImports;
+				var selector = (exportMode)? 'selectedExports' : 'selectedImports';
+				list[key] = value;
+				var out = [];
+				var valueList = Object.values(list);
+				for (var i in valueList) {
+					out.push(valueList[i]);
+				}				
+				$('input.' + selectAllClass).attr('checked', false);
+				$('input#' + selector).val(JSON.stringify(out));
+			}
+			
+			var selectAllState = false;
+			function selectAll(selectClass, value) {
+				if (selectClass != null) {
+					$('input[type="checkbox"].' + selectClass).attr('checked', value);
+				} else {
+					$('div.ConfigMigration input[type="checkbox"]').attr('checked', value);
+					selectAllState = value;
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div class="ConfigMigration">
+			<form action="ExportAction2.jspa" method="post" id="mainForm">
+				<input type="hidden" id="action" name="action" value=""/>
+				<input 	type="hidden" 
+						id="selectedExports" name="selectedExports" 
+						value="[]"/>
+				<input 	type="hidden" 
+						id="viewExport" name="viewExport" 
+						value=""/>
+				<div style="display: flex; flex-flow: column nowrap; max-height: 100%">
+					<!-- Toolbar -->
+					<div style="flex: 1 1 auto">
+						<div>
+							<input 	type="button" 
+									value="Select All/None"
+									onclick="selectAll(null, !selectAllState)"
+							/>
+							<input type="button" id="reload" value="Reload"/>
+							<input type="button" id="export" value="Export" onclick="submitForm('export')"/>
+							<input type="button" id="upload" value="Upload"/>
+							<input type="button" id="import" value="Import"/>
+						</div>
+						<div>
+							<span style="font-weight: bold">Object Type: </span>
+							<select id="objectType" name="objectType"
+									value="${action.getObjectType()}" 
+									style="width: 20%"
+									onchange="submitForm('objectType')">
+								#if ($action.getObjectType().length() == 0) 
+									<option selected value="">All</option>
+								#else
+									<option value="">All</option>
+								#end
+								#foreach ($item in $action.getObjectTypes().entrySet())
+									#if ($item.getValue() == $action.getObjectType())
+										<option selected value="${item.getValue()}">${item.getKey()}</option>
+									#else
+										<option value="${item.getValue()}">${item.getKey()}</option>
+									#end
+								#end
+							</select>
+						</div>
+					</div>
+					<!-- 3 columns -->
+					<div style="flex: 1 1 auto; max-height: 30vh; overflow-y: auto">
+						<table class="ConfigMigration" style="flex: 1 1 auto">
+							<tr>
+								<td width="45%">
+									<!-- filteredResult -->
+									<table class="ConfigMigration">
+										<thead>
+											<tr>
+												<td colspan="100%">
+													<span style="font-weight: bold">Filter: </span>
+													<input 	type="text" 
+															id="exportFilter" name="exportFilter"
+															value="${action.getExportFilter()}" 
+															style="width: 35%" 
+															onkeyup="$('input#exportFilterApply').attr('disabled', false)"/>
+													<input 	type="button"
+															id="exportFilterApply"
+															disabled
+															value="Apply"
+															onclick="submitForm('exportFilter')"/>
+												</td>
+											</tr>
+										</thead>
+										<tbody>
+										#foreach ($util in $action.getExportStore().getUtils())
+											#set ($showUtil = $true)
+											#if ($action.getObjectType().length() != 0)
+												#if (!$util.getImplementation().equals($action.getObjectType()))
+													#set ($showUtil = $false)
+												#end
+											#end
+											#if ($showUtil)			
+												#set ($selectClass = $util.getImplementation().replaceAll(".", "-"))
+												#set ($selectAllClass = $selectClass + "-All")
+												<tr>
+													<th colspan="100%">
+														<input 	type="checkbox"
+																class="${selectAllClass}"
+																onchange="selectAll('${selectClass}', this.checked)"
+														/>
+														${util.getName()}
+													</th>
+												</tr>
+												#if ($action.getExportStore().getTypeStore($util).size() == 0)
+													<tr>
+														<td colspan="100%">No objects found</td>
+													</tr>
+												#else
+													#set ($objFound = $false)
+													#foreach ($obj in $action.getExportStore().getTypeStore($util))
+														#if ($util.matchFilter($obj, $action.getExportFilter()))
+															#set ($objFound = $true)
+															#if ($obj.isSelected())
+																#set ($checked = "checked")
+															#else
+																#set ($checked = "")
+															#end
+															<tr>
+																<td>
+																	<input 	type="checkbox" 
+																			class="${selectClass}"
+																			$!{checked}
+																			onchange="updateSelection(
+																				true,
+																				this.checked,
+																				'${util.getImplementation()}', 
+																				'${obj.getUniqueKey()}',
+																				'${selectAllClass}')"/>
+																</td>
+																<td>
+																	<a href="#" onclick="view(
+																			'${util.getImplementation()}', 
+																			'${obj.getUniqueKey()}')">
+																		${obj.getConfigName()}
+																	</a>
+																</td>
+															</tr>
+														#end
+													#end
+													#if ($objFound == $false)
+														<tr>
+															<td colspan="2">No objects match filter</td>
+														</tr>
+													#end
+												#end
+											#end
+										#end
+										</tbody>
+									</table>
+								</td>
+								<td width="10%">
+								</td>
+								<td width="45%">
+								</td>
+							</tr>
+						</table>
+					</div>
+					<!-- Details -->
+					<div style="flex: 1 1 auto; max-height: 10vh; overflow-y: auto">
+						#if ($action.getViewName())
+							<span style="font-weight: bold">$!{action.getViewType()}: $!{action.getViewName()}</span>
+						#end
+					</div>
+					<!-- Details -->
+					<div style="flex: 1 1 auto; max-height: 20vh; overflow-y: auto">
+						#if ($action.getView())
+							<table class="ConfigMigration" style="flex: 1 1 auto">
+								<tbody>
+									#foreach ($item in $action.getView().entrySet())
+										<tr>
+											<th>$!{item.getKey()}</th>
+											<td>$!{item.getValue()}</td>
+										</tr>
+									#end
+								</tbody>
+							</table>
+						#end
+					</div>
+					$!{action.errorMessage}
+				</div>
+			</form>
+		</div>
+	</body>
+</html>
