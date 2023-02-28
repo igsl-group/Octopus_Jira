@@ -221,14 +221,16 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		List<?> objects = findObjectsByIQL("Name like \"\"");
-		for (Object ob : objects) {
-			ObjectBeanDTO item = new ObjectBeanDTO();
-			item.setJiraObject(ob);
-			if (!matchFilter(item, filter)) {
-				continue;
+		if (checkInsight()) {
+			List<?> objects = findObjectsByIQL("Name like \"\"");
+			for (Object ob : objects) {
+				ObjectBeanDTO item = new ObjectBeanDTO();
+				item.setJiraObject(ob);
+				if (!matchFilter(item, filter)) {
+					continue;
+				}
+				result.put(item.getUniqueKey(), item);
 			}
-			result.put(item.getUniqueKey(), item);
 		}
 		return result;
 	}
