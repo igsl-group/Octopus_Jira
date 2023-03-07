@@ -1,15 +1,26 @@
 package com.igsl.customapproval.delegation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.ofbiz.core.entity.GenericEntityException;
 
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.event.issue.IssueEventBundle;
+import com.atlassian.jira.event.issue.IssueEventBundleFactory;
+import com.atlassian.jira.event.issue.IssueEventManager;
+import com.atlassian.jira.issue.IssueManager;
+import com.atlassian.jira.issue.MutableIssue;
+import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserPropertyManager;
+import com.igsl.customapproval.CustomApprovalSetup;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -21,6 +32,10 @@ public class DelegationUtil {
 
 	private static final String PROPERTY_DELEGATION = "customApprovalDelegation";
 
+	public static final String DELEGATE_FROM_USER = "From";
+	public static final String DELEGATE_ADDED = "Added";
+	public static final String DELEGATE_REMOVED = "Removed";
+	
 	/**
 	 * Calculate no. of days in d1 - d2.
 	 * @param d1
@@ -93,21 +108,63 @@ public class DelegationUtil {
 		}
 		if (remove != null) {
 			list.remove(remove);
-			saveData(userKey, list);
+			saveData(userKey, list, remove, false);
 		}
 	}
 	
 	public static void addData(String userKey, DelegationSetting setting) {
 		List<DelegationSetting> list = loadData(userKey, false);
 		list.add(setting);
-		saveData(userKey, list);
+		saveData(userKey, list, setting, true);
 	}
 	
-	public static void saveData(String userKey, List<DelegationSetting> list) {
+	public static void saveData(String userKey, List<DelegationSetting> list, DelegationSetting delta, boolean added) {
 		String data = DelegationSetting.format(list);
 		LOGGER.debug("Saving property: " + data);
 		PropertySet ps = getPropertySet(userKey);
 		ps.setText(PROPERTY_DELEGATION, data);
+		// Get event type id
+		Long eventTypeId = CustomApprovalSetup.getCustomEventType();
+		if (eventTypeId != null) {
+			// Find a random issue to use
+			ProjectManager pm = ComponentAccessor.getProjectManager();
+			IssueManager im = ComponentAccessor.getIssueManager();
+			MutableIssue randomIssue = null;
+			for (Project p : pm.getProjects()) {
+				try {
+					Collection<Long> issueIds = im.getIssueIdsForProject(p.getId());
+					for (Long issueId : issueIds) {
+						randomIssue = im.getIssueObject(issueId);
+						if (randomIssue != null) {
+							break;
+						}
+					}
+				} catch (GenericEntityException e) {
+					// Ignored
+				}
+			}
+			if (randomIssue != null) {
+				ApplicationUser admin = CustomApprovalUtil.getAdminUser();
+				Map<String, Object> map = new HashMap<>();
+				map.put(DELEGATE_FROM_USER, delta.getFromUser());
+				if (added) {
+					map.put(DELEGATE_ADDED, delta.getDelegateToUser());
+				} else {
+					map.put(DELEGATE_REMOVED, delta.getDelegateToUser());
+				}
+				// Create issue event bundle
+				IssueEventBundleFactory bundleFactory = ComponentAccessor.getComponent(IssueEventBundleFactory.class);
+				IssueEventBundle bundle = bundleFactory.createWorkflowEventBundle(eventTypeId, randomIssue, admin, null, null, map, false, null);
+				// Raise event
+				IssueEventManager iem = ComponentAccessor.getIssueEventManager();
+				iem.dispatchEvent(bundle);
+				LOGGER.debug("Event triggered");
+			} else {
+				LOGGER.error("No issue found for use with event");
+			}
+		} else {
+			LOGGER.debug("Event type not found");
+		}
 	}
 	
 	public static List<DelegationSetting> loadData(String userKey, boolean removeOldRecords) {

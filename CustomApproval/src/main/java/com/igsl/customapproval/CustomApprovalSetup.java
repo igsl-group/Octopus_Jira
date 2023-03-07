@@ -18,6 +18,8 @@ import com.atlassian.jira.config.managedconfiguration.ConfigurationItemAccessLev
 import com.atlassian.jira.config.managedconfiguration.ManagedConfigurationItem;
 import com.atlassian.jira.config.managedconfiguration.ManagedConfigurationItemBuilder;
 import com.atlassian.jira.config.managedconfiguration.ManagedConfigurationItemService;
+import com.atlassian.jira.event.type.EventType;
+import com.atlassian.jira.event.type.EventTypeManager;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.context.GlobalIssueContext;
 import com.atlassian.jira.issue.context.JiraContextNode;
@@ -32,6 +34,10 @@ import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
 public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	
 	private static final Logger LOGGER = Logger.getLogger(CustomApprovalSetup.class);
+	
+	private static final String GENERIC_EVENT = "Generic Event";
+	private static final String DELEGATOR_CHANGED_EVENT = "Custom Approval Delegator Changed";
+	private static final String DELEGATOR_CHANGED_EVENT_DESC = "Raised when delegator settings have been updated";
 	
 	private EventPublisher eventPublisher;
 	
@@ -160,6 +166,24 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 		}
 	}
 	
+	public static Long getCustomEventType() {
+		EventTypeManager evm = ComponentAccessor.getEventTypeManager();
+		for (EventType et : evm.getEventTypes()) {
+			if (DELEGATOR_CHANGED_EVENT.equals(et.getName())) {
+				return et.getId();
+			}
+		}
+		return null;
+	}
+	
+	private static void createCustomEvent() {
+		EventTypeManager evm = ComponentAccessor.getEventTypeManager();
+		if (!evm.isEventTypeExists(DELEGATOR_CHANGED_EVENT)) {
+			EventType ev = new EventType(DELEGATOR_CHANGED_EVENT, DELEGATOR_CHANGED_EVENT_DESC, EventType.ISSUE_GENERICEVENT_ID);
+			evm.addEventType(ev);
+		}
+	}
+	
 	// PluginInstalledEvent, PluginUninstallingEvent and PluginUninstalledEvent 
 	// The above events do not work (at least not in SDK), never invoked
 	
@@ -173,6 +197,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 		LOGGER.debug("PluginEvent enabled: " + event.getPlugin().getKey());
 		if (CustomApprovalUtil.PLUGIN_KEY.equals(event.getPlugin().getKey())) {
 			CustomApprovalSetup.createCustomFields();
+			CustomApprovalSetup.createCustomEvent();
 		}
 		CustomApprovalUtil.createScheduledJob(CustomApprovalUtil.getJobFrequency());
 	}
