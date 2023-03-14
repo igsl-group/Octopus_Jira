@@ -14,11 +14,12 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.igsl.configmigration.export.v1.ExportData;
 
-import net.java.ao.EntityManager;
 import net.java.ao.Query;
 
 public class ManageExport extends JiraWebActionSupport {
 
+	private static final long serialVersionUID = 1L;
+	
 	private static final String ACTION_DELETE = "delete";
 	private static final String ACTION_DOWNLOAD = "download";
 	
