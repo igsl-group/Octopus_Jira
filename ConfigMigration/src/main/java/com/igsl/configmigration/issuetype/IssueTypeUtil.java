@@ -10,6 +10,7 @@ import com.atlassian.jira.config.IssueTypeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
@@ -86,7 +87,7 @@ public class IssueTypeUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		return true;
 	}
-
+	
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();

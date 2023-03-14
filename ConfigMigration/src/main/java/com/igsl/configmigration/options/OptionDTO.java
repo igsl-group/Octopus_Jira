@@ -3,6 +3,8 @@ package com.igsl.configmigration.options;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -11,6 +13,7 @@ import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
@@ -50,11 +53,19 @@ public class OptionDTO extends JiraConfigDTO {
 			this.childOptions.add(item);
 		}
 		this.sequence = obj.getSequence();
+		this.uniqueKey = this.value;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getValue();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Parent ID", new JiraConfigProperty(this.parentId));
+		r.put("Option ID", new JiraConfigProperty(this.optionId));
+		r.put("Value", new JiraConfigProperty(this.value));
+		r.put("Disabled", new JiraConfigProperty(this.disabled));
+		r.put("Child Options", new JiraConfigProperty(OptionUtil.class, this.childOptions));
+		r.put("Sequence", new JiraConfigProperty(this.sequence));
+		return r;
 	}
 
 	@Override

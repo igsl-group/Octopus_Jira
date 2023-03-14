@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -15,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -42,6 +45,16 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 		}
 		this.name = obj.getName();
 		this.referenceMode = obj.getReferenceMode();
+		this.uniqueKey = this.name;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Artifact Size", new JiraConfigProperty(this.artifactSize));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Reference Mode", new JiraConfigProperty(this.referenceMode));
+		return r;
 	}
 	
 	@JsonIgnore
@@ -50,22 +63,10 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
-	}
-
-	@Override
 	public String getInternalId() {
 		return this.getName();
 	}
 
-	@Override
-	public List<String> getMapIgnoredMethods() {
-		return Arrays.asList(
-				"getArtifactData",
-				"getArtifactDataBytes");
-	}
-	
 	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
@@ -100,7 +101,7 @@ public class PluginArtifactDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return PluginArtifactUtil.class;
 	}
 
 	@Override

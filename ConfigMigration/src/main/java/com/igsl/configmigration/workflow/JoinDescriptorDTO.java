@@ -3,10 +3,12 @@ package com.igsl.configmigration.workflow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.JoinDescriptor;
 
@@ -33,6 +35,7 @@ public class JoinDescriptorDTO extends AbstractDescriptorDTO {
 		//o.getParent();
 		this.result = new ResultDescriptorDTO();
 		this.result.setJiraObject(o.getResult());
+		this.uniqueKey = Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -48,11 +51,6 @@ public class JoinDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -90,6 +88,12 @@ public class JoinDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setResult(ResultDescriptorDTO result) {
 		this.result = result;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -2,10 +2,12 @@ package com.igsl.configmigration.workflow;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.PermissionDescriptor;
 
@@ -26,6 +28,7 @@ public class PermissionDescriptorDTO extends AbstractDescriptorDTO {
 		//o.getParent();
 		this.restriction = new RestrictionDescriptorDTO();
 		this.restriction.setJiraObject(o.getRestriction());
+		this.uniqueKey = Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -43,11 +46,6 @@ public class PermissionDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -85,6 +83,12 @@ public class PermissionDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setRestriction(RestrictionDescriptorDTO restriction) {
 		this.restriction = restriction;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -2,11 +2,14 @@ package com.igsl.configmigration.priority;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.priority.Priority;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -19,7 +22,7 @@ public class PriorityDTO extends JiraConfigDTO {
 	private String description;
 	private String name;
 	private String statusColor;
-	private Long sequence;	// TODO What is this for? It is not used in create/update
+	private Long sequence;
 	private String iconUrl;
 	
 	@Override
@@ -31,13 +34,21 @@ public class PriorityDTO extends JiraConfigDTO {
 		this.statusColor = obj.getStatusColor();
 		this.sequence = obj.getSequence();
 		this.iconUrl = obj.getIconUrl();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Status Color", new JiraConfigProperty(this.statusColor));
+		r.put("Sequence", new JiraConfigProperty(this.sequence));
+		r.put("Icon URL", new JiraConfigProperty(this.iconUrl));
+		return r;
 	}
-
+	
 	@Override
 	public String getInternalId() {
 		return this.getId();

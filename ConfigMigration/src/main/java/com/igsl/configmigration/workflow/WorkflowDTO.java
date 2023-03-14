@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.opensymphony.workflow.loader.ActionDescriptor;
@@ -52,11 +54,7 @@ public class WorkflowDTO extends JiraConfigDTO {
 		this.author.setJiraObject(wf.getUpdateAuthor());
 		this.authorName = wf.getUpdateAuthorName();
 		this.updatedDate = wf.getUpdatedDate();
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getName();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
@@ -167,6 +165,12 @@ public class WorkflowDTO extends JiraConfigDTO {
 
 	public void setActions(Collection<ActionDescriptorDTO> actions) {
 		this.actions = actions;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

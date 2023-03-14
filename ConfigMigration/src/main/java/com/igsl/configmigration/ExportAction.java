@@ -74,7 +74,7 @@ public class ExportAction extends JiraWebActionSupport {
 	
 	private void initSessionData() throws Exception {
 		sessionData = new LinkedTreeMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList()) {
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(true)) {
 			SessionData sd = new SessionData(util);
 			sessionData.put(util.getClass().getCanonicalName(), sd);
 		}
@@ -104,11 +104,11 @@ public class ExportAction extends JiraWebActionSupport {
 		if (action == null || sessionData == null) {
 			initSessionData();
 			
-			// TODO Load all sections
-			for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
-				SessionData data = sessionData.get(entry.getKey());
-				data.getExportData().putAll(data.getUtil().search(null));
-			}
+//			// TODO Load all sections
+//			for (Map.Entry<String, SessionData> entry : sessionData.entrySet()) {
+//				SessionData data = sessionData.get(entry.getKey());
+//				data.getExportData().putAll(data.getUtil().search(null, null));
+//			}
 		}
 		
 		// Save selection

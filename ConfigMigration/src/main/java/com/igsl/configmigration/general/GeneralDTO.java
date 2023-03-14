@@ -2,10 +2,13 @@ package com.igsl.configmigration.general;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -20,6 +23,14 @@ public class GeneralDTO extends JiraConfigDTO {
 	private String valueClass;
 	
 	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Value", new JiraConfigProperty(this.value));
+		r.put("Value Class", new JiraConfigProperty(this.valueClass));
+		return r;
+	}
+	
+	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList("getValue");
 	}
@@ -32,23 +43,12 @@ public class GeneralDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		if (value != null) {
-			return Integer.toString(value.hashCode());
-		}
-		return null;
+		return GeneralUtil.class;
 	}
 
 	@Override
 	public String getInternalId() {
-		if (value != null) {
-			return Integer.toString(value.hashCode());
-		}
-		return null;
+		return this.uniqueKey;
 	}
 
 	@Override
@@ -57,6 +57,7 @@ public class GeneralDTO extends JiraConfigDTO {
 		if (this.value != null) {
 			this.valueClass = this.value.getClass().getCanonicalName();
 		}
+		this.uniqueKey = Integer.toString(this.hashCode());
 	}
 
 	public String getValueClass() {

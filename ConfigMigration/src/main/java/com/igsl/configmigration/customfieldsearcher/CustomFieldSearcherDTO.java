@@ -2,11 +2,14 @@ package com.igsl.configmigration.customfieldsearcher;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -37,11 +40,14 @@ public class CustomFieldSearcherDTO extends JiraConfigDTO {
 //		obj.getSearchInformation();
 //		obj.getSearchInputTransformer();
 //		obj.getSearchRenderer();
+		this.uniqueKey = this.completeKey;
 	}
 	
 	@Override
-	public String getUniqueKey() {
-		return this.getCompleteKey();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Complete Key", new JiraConfigProperty(this.completeKey));
+		return r;
 	}
 
 	@Override

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.option.Option;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -46,11 +49,15 @@ public class OptionSetDTO extends JiraConfigDTO {
 			this.options.add(item);
 		}
 		Collections.sort(this.optionIds);
+		this.uniqueKey = Long.toString(this.hashCode());
 	}
 		
 	@Override
-	public String getUniqueKey() {
-		return optionIds.toString();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Option IDs", new JiraConfigProperty(this.optionIds));
+		r.put("Options", new JiraConfigProperty(OptionUtil.class, this.options));
+		return r;
 	}
 
 	@Override

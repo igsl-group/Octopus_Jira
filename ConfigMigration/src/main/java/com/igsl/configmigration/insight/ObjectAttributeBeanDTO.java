@@ -3,10 +3,13 @@ package com.igsl.configmigration.insight;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeBean;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeValueBean;
@@ -31,11 +34,18 @@ public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 		}
 		this.objectId = o.getObjectId();
 		this.objectTypeAttributeId = o.getObjectTypeAttributeId();
+		this.uniqueKey = Long.toString(this.hashCode());
 	}
-
+	
 	@Override
-	public String getUniqueKey() {
-		return Long.toString(this.getId());
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Object Attribute Value Beans", 
+				new JiraConfigProperty(ObjectAttributeValueBeanUtil.class, this.objectAttributeValueBeans));
+		r.put("Object ID", new JiraConfigProperty(this.objectId));
+		r.put("Object Type Attribute ID", new JiraConfigProperty(this.objectTypeAttributeId));
+		return r;
 	}
 
 	@Override
@@ -83,8 +93,7 @@ public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return ObjectAttributeBeanUtil.class;
 	}
 
 	@Override

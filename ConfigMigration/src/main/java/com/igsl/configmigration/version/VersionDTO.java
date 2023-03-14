@@ -3,11 +3,14 @@ package com.igsl.configmigration.version;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.project.version.Version;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -35,13 +38,24 @@ public class VersionDTO extends JiraConfigDTO {
 		this.startDate = o.getStartDate();
 		this.released = o.isReleased();
 		this.archived = o.isArchived();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Project ID", new JiraConfigProperty(this.projectId));
+		r.put("Release Date", new JiraConfigProperty(this.releaseDate));
+		r.put("Sequence", new JiraConfigProperty(this.sequence));
+		r.put("Start Date", new JiraConfigProperty(this.startDate));
+		r.put("Released", new JiraConfigProperty(this.released));
+		r.put("Archived", new JiraConfigProperty(this.archived));
+		return r;
 	}
-
+	
 	@Override
 	public String getInternalId() {
 		return Long.toString(this.getId());

@@ -2,6 +2,8 @@ package com.igsl.configmigration.avatar;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.avatar.Avatar;
 import com.atlassian.jira.avatar.AvatarManager;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -25,6 +28,16 @@ public class AvatarDTO extends JiraConfigDTO {
 	protected String iconType;
 	protected String contentType;
 	protected String imageData;
+	
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Owner", new JiraConfigProperty(owner));
+		r.put("File Name", new JiraConfigProperty(fileName));
+		r.put("Content Type", new JiraConfigProperty(contentType));
+		r.put("Icon Type", new JiraConfigProperty(iconType));
+		return r;
+	}
 	
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
@@ -43,16 +56,12 @@ public class AvatarDTO extends JiraConfigDTO {
 		Base64InputStreamConsumer stream = new Base64InputStreamConsumer(false);
 		AVATAR_MANAGER.readAvatarData(o, size, stream);
 		this.imageData = stream.getEncoded();
+		this.uniqueKey = o.getFileName();
 	}
 	
 	@JsonIgnore
 	public IconType getIconTypeObject() {
 		return IconType.of(this.getIconType());
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getFileName();
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import com.atlassian.jira.icon.IconOwningObjectId;
 import com.atlassian.jira.icon.IconType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
@@ -86,7 +87,7 @@ public class AvatarUtil extends JiraConfigUtil {
 						src.getFileName(), src.getContentType(), src.getIconTypeObject(), owner, bais, null);
 			LOGGER.debug("Avatar created from data: " + createdJira);
 			AvatarDTO created = new AvatarDTO();
-			created.setJiraObject(createdJira);
+			created.setJiraObject(null, createdJira);
 			return created;
 		}
 	}
@@ -109,18 +110,30 @@ public class AvatarUtil extends JiraConfigUtil {
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
+			try {
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			} catch (Exception ex) {
+				LOGGER.error("Error loading system avatar (issue type)", ex);
+			}
  		}
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.PROJECT_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
- 		}
+			try {
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			} catch (Exception ex) {
+				LOGGER.error("Error loading system avatar (project)", ex);
+			}
+		}
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.USER_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
-			item.setJiraObject(av, params);
-			result.put(item.getUniqueKey(), item); 
+			try {
+				item.setJiraObject(av, params);
+				result.put(item.getUniqueKey(), item); 
+			} catch (Exception ex) {
+				LOGGER.error("Error loading user avatar", ex);
+			}
  		}
 		// Find among custom avatars of owner
 		String avatarOwner = null;
@@ -128,18 +141,30 @@ public class AvatarUtil extends JiraConfigUtil {
 			avatarOwner = (String) params[0];
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.ISSUE_TYPE_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				try {
+					item.setJiraObject(av, params);
+					result.put(item.getUniqueKey(), item); 
+				} catch (Exception ex) {
+					LOGGER.error("Error loading custom avatar (issue type)", ex);
+				}
 			}
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.PROJECT_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				try {
+					item.setJiraObject(av, params);
+					result.put(item.getUniqueKey(), item); 
+				} catch (Exception ex) {
+					LOGGER.error("Error loading custom avatar (project)", ex);
+				}
 			}
 			for (Avatar av : MANAGER.getCustomAvatarsForOwner(IconType.USER_ICON_TYPE, avatarOwner)) {
 				AvatarDTO item = new AvatarDTO();
-				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				try {
+					item.setJiraObject(av, params);
+					result.put(item.getUniqueKey(), item); 
+				} catch (Exception ex) {
+					LOGGER.error("Error loading custom avatar (user)", ex);
+				}
 			}
 		}
 		return result;

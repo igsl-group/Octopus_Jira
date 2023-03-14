@@ -1,104 +1,53 @@
 package com.igsl.configmigration;
 
-import java.util.Arrays;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-/**
- * A bidirectional reference for JiraConfigDTO parent-child relationships
- */
-public class JiraConfigRef extends JiraConfigDTO {
-
-	@JsonIgnore
-	private JiraConfigDTO parent;
-	@JsonIgnore
-	private JiraConfigDTO child;
+public class JiraConfigRef {
 	
-	private String parentInternalId;
-	private String parentUniqueKey;
-	private String childInternalId;
-	private String childUniqueKey;
+	private String display;
+	private String util;
+	private String type;
+	private String uniqueKey;
+	private String uniqueKeyJS;
 	
-	public void setJiraConfigDTO(JiraConfigDTO parent, JiraConfigDTO child) {
-		this.parent = parent;
-		this.parentInternalId = parent.getInternalId();
-		this.parentUniqueKey = parent.getUniqueKey();
-		this.child = child;
-		if (child != null) {
-			this.childInternalId = child.getInternalId();
-			this.childUniqueKey = child.getUniqueKey();
-			this.child.addReference(this);
+	public JiraConfigRef(JiraConfigDTO dto) {
+		if (dto != null) {
+			this.display = dto.getConfigName();
+			this.util = dto.getUtilClass().getCanonicalName();
+			this.type = JiraConfigTypeRegistry.getConfigUtil(dto.getUtilClass()).getName();
+			this.uniqueKey = dto.getUniqueKey();
+			this.uniqueKeyJS = dto.getUniqueKeyJS();
 		}
 	}
-	
-	public void updateChild(JiraConfigDTO child) {
-		if (this.child != null) {
-			this.child.removeReference(this);
-			this.childInternalId = null;
-			this.childUniqueKey = null;
-		}
-		this.child = child;
-		if (child != null) {
-			this.childUniqueKey = child.getUniqueKey();
-			this.child.addReference(this);
-		}
+	public String getRefKey() {
+		return this.util + "-" + this.uniqueKey;
 	}
-	
-	@Override
-	protected List<String> getCompareMethods() {
-		return Arrays.asList(
-				"getParent",
-				"getChild");
+	public String getDisplay() {
+		return display;
 	}
-
-	@Override
-	public Class<?> getJiraClass() {
-		return null;
+	public String getUtil() {
+		return util;
 	}
-
-	@Override
-	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
-	}
-
-	@Override
 	public String getUniqueKey() {
-		return getChildUniqueKey();
+		return uniqueKey;
 	}
-
-	@Override
-	public String getInternalId() {
-		return getChildInternalId();
+	public String getType() {
+		return type;
 	}
-
-	@Override
-	protected void fromJiraObject(Object obj) throws Exception {
-		throw new IllegalStateException("JiraConfigRef does not store Jira object");
+	public String getUniqueKeyJS() {
+		return uniqueKeyJS;
 	}
-
-	public JiraConfigDTO getParent() {
-		return parent;
+	public void setDisplay(String display) {
+		this.display = display;
 	}
-
-	public JiraConfigDTO getChild() {
-		return child;
+	public void setUtil(String util) {
+		this.util = util;
 	}
-
-	public String getParentInternalId() {
-		return parentInternalId;
+	public void setType(String type) {
+		this.type = type;
 	}
-
-	public String getParentUniqueKey() {
-		return parentUniqueKey;
+	public void setUniqueKey(String uniqueKey) {
+		this.uniqueKey = uniqueKey;
 	}
-
-	public String getChildInternalId() {
-		return childInternalId;
+	public void setUniqueKeyJS(String uniqueKeyJS) {
+		this.uniqueKeyJS = uniqueKeyJS;
 	}
-
-	public String getChildUniqueKey() {
-		return childUniqueKey;
-	}
-
 }

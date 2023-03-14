@@ -76,7 +76,7 @@ public class ImportAction extends JiraWebActionSupport {
 	
 	private void initSessionData() throws Exception {
 		sessionData = new LinkedTreeMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList()) {
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(true)) {
 			SessionData sd = new SessionData(util);
 			sessionData.put(util.getClass().getCanonicalName(), sd);
 		}
@@ -154,7 +154,7 @@ public class ImportAction extends JiraWebActionSupport {
 			for (Map.Entry<String, SessionData> entry : imported.entrySet()) {
 				SessionData sd = this.sessionData.get(entry.getKey());
 				if (sd != null) {
-					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().search(null);
+					Map<String, JiraConfigDTO> serverDataList = sd.getUtil().search(null, null);
 					for (Map.Entry<String, ImportData> item : sd.getImportData().entrySet()) {
 						String itemKey = item.getValue().getData().getUniqueKey();
 						this.debug += "Looking for " + itemKey + "\n";

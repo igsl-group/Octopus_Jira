@@ -3,10 +3,12 @@ package com.igsl.configmigration.workflow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.ConditionsDescriptor;
 
@@ -32,6 +34,7 @@ public class ConditionsDescriptorDTO extends AbstractDescriptorDTO {
 		this.id = cd.getId();
 		//cd.getParent();
 		this.type = cd.getType();
+		this.uniqueKey = Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -47,11 +50,6 @@ public class ConditionsDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -89,6 +87,12 @@ public class ConditionsDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setConditions(List<JiraConfigDTO> conditions) {
 		this.conditions = conditions;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

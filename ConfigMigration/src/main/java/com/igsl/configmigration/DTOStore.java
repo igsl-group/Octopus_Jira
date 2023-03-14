@@ -2,42 +2,88 @@ package com.igsl.configmigration;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 /**
  * Store for JiraConfigDTO
  * 
- * Two layers of map, first by JiraConfigDTO class, second by JiraConfigDTO's unique key
+ * Two layers of map, first by JiraConfigUtil class, second by JiraConfigDTO's unique key
  */
 public class DTOStore {
 
 	private static final Logger LOGGER = Logger.getLogger(DTOStore.class);
 	
-	// Sort by type - always need this, so okay to split storage into types
-	private Map<String, Map<String, JiraConfigDTO>> store;
+	// Group DTOs by Util type
+	protected Map<String, Map<String, JiraConfigDTO>> store;
 	
-	/**
-	 *  Is this store for export or import
-	 *  
-	 *  Export:
-	 *  - DTOs are looked up by internal ID
-	 *  
-	 *  Import:
-	 *  - DTOs are looked up by unique key (to compare with deserialized data)
-	 */
-	private boolean export;
-	
-	public DTOStore(boolean export) {
-		this.export = export;
+	public DTOStore() {
 		store = new LinkedHashMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(true)) {
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
 			store.put(util.getImplementation(), new LinkedHashMap<String, JiraConfigDTO>());
 		}
+	}
+	
+	/**
+	 * Get no. of objects for a specific type.
+	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
+	 * @return long
+	 */
+	public final long getTotalCount(String utilName) {
+		long count = 0;
+		if (utilName != null && !utilName.isEmpty()) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
+			if (util != null && util.isVisible()) {
+				Map<String, JiraConfigDTO> store = getTypeStore(utilName);
+				if (store != null) {
+					count = store.size();
+				}
+			}
+		} else {
+			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
+				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
+				if (util != null && util.isVisible()) {
+					count += s.getValue().size();
+				}
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Get no. of selected objects for a specific type.
+	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
+	 * @return long
+	 */
+	public final long getSelectedCount(String utilName) {
+		long count = 0;
+		if (utilName != null && !utilName.isEmpty()) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
+			if (util != null && util.isVisible()) {
+				Map<String, JiraConfigDTO> store = getTypeStore(utilName);
+				if (store != null) {
+					for (JiraConfigDTO dto : store.values()) {
+						if (dto.isSelected()) {
+							count++;
+						}
+					}
+				}
+			}
+		} else {
+			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
+				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
+				if (util != null && util.isVisible()) {
+					for (JiraConfigDTO dto : s.getValue().values()) {
+						if (dto.isSelected()) {
+							count++;
+						}
+					}
+				}
+			}
+		}
+		return count;
 	}
 	
 	/**
@@ -45,7 +91,7 @@ public class DTOStore {
 	 * @param utilName JiraConfigUtil class name
 	 * @return Map<String, JiraConfigDTO>
 	 */
-	public Map<String, JiraConfigDTO> getTypeStore(String utilName) {
+	public final Map<String, JiraConfigDTO> getTypeStore(String utilName) {
 		if (store.containsKey(utilName)) {
 			LOGGER.debug("Type store found for String: " + utilName);
 			return store.get(utilName);
@@ -58,7 +104,7 @@ public class DTOStore {
 	 * @param util JiraConfigUtil
 	 * @return Map<String, JiraConfigDTO>
 	 */
-	public Map<String, JiraConfigDTO> getTypeStore(JiraConfigUtil util) {
+	public final Map<String, JiraConfigDTO> getTypeStore(JiraConfigUtil util) {
 		if (store.containsKey(util.getImplementation())) {
 			LOGGER.debug("Type store found for util: " + util);
 			return store.get(util.getImplementation());
@@ -70,25 +116,41 @@ public class DTOStore {
 	 * Get list of registered JiraConfigUtil
 	 * @return Unmodifiable Collection of JiraConfigUtil
 	 */
-	public Collection<JiraConfigUtil> getUtils() {
+	public final Collection<JiraConfigUtil> getUtils() {
 		return Collections.unmodifiableCollection(JiraConfigTypeRegistry.getConfigUtilList(true));
 	}
 
-	private String getDTOKey(JiraConfigDTO dto) {
-		if (export) {
+	protected String getDTOKey(JiraConfigDTO dto) {
+		if (dto != null) {
 			return dto.getUniqueKey();
-		} else {
-			return dto.getInternalId();
-		}
+		} 
+		return null;
 	}
 	
 	/**
 	 * Empties store.
 	 */
-	public void clear() {
+	public final void clear() {
 		for (Map<String, JiraConfigDTO> typeStore : store.values()) {
 			typeStore.clear();
 		}
+	}
+	
+	public final JiraConfigDTO checkAndRegister(JiraConfigDTO dto) 
+			throws NullPointerException, IllegalStateException, IllegalArgumentException {
+		if (dto == null) {
+			throw new NullPointerException("DTO cannot be null");
+		}
+		Map<String, JiraConfigDTO> s = getTypeStore(dto.getUtilClass().getCanonicalName());
+		if (s == null) { 
+			throw new IllegalStateException("Store cannot be located for class " + dto.getClass().getCanonicalName());
+		}
+		String key = getDTOKey(dto);
+		if (s.containsKey(key)) { 
+			return s.get(key);
+		}
+		s.put(key, dto);
+		return dto;
 	}
 	
 	/**
@@ -100,7 +162,7 @@ public class DTOStore {
 	 * @throws IllegalStateException If store cannot be found for JiraConfigDTO type
 	 * @throws IllegalArgumentException If store already contains DTO with same key
 	 */
-	public void register(JiraConfigDTO dto) 
+	public final void register(JiraConfigDTO dto) 
 			throws NullPointerException, IllegalStateException, IllegalArgumentException {
 		if (dto == null) {
 			throw new NullPointerException("DTO cannot be null");
@@ -124,7 +186,7 @@ public class DTOStore {
 	 * @throws NullPointerException If provided DTO is null
 	 * @throws IllegalStateException If store cannot be found for JiraConfigDTO type
 	 */
-	public boolean unregister(JiraConfigDTO dto) 
+	public final boolean unregister(JiraConfigDTO dto) 
 			throws NullPointerException, IllegalStateException {
 		if (dto == null) {
 			throw new NullPointerException("DTO cannot be null");
@@ -144,7 +206,7 @@ public class DTOStore {
 	 * @throws NullPointerException If provided DTO is null
 	 * @throws IllegalStateException If store cannot be found for JiraConfigDTO type
 	 */
-	public JiraConfigDTO check(JiraConfigDTO dto) throws NullPointerException, IllegalStateException {
+	public final JiraConfigDTO check(JiraConfigDTO dto) throws NullPointerException, IllegalStateException {
 		if (dto == null) {
 			throw new NullPointerException("DTO cannot be null");
 		}

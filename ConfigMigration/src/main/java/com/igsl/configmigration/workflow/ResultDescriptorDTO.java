@@ -3,10 +3,12 @@ package com.igsl.configmigration.workflow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.ResultDescriptor;
 
@@ -62,6 +64,7 @@ public class ResultDescriptorDTO extends AbstractDescriptorDTO {
 				this.validators.add(dto);
 			}
 		}
+		this.uniqueKey = this.displayName;
 	}
 
 	@Override
@@ -79,11 +82,6 @@ public class ResultDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getDisplayName();
 	}
 
 	@Override
@@ -193,6 +191,12 @@ public class ResultDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setValidators(List<JiraConfigDTO> validators) {
 		this.validators = validators;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

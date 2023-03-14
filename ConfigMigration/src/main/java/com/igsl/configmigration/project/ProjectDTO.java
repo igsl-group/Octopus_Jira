@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.issue.issuetype.IssueType;
@@ -14,13 +16,20 @@ import com.atlassian.jira.project.version.Version;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
+import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
+import com.igsl.configmigration.avatar.AvatarUtil;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
+import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryDTO;
+import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
 import com.igsl.configmigration.projectcomponent.ProjectComponentDTO;
+import com.igsl.configmigration.projectcomponent.ProjectComponentUtil;
 import com.igsl.configmigration.version.VersionDTO;
+import com.igsl.configmigration.version.VersionUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectDTO extends JiraConfigDTO {
@@ -86,11 +95,31 @@ public class ProjectDTO extends JiraConfigDTO {
 			dto.setJiraObject(item);
 			this.versions.add(dto);
 		}
+		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Archived By", new JiraConfigProperty(ApplicationUserUtil.class, this.archivedBy));
+		r.put("Archived Date", new JiraConfigProperty(this.archivedDate));
+		r.put("Assignee Type", new JiraConfigProperty(this.assigneeType));
+		r.put("Avatar", new JiraConfigProperty(AvatarUtil.class, this.avatar));
+		r.put("Project Components", new JiraConfigProperty(ProjectComponentUtil.class, this.components));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Email", new JiraConfigProperty(this.email));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Issue Types", new JiraConfigProperty(IssueTypeUtil.class, this.issueTypes));
+		r.put("Key", new JiraConfigProperty(this.key));
+		r.put("Leader User Key", new JiraConfigProperty(this.leadUserKey));
+		r.put("Leader User Name", new JiraConfigProperty(this.leadUserName));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Original Key", new JiraConfigProperty(this.originalKey));
+		r.put("Project Category", new JiraConfigProperty(ProjectCategoryUtil.class, this.category));
+		r.put("Project Type Key", new JiraConfigProperty(ProjectTypeKeyUtil.class, this.projectTypeKey));
+		r.put("URL", new JiraConfigProperty(this.url));
+		r.put("Versions", new JiraConfigProperty(VersionUtil.class, this.versions));
+		return r;
 	}
 
 	@Override

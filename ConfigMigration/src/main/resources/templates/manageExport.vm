@@ -1,0 +1,69 @@
+<html>
+	<head>
+		<title>Manage Exports</title>
+		<script type="text/javascript">
+			function downloadExport(id) {
+				// Create link to new tab and trigger it
+				var element = document.createElement('a');
+				element.setAttribute(
+						'href', 
+						AJS.contextPath() + '/plugins/servlet/configmigrationdownload?id=' + id);
+				document.body.appendChild(element);
+				element.click();
+				document.body.removeChild(element);
+			}
+		
+			function deleteExport(id) {
+				$('input#action').val('delete');
+				$('input#idList').val(id);
+				document.forms['main'].submit();
+			}
+		</script>
+	</head>
+	<body>
+		<div class="ConfigMigration">
+			<form action="ManageExport.jspa" method="POST" id="main">
+				<input type="hidden" id="action" name="action" value=""/>
+				<input type="hidden" id="idList" name="idList" value=""/>
+				<table>
+					<thead>
+						<th>Description</th>
+						<th>Export By</th>
+						<th>Export Date</th>
+						<th></th>
+					</thead>
+					<tbody>
+						#if ($action.getExportData().size() != 0)
+							#foreach ($item in $action.getExportData())
+								#if ($action.getAutoDownload() == $item.getID())
+									<tr class="highlight">
+								#else
+									<tr>
+								#end
+									<td>$!{item.getDescription()}</td>
+									<td>$!{action.getUserInfo($item.getExportUser())}</td>
+									<td>$!{action.formatDate($item.getExportDate())}</td>	
+									<td>
+										<input type="button" value="Download" 
+											onclick="downloadExport('${item.getID()}')"/>
+										<input type="button" value="Delete" 
+											onclick="deleteExport('${item.getID()}')"/>
+									</td>				
+								</tr>
+							#end
+						#else
+							<tr>
+								<td colspan="100%">No Export Data</td>
+							</tr>
+						#end
+					</tbody>
+				</table>
+			</form>
+		</div>
+		<script type="text/javascript">
+			#if ($action.getAutoDownload())
+				downloadExport(${action.getAutoDownload()});
+			#end
+		</script>
+	</body>
+</html>

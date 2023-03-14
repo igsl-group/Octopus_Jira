@@ -3,6 +3,8 @@ package com.igsl.configmigration.issuetypescheme;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -18,10 +20,14 @@ import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
+import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.project.ProjectDTO;
+import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueTypeSchemeDTO extends JiraConfigDTO {
@@ -71,14 +77,30 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 			LOGGER.debug("Object Key: " + item.getObjectKey());
 			LOGGER.debug("Type: " + item.getType());
 		}
-
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Associated Issue Types", new JiraConfigProperty(IssueTypeUtil.class, this.associatedIssueTypes));
+		r.put("Associated Projects", new JiraConfigProperty(ProjectUtil.class, this.associatedProjects));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Field Config", new JiraConfigProperty(FieldConfigUtil.class, this.fieldConfig));
+		return r;
 	}
 
+	protected void setupRelatedObjects() throws Exception {
+		super.setupRelatedObjects();
+		// Add self to associated Project's related object list
+		for (ProjectDTO proj : this.associatedProjects) {
+			proj.addRelatedObject(this);
+			removeRelatedObject(proj);
+		}
+	}
+	
 	@Override
 	public String getInternalId() {
 		return Long.toString(this.getId());

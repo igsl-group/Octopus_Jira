@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.ValidatorDescriptor;
 
@@ -27,6 +28,7 @@ public class ValidatorDescriptorDTO extends AbstractDescriptorDTO {
 		this.name = o.getName();
 		//o.getParent();
 		this.type = o.getType();
+		this.uniqueKey = Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -45,11 +47,6 @@ public class ValidatorDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -95,6 +92,12 @@ public class ValidatorDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setType(String type) {
 		this.type = type;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

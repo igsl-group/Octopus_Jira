@@ -3,10 +3,13 @@ package com.igsl.configmigration.insight;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeValueBean;
 
@@ -37,11 +40,23 @@ public class ObjectAttributeValueBeanDTO extends JiraConfigDTO {
 		this.referencedObjectBeanId = o.getReferencedObjectBeanId();
 		this.textValue = o.getTextValue();
 		this.value = o.getValue();
+		this.uniqueKey = Long.toString(this.hashCode());
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return Long.toString(this.getId());
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Additional Value", new JiraConfigProperty(this.additionalValue));
+		r.put("Boolean Value", new JiraConfigProperty(this.booleanValue));
+		r.put("Date Value", new JiraConfigProperty(this.dateValue));
+		r.put("Double Value", new JiraConfigProperty(this.doubleValue));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Integer Value", new JiraConfigProperty(this.integerValue));
+		r.put("Invalid Value", new JiraConfigProperty(this.invalidValue));
+		r.put("Referenced Object Bean ID", new JiraConfigProperty(this.referencedObjectBeanId));
+		r.put("Text Value", new JiraConfigProperty(this.textValue));
+		r.put("Value", new JiraConfigProperty(this.value));
+		return r;
 	}
 
 	@Override
@@ -145,8 +160,7 @@ public class ObjectAttributeValueBeanDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return ObjectAttributeValueBeanUtil.class;
 	}
 
 	@Override

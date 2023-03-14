@@ -49,35 +49,136 @@
 				submitForm('viewExport');
 			}
 			
-			function updateSelection(exportMode, selected, util, uniqueKey, selectAllClass) {
-				var key = getSelectionKey(util, uniqueKey);
-				var value = getSelectionItem(selected, util, uniqueKey);
-				var list = (exportMode)? selectedExports : selectedImports;
-				var selector = (exportMode)? 'selectedExports' : 'selectedImports';
-				list[key] = value;
+			function viewJump(util, uniqueKey) {
+				var value = getSelectionItem(false, util, uniqueKey);
+				$('input#viewExport').val(JSON.stringify(value));
+				submitForm('viewExportJump');
+			}
+			
+			function viewAdd(util, uniqueKey) {
+				var value = getSelectionItem(false, util, uniqueKey);
+				$('input#viewExport').val(JSON.stringify(value));
+				submitForm('viewExportAdd');
+			}
+			
+			function updateExportSelection(checkbox, selectClass, selectAllClass) {
+				if (checkbox) {
+					// Update single checkbox
+					var util = $(checkbox).attr('util');
+					var uniqueKey = $(checkbox).attr('uniqueKey');
+					var selected = ($(checkbox).attr('checked') == 'checked');
+					// Update selectedExports map
+					var key = getSelectionKey(util, uniqueKey);
+					var value = getSelectionItem(selected, util, uniqueKey);
+					selectedExports[key] = value;
+				} else {
+					if (selectClass != null) {
+						// Update all checkboxes of specified util class
+						$('input[type="checkbox"].' + selectClass).each(function() {
+							var util = $(this).attr('util');
+							var uniqueKey = $(this).attr('uniqueKey');
+							var selected = ($(this).attr('checked') == 'checked');
+							// Update selectedExports map
+							var key = getSelectionKey(util, uniqueKey);
+							var value = getSelectionItem(selected, util, uniqueKey);
+							selectedExports[key] = value;
+						});					
+					} else {
+						// Update all checkboxes of all util classes
+						$('input[type="checkbox"][util][uniqueKey]').each(function() {
+							var util = $(this).attr('util');
+							var uniqueKey = $(this).attr('uniqueKey');
+							var selected = ($(this).attr('checked') == 'checked');
+							// Update selectedExports map
+							var key = getSelectionKey(util, uniqueKey);
+							var value = getSelectionItem(selected, util, uniqueKey);
+							selectedExports[key] = value;
+						});					
+					}
+				}
+				// Create value list
 				var out = [];
-				var valueList = Object.values(list);
+				var valueList = Object.values(selectedExports);
 				for (var i in valueList) {
 					out.push(valueList[i]);
-				}				
-				$('input.' + selectAllClass).attr('checked', false);
-				$('input#' + selector).val(JSON.stringify(out));
+				}
+				// Turn off select all checkbox
+				if (selectAllClass) {
+					$('input.' + selectAllClass).attr('checked', false);
+				}
+				// Update hidden field
+				$('input#selectedExports').val(JSON.stringify(out));
+				// Enable button
+				$('input#select').attr('disabled', false);
 			}
 			
 			var selectAllState = false;
-			function selectAll(selectClass, value) {
+			function selectAllExport(selectClass, value) {
 				if (selectClass != null) {
 					$('input[type="checkbox"].' + selectClass).attr('checked', value);
 				} else {
-					$('div.ConfigMigration input[type="checkbox"]').attr('checked', value);
+					$('input[type="checkbox"][util][uniqueKey]').attr('checked', value);
 					selectAllState = value;
 				}
+				updateExportSelection(null, selectClass, null);
 			}
+			
+			function exportData() {
+				// Show dialog to get description
+				AJS.dialog2("#static-dialog").show();
+			}
+			
+			// Dialog event handlers
+			AJS.$(document).on("click", "#dialogOK", function (e) {
+			    e.preventDefault();
+			    var desc = $('input#descriptionInput').val();
+			    AJS.dialog2("#static-dialog").hide();
+			    $('input#exportDesc').val(desc);
+			    submitForm('export');
+			});
+			AJS.$(document).on("click", "#dialogCancel", function (e) {
+			    e.preventDefault();
+			    AJS.dialog2("#static-dialog").hide();
+			});
 		</script>
 	</head>
 	<body>
+	
+		<!-- Hidden dialog -->
+		<section 	id="static-dialog" 
+					class="aui-dialog2 aui-dialog2-medium aui-layer" 
+					aria-hidden="true"
+					role="dialog">
+		    <!-- Dialog header -->
+		    <header class="aui-dialog2-header">
+		        <!-- The dialog's title -->
+		        <h2 class="aui-dialog2-header-main">Please enter a description for the export</h2>
+		        <!-- Close icon -->
+		        <!-- 
+		        <a class="aui-dialog2-header-close">
+		            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+		        </a>
+		        -->
+		    </header>
+		    <!-- Main dialog content -->
+		    <div class="aui-dialog2-content">
+				<span>Description: </span>
+				<input type="text" id="descriptionInput" name="descriptionInput" value=""/>
+		    </div>
+		    <!-- Dialog footer -->
+		    <footer class="aui-dialog2-footer">
+		        <!-- Actions to render on the right of the footer -->
+		        <div class="aui-dialog2-footer-actions">
+		            <button id="dialogOK" class="aui-button aui-button-primary">OK</button>
+		            <button id="dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		        </div>
+		        <!-- Hint text is rendered on the left of the footer -->
+		        <div class="aui-dialog2-footer-hint"></div>
+		    </footer>
+		</section>
+
 		<div class="ConfigMigration">
-			<form action="ExportAction2.jspa" method="post" id="mainForm">
+			<form action="ExportAction2.jspa" method="post" id="mainForm" onkeydown="return event.key != 'Enter';">
 				<input type="hidden" id="action" name="action" value=""/>
 				<input 	type="hidden" 
 						id="selectedExports" name="selectedExports" 
@@ -85,23 +186,38 @@
 				<input 	type="hidden" 
 						id="viewExport" name="viewExport" 
 						value=""/>
+				<input  type="hidden"
+						id="exportDesc" name="exportDesc"
+						value=""/>
 				<div style="display: flex; flex-flow: column nowrap; max-height: 100%">
 					<!-- Toolbar -->
 					<div style="flex: 1 1 auto">
 						<div>
+							<span style="font-weight: bold">Select/Deselect Dependencies</span>
+							SelectNested: ${action.getSelectNested()}
+							<select id="selectNested" name="selectNested">
+								#if ($action.getSelectNested() == $true)
+									<option value="true" selected>Automatically</option>
+									<option value="false">Manually</option>
+								#else
+									<option value="true">Automatically</option>
+									<option value="false" selected>Manually</option>
+								#end
+							</select>
+							<input type="button" id="select" value="Update Selection" onclick="submitForm('select')" disabled/>
 							<input 	type="button" 
 									value="Select All/None"
-									onclick="selectAll(null, !selectAllState)"
+									onclick="selectAllExport(null, !selectAllState)"
 							/>
-							<input type="button" id="reload" value="Reload"/>
-							<input type="button" id="export" value="Export" onclick="submitForm('export')"/>
+							<input type="button" id="reload" value="Reload" onclick="submitForm('reload')"/>
+							<input type="button" id="export" value="Export" onclick="exportData()"/>
 							<input type="button" id="upload" value="Upload"/>
 							<input type="button" id="import" value="Import"/>
 						</div>
 						<div>
 							<span style="font-weight: bold">Object Type: </span>
 							<select id="objectType" name="objectType"
-									value="${action.getObjectType()}" 
+									value="$!{action.getObjectType()}" 
 									style="width: 20%"
 									onchange="submitForm('objectType')">
 								#if ($action.getObjectType().length() == 0) 
@@ -111,12 +227,26 @@
 								#end
 								#foreach ($item in $action.getObjectTypes().entrySet())
 									#if ($item.getValue() == $action.getObjectType())
-										<option selected value="${item.getValue()}">${item.getKey()}</option>
+										<option selected value="$!{item.getValue()}">${item.getKey()}</option>
 									#else
-										<option value="${item.getValue()}">${item.getKey()}</option>
+										<option value="$!{item.getValue()}">${item.getKey()}</option>
 									#end
 								#end
 							</select>
+							#if ($action.getObjectType() != "") 
+								<span style="font-weight: bold">
+									Selected $!{action.getObjectTypeName()}: 
+									$!{action.getExportStore().getSelectedCount($action.getObjectType())} 
+									/ 
+									$!{action.getExportStore().getTotalCount($action.getObjectType())}
+								</span>
+							#end
+							<span style="font-weight: bold">
+								Selected Objects: 
+								$!{action.getExportStore().getSelectedCount($null)} 
+								/ 
+								$!{action.getExportStore().getTotalCount($null)}
+							</span>
 						</div>
 					</div>
 					<!-- 3 columns -->
@@ -132,8 +262,9 @@
 													<span style="font-weight: bold">Filter: </span>
 													<input 	type="text" 
 															id="exportFilter" name="exportFilter"
-															value="${action.getExportFilter()}" 
+															value="$!{action.getExportFilter()}" 
 															style="width: 35%" 
+															onkeydown="if (event.key == 'Enter') { $('input#exportFilterApply').click(); }"
 															onkeyup="$('input#exportFilterApply').attr('disabled', false)"/>
 													<input 	type="button"
 															id="exportFilterApply"
@@ -152,13 +283,13 @@
 												#end
 											#end
 											#if ($showUtil)			
-												#set ($selectClass = $util.getImplementation().replaceAll(".", "-"))
+												#set ($selectClass = $util.getImplementationCSS())
 												#set ($selectAllClass = $selectClass + "-All")
 												<tr>
 													<th colspan="100%">
 														<input 	type="checkbox"
-																class="${selectAllClass}"
-																onchange="selectAll('${selectClass}', this.checked)"
+																class="$!{selectAllClass}"
+																onchange="selectAllExport('$!{selectClass}', this.checked)"
 														/>
 														${util.getName()}
 													</th>
@@ -180,20 +311,21 @@
 															<tr>
 																<td>
 																	<input 	type="checkbox" 
-																			class="${selectClass}"
+																			class="$!{selectClass}"
 																			$!{checked}
-																			onchange="updateSelection(
-																				true,
-																				this.checked,
-																				'${util.getImplementation()}', 
-																				'${obj.getUniqueKey()}',
-																				'${selectAllClass}')"/>
+																			util="$!{util.getImplementation()}"
+																			uniqueKey="$!{obj.getUniqueKey()}"
+																			onchange="updateExportSelection(this, null, '$!{selectAllClass}')"/>
 																</td>
-																<td>
+																<td width="100%">
 																	<a href="#" onclick="view(
-																			'${util.getImplementation()}', 
-																			'${obj.getUniqueKey()}')">
-																		${obj.getConfigName()}
+																			'$!{util.getImplementation()}', 
+																			'$!{obj.getUniqueKeyJS()}')">
+																		#if ($obj.getConfigName())
+																			$!{obj.getConfigName()}
+																		#else
+																			(Default)
+																		#end
 																	</a>
 																</td>
 															</tr>
@@ -218,9 +350,15 @@
 						</table>
 					</div>
 					<!-- Details -->
-					<div style="flex: 1 1 auto; max-height: 10vh; overflow-y: auto">
-						#if ($action.getViewName())
-							<span style="font-weight: bold">$!{action.getViewType()}: $!{action.getViewName()}</span>
+					<div style="flex: 1 1 auto; max-height: 30vh; overflow-y: auto">
+						#foreach ($item in $action.getViewHistory())
+							<span style="font-weight: bold">
+								&gt; <a href="#" onclick="viewJump(
+										'$!{item.getUtil()}', 
+										'$!{item.getUniqueKeyJS()}')">
+									$!{item.getType()}: $!{item.getDisplay()}
+								</a>
+							</span>
 						#end
 					</div>
 					<!-- Details -->
@@ -230,8 +368,37 @@
 								<tbody>
 									#foreach ($item in $action.getView().entrySet())
 										<tr>
-											<th>$!{item.getKey()}</th>
-											<td>$!{item.getValue()}</td>
+											<th width="30%">$!{item.getKey()}</th>
+											#if ($item.getValue().getType() == "TEXT")
+												<td width="70%">$!{item.getValue().getValue()}</td>
+											#end
+											#if ($item.getValue().getType() == "LIST")
+												<td width="70%">
+													#foreach ($prop in $item.getValue().getList())
+														<div>
+															<a href="#" onclick="viewAdd(
+																	'$!{prop.getUtil()}', 
+																	'$!{prop.getUniqueKeyJS()}')">
+																$!{prop.getDisplay()}
+															</a>
+														</div>
+													#end
+												</td>
+											#end
+											#if ($item.getValue().getType() == "MAP")
+												<td width="70%">
+													#foreach ($prop in $item.getValue().getMap().entrySet())
+														<div>
+															$!{prop.getKey()}: 
+															<a href="#" onclick="viewAdd(
+																	'$!{prop.getValue().getUtil()}', 
+																	'$!{prop.getValue().getUniqueKeyJS()}')">
+																$!{prop.getValue().getDisplay()}
+															</a>
+														</div>
+													#end
+												</td>
+											#end
 										</tr>
 									#end
 								</tbody>

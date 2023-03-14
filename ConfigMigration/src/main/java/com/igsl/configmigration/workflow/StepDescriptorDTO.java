@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.ConditionsDescriptor;
 import com.opensymphony.workflow.loader.StepDescriptor;
@@ -71,6 +72,7 @@ public class StepDescriptorDTO extends AbstractDescriptorDTO {
 				this.preFunctions.add(dto);
 			}
 		}
+		this.uniqueKey = Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -86,11 +88,6 @@ public class StepDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -160,6 +157,12 @@ public class StepDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setPreFunctions(List<JiraConfigDTO> preFunctions) {
 		this.preFunctions = preFunctions;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

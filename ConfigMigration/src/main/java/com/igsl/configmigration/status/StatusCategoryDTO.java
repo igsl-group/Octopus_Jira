@@ -2,11 +2,14 @@ package com.igsl.configmigration.status;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -36,11 +39,20 @@ public class StatusCategoryDTO extends JiraConfigDTO {
 		this.name = o.getName();
 		this.primaryAlias = o.getPrimaryAlias();
 		this.translatedName = o.getTranslatedName();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Aliases", new JiraConfigProperty(this.aliases));
+		r.put("Color Name", new JiraConfigProperty(this.colorName));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Key", new JiraConfigProperty(this.key));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Primary Alias", new JiraConfigProperty(this.primaryAlias));
+		r.put("Translated Name", new JiraConfigProperty(this.translatedName));
+		return r;
 	}
 
 	@Override
@@ -117,7 +129,7 @@ public class StatusCategoryDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return StatusCategoryUtil.class;
 	}
 
 	@Override

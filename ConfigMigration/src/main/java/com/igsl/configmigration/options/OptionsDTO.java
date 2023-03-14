@@ -3,6 +3,8 @@ package com.igsl.configmigration.options;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.customfields.option.Options;
@@ -11,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
@@ -37,6 +40,14 @@ public class OptionsDTO extends JiraConfigDTO {
 			item.setJiraObject(opt, fieldConfig, null);
 			this.rootOptions.add(item);
 		}
+		this.uniqueKey = Integer.toString(this.hashCode());
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Root Options", new JiraConfigProperty(OptionUtil.class, this.rootOptions));
+		return r;
 	}
 
 	private static List<OptionDTO> getAllOptionsHelper(OptionDTO option) {
@@ -62,15 +73,10 @@ public class OptionsDTO extends JiraConfigDTO {
 		}
 		return result;
 	}
-	
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.hashCode());
-	}
 
 	@Override
 	public String getInternalId() {
-		return Integer.toString(this.hashCode());
+		return this.uniqueKey;
 	}
 
 	@Override
@@ -89,8 +95,7 @@ public class OptionsDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// Referenced from CustomFieldDTO only
-		return null;
+		return OptionsUtil.class;
 	}
 
 	@Override

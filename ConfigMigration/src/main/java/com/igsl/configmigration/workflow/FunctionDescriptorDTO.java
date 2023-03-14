@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.FunctionDescriptor;
 
@@ -32,6 +33,7 @@ public class FunctionDescriptorDTO extends AbstractDescriptorDTO {
 		this.name = fd.getName();
 		this.type = fd.getType();
 		//fd.getParent();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
@@ -50,11 +52,6 @@ public class FunctionDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getName();
 	}
 
 	@Override
@@ -100,6 +97,12 @@ public class FunctionDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setArgs(Map args) {
 		this.args = args;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

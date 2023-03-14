@@ -14,6 +14,7 @@ import com.atlassian.jira.user.LazyLoadingApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
@@ -73,7 +74,7 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for(ApplicationUser user : SERVICE.findUsersByFullName("")) {
 			ApplicationUserDTO dto = new ApplicationUserDTO();
-			dto.setJiraObject(user, params);
+			dto.setJiraObject(null, user, params);
 			if (filter != null) {
 				if (!matchFilter(dto, filter)) {
 					continue;

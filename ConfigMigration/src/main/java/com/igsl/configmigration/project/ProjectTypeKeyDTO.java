@@ -2,11 +2,14 @@ package com.igsl.configmigration.project;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.project.type.ProjectTypeKey;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -18,11 +21,14 @@ public class ProjectTypeKeyDTO extends JiraConfigDTO {
 	public void fromJiraObject(Object obj) throws Exception {
 		ProjectTypeKey o = (ProjectTypeKey) obj;
 		this.key = o.getKey();
+		this.uniqueKey = this.key;
 	}
-
+	
 	@Override
-	public String getUniqueKey() {
-		return this.getKey();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Key", new JiraConfigProperty(this.key));
+		return r;
 	}
 
 	@Override
@@ -38,7 +44,7 @@ public class ProjectTypeKeyDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return ProjectTypeKeyUtil.class;
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.RegisterDescriptor;
 import com.opensymphony.workflow.loader.RestrictionDescriptor;
@@ -28,6 +29,7 @@ public class RegisterDescriptorDTO extends AbstractDescriptorDTO {
 		this.id = o.getId();
 		this.type = o.getType();
 		this.variableName = o.getVariableName();
+		this.uniqueKey = Integer.toString(this.getId());
 	}
 
 	@Override
@@ -46,11 +48,6 @@ public class RegisterDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getId());
 	}
 
 	@Override
@@ -96,6 +93,12 @@ public class RegisterDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setArgs(Map args) {
 		this.args = args;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

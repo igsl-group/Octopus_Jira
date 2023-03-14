@@ -7,6 +7,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.workflow.loader.ConditionDescriptor;
 
@@ -28,6 +29,7 @@ public class ConditionDescriptorDTO extends AbstractDescriptorDTO {
 		this.name = cd.getName();
 		//cd.getParent();
 		this.type = cd.getType();
+		this.uniqueKey = Long.toString(this.entityId);
 	}
 
 	@Override
@@ -43,11 +45,6 @@ public class ConditionDescriptorDTO extends AbstractDescriptorDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return null;
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getEntityId());
 	}
 
 	@Override
@@ -93,6 +90,12 @@ public class ConditionDescriptorDTO extends AbstractDescriptorDTO {
 
 	public void setArgs(Map args) {
 		this.args = args;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

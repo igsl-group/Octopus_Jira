@@ -145,14 +145,6 @@ public class JiraConfigTypeRegistry {
 	}
 	
 	/**
-	 * Get public Util instance list.
-	 * @return
-	 */
-	public static Collection<JiraConfigUtil> getConfigUtilList() {
-		return getConfigUtilList(true);
-	}
-	
-	/**
 	 * Get Util instance list.
 	 * @param publicOnly Get public Util only.
 	 * @return Collection of JiraConfigUtil instances.
@@ -305,7 +297,7 @@ public class JiraConfigTypeRegistry {
 		try {
 			logger.debug("UtilMap: " + OM.writeValueAsString(UTIL_MAP));
 			logger.debug("InstanceMap: " + OM.writeValueAsString(UTIL_INSTANCE_MAP));
-			logger.debug("Public list: " + OM.writeValueAsString(getConfigUtilList()));
+			logger.debug("Public list: " + OM.writeValueAsString(getConfigUtilList(true)));
 			logger.debug("All list: " + OM.writeValueAsString(getConfigUtilList(false)));
 		} catch (Exception ex) {
 			logger.error("OM error", ex);

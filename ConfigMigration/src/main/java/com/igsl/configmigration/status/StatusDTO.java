@@ -2,11 +2,14 @@ package com.igsl.configmigration.status;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.status.Status;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -30,11 +33,18 @@ public class StatusDTO extends JiraConfigDTO {
 		description = o.getDescription();
 		statusCategoryConfigItem = new StatusCategoryDTO();
 		statusCategoryConfigItem.setJiraObject(o.getStatusCategory());
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Sequence", new JiraConfigProperty(this.sequence));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Status Category", new JiraConfigProperty(StatusCategoryUtil.class, this.statusCategoryConfigItem));
+		return r;
 	}
 
 	@Override

@@ -1,16 +1,21 @@
 package com.igsl.configmigration;
 
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
+
+import javax.annotation.Nonnull;
 
 import org.apache.log4j.Logger;
 
@@ -20,7 +25,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.general.GeneralDTO;
 
 /*
  * Class to represent a Jira configuration item to be exported/imported.
@@ -41,19 +45,22 @@ public abstract class JiraConfigDTO {
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
 	// Methods not to be included in getMap(), i.e. display
-	private static final List<String> MAP_EXCLUDE_METHODS = Arrays.asList(
+	public static final List<String> MAP_EXCLUDE_METHODS = Arrays.asList(
 			"getClass",
 			"getJiraObject",
 			"isSelected",
 			"isReferenced",
 			"getUniqueKey",
+			"getUniqueKeyJS",
 			"getInternalId",
 			"getImplementation",
 			"getMap",
 			"getMapIgnoredMethods",
 			"getUtilClass",
 			"getJiraClass",
-			"getObjectParameters"
+			"getObjectParameters",
+			"getConfigProperties",
+			"getCustomConfigProperties"
 		);
 	
 	/**
@@ -78,6 +85,7 @@ public abstract class JiraConfigDTO {
 	 * Return JiraConfigUtil class associated with this DTO.
 	 */
 	@JsonIgnore
+	@Nonnull
 	public abstract Class<? extends JiraConfigUtil> getUtilClass();
 	
 	/**
@@ -249,8 +257,58 @@ public abstract class JiraConfigDTO {
 	}
 	
 	/**
+	 * Override to provide custom properties display.
+	 * If null is returned, the generic implementation will be used instead.
+	 * Return empty map to display nothing.
+	 * 
+	 * Key is name of the property. 
+	 * Value is JiraConfigProperty.
+	 * @return Map<String, JiraConfigProperty>. 
+	 */
+	@JsonIgnore
+	protected abstract Map<String, JiraConfigProperty> getCustomConfigProperties();
+	
+	/**
+	 * To display JiraConfigDTO properties, alternative for getMap().
+	 * Key is display name of the property.
+	 * Value is JiraConfigProperty. 
+	 * 
+	 * @return Map<String, JiraConfigProperty>
+	 */
+	@JsonIgnore
+	public Map<String, JiraConfigProperty> getConfigProperties() {
+		Map<String, JiraConfigProperty> result = getCustomConfigProperties();
+		if (result == null) {
+			result = new LinkedHashMap<String, JiraConfigProperty>();
+			Map<String, String> map = getMap();
+			for (Map.Entry<String, String> e : map.entrySet()) {
+				result.put(e.getKey(), new JiraConfigProperty(e.getValue()));
+			}
+		}
+		
+		// TODO Debug adding relatedObjects
+		String sb = "";
+		try {
+			sb = OM.writeValueAsString(this.getRelatedObjects());
+		} catch (Exception ex) {
+			sb = "Failed to convert relatedObjects to string: " + ex.getMessage();
+		}
+		result.put("Related Objects", new JiraConfigProperty(sb));
+
+		return result;
+	}
+	
+	/**
 	 * Get all object properties as a TreeMap.
 	 * Recurse into nested objects. 
+	 * 
+	 * Default implementation is a generic one using reflection.
+	 * Getters and setters are included unless method name is in: 
+	 * 1. MAP_EXCLUDE_METHODS 
+	 * 2. getMapIgnoredMethods()
+	 * Implemenatations can override getMapIgnoredMethods() to exclude additional methods.
+	 * 
+	 * Implementations can override getCustomConfigProperties() to return a Map<String, String>.
 	 * 
 	 * Methods will be have method name as key.
 	 * e.g. Object.Method1
@@ -464,6 +522,7 @@ public abstract class JiraConfigDTO {
 		if (obj != null) {
 			this.jiraObject = obj;
 			this.fromJiraObject(obj);
+			this.setupRelatedObjects();
 		}
 	}
 	
@@ -483,15 +542,95 @@ public abstract class JiraConfigDTO {
 		return this.mappedObject;
 	}
 	
-	/**
-	 * To store JiraConfigDTO referencer (the parent, while this object is the child)
-	 */
-	protected Set<JiraConfigRef> references = new HashSet<>();
-	public final void addReference(JiraConfigRef ref) {
-		this.references.add(ref);
+	@JsonIgnore
+	protected Map<String, JiraConfigRef> relatedObjects = new HashMap<>();
+	public final Collection<JiraConfigRef> getRelatedObjects() {
+		return this.relatedObjects.values();
 	}
-	public final void removeReference(JiraConfigRef ref) {
-		this.references.remove(ref);
+	public final boolean addRelatedObject(JiraConfigDTO dto) {
+		if (dto != null) {
+			return addRelatedObject(new JiraConfigRef(dto));
+		}
+		return false;
+	}
+	public final boolean addRelatedObject(JiraConfigRef ref) {
+		if (ref != null) {
+			if (!this.relatedObjects.containsKey(ref.getRefKey())) {
+				this.relatedObjects.put(ref.getRefKey(), ref);
+				return true;
+			}
+		}
+		return false;
+	}
+	public final boolean removeRelatedObject(JiraConfigDTO dto) {
+		if (dto != null) {
+			return removeRelatedObject(new JiraConfigRef(dto));
+		}
+		return false;
+	}
+	public final boolean removeRelatedObject(JiraConfigRef ref) {
+		if (ref != null) {
+			if (this.relatedObjects.containsKey(ref.getRefKey())) {
+				this.relatedObjects.remove(ref.getRefKey());
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Add nested objects of the DTO as related objects via reflection.
+	 * Override as needed.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected void setupRelatedObjects() throws Exception {
+		// Check for nested DTOs
+		BeanInfo info = Introspector.getBeanInfo(this.getClass());
+		for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {
+			if (propDesc.getReadMethod() == null) {
+				continue;
+			}
+			if (JiraConfigDTO.MAP_EXCLUDE_METHODS.indexOf(propDesc.getReadMethod().getName()) != -1) {
+				continue;
+			}
+			if (this.getMapIgnoredMethods().indexOf(propDesc.getReadMethod().getName()) != -1) {
+				continue;
+			}
+			if (JiraConfigDTO.class.isAssignableFrom(propDesc.getPropertyType())) {
+				// Nested DTO found
+				JiraConfigDTO nestedDTO = (JiraConfigDTO) propDesc.getReadMethod().invoke(this);
+				if (nestedDTO != null) {
+					this.addRelatedObject(nestedDTO);
+				}
+			} else if (Collection.class.isAssignableFrom(propDesc.getPropertyType())) {
+				Collection oldData = (Collection) propDesc.getReadMethod().invoke(this);
+				if (oldData != null) {
+					for (Object item : oldData) {
+						if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
+							JiraConfigDTO dtoItem = (JiraConfigDTO) item;
+							this.addRelatedObject(dtoItem);
+						}
+					}
+				}
+			} else if (Map.class.isAssignableFrom(propDesc.getPropertyType())) {
+				Map oldData = (Map) propDesc.getReadMethod().invoke(this);
+				if (oldData != null) {
+					for (Object entry : oldData.entrySet()) {
+						Map.Entry e = (Map.Entry) entry;
+						if (e.getValue() != null && JiraConfigDTO.class.isAssignableFrom(e.getValue().getClass())) {
+							JiraConfigDTO dtoItem = (JiraConfigDTO) e.getValue();
+							this.addRelatedObject(dtoItem);
+						}
+					}
+				}
+			} else if (propDesc.getPropertyType().isArray() && 
+					JiraConfigDTO.class.isAssignableFrom(propDesc.getPropertyType().getComponentType())) {
+				JiraConfigDTO[] oldData = (JiraConfigDTO[]) propDesc.getReadMethod().invoke(this);
+				for (JiraConfigDTO item : oldData) {
+					this.addRelatedObject(item);
+				}
+			}
+		}
 	}
 	
 	/**
@@ -514,10 +653,34 @@ public abstract class JiraConfigDTO {
 	}
 	
 	/**
-	 * Return a string-based unique key (e.g. issue key, project key) that is not internal ID (which can change across environments)
+	 * Return a string-based unique key (e.g. issue key, project key) that is 
+	 * not internal ID (which can change across environments)
+	 * 
+	 * The result should be consistent with makeUniqueKey().
+	 */
+	protected String uniqueKey;
+	public String getUniqueKey() {
+		return this.uniqueKey;
+	}
+	public void setUniqueKey(String uniqueKey) {
+		this.uniqueKey = uniqueKey;
+	}
+	
+	/**
+	 * Return unique key where quotes are escaped to fit in JavaScript
+	 * @return
 	 */
 	@JsonIgnore
-	public abstract String getUniqueKey();
+	public final String getUniqueKeyJS() {
+		String s = getUniqueKey();
+		if (s != null) {
+			String m = s.replaceAll("'", "\\\\'");
+			m = m.replaceAll("\"", "\\\\\"");
+			LOGGER.debug("getJSUniqueKey [" + s + "] => [" + m + "]");
+			return m;
+		}
+		return s;
+	}
 	
 	/**
 	 * Return a string-based internal ID that is specific to a server instance. 
@@ -539,7 +702,6 @@ public abstract class JiraConfigDTO {
 	 * Stores data from provided object.
 	 * JiraConfigUtil should call setJiraObject() instead of this method.
 	 * Additional parameters needed can be found in parameters member. The count will match getParameterCount().
-	 * 
 	 * @param obj Jira object.
 	 */
 	protected abstract void fromJiraObject(Object obj) throws Exception;

@@ -2,14 +2,18 @@ package com.igsl.configmigration.fieldscreenscheme;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldscreen.FieldScreenDTO;
+import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 
 /**
  * Status wrapper.
@@ -31,11 +35,16 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 		this.issueOperation = new ScreenableIssueOperationDTO();
 		this.issueOperation.setJiraObject(o.getIssueOperation());
 		this.issueOperationName = o.getIssueOperationName();
+		this.uniqueKey = this.issueOperationName;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return getIssueOperationName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Field Screen", new JiraConfigProperty(FieldScreenUtil.class, this.fieldScreen));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Issue Operation", new JiraConfigProperty(ScreenableIssueOperationUtil.class, this.issueOperation));
+		return r;
 	}
 
 	@Override
@@ -53,7 +62,7 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return FieldScreenSchemeItemUtil.class;
 	}
 
 	@Override

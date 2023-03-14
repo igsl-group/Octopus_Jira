@@ -2,11 +2,14 @@ package com.igsl.configmigration.label;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.label.Label;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -20,11 +23,15 @@ public class LabelDTO extends JiraConfigDTO {
 		Label o = (Label) obj;
 		this.id = o.getId();
 		this.label = o.getLabel();
+		this.uniqueKey = this.label;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getLabel();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Label", new JiraConfigProperty(this.label));
+		return r;
 	}
 
 	@Override
@@ -56,8 +63,7 @@ public class LabelDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// Referenced from other DTOs only
-		return null;
+		return LabelUtil.class;
 	}
 
 	@Override

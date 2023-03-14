@@ -3,6 +3,8 @@ package com.igsl.configmigration.issuesecuritylevelscheme;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
@@ -11,6 +13,7 @@ import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -42,13 +45,22 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 				this.defaultSecurityLevelName = item.getName();
 			}
 		}
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Default Security Level ID", new JiraConfigProperty(this.defaultSecurityLevelId));
+		r.put("Issue Security Levels", 
+				new JiraConfigProperty(IssueSecurityLevelUtil.class, this.issueSecurityLevels));
+		r.put("Default Security Level", new JiraConfigProperty(this.defaultSecurityLevelName));
+		return r;
 	}
-
+	
 	@Override
 	public String getInternalId() {
 		return Long.toString(this.getId());

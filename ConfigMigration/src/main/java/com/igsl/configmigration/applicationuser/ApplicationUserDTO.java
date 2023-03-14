@@ -1,12 +1,17 @@
 package com.igsl.configmigration.applicationuser;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -20,8 +25,19 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 	private String displayName;
 	
 	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Display Name", new JiraConfigProperty(displayName));
+		r.put("User Name", new JiraConfigProperty(userName));
+		r.put("Email Address", new JiraConfigProperty(emailAddress));
+		r.put("Key", new JiraConfigProperty(key));
+		r.put("ID", new JiraConfigProperty(id));
+		return r;
+	}
+	
+	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return ApplicationUserUtil.class;
 	}
 	
 	@Override
@@ -33,16 +49,15 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		this.displayName = o.getDisplayName();
 		this.emailAddress = o.getEmailAddress();
 		this.userName = o.getUsername();
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getKey();
+		this.uniqueKey = o.getKey();
 	}
 
 	@Override
 	public String getInternalId() {
-		return Long.toString(this.getId());
+		if (this.id != null) {
+			return Long.toString(this.id);
+		} 
+		return null;
 	}
 
 	@Override

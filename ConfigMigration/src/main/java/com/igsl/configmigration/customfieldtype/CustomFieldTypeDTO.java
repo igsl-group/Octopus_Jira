@@ -2,11 +2,14 @@ package com.igsl.configmigration.customfieldtype;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -25,11 +28,16 @@ public class CustomFieldTypeDTO extends JiraConfigDTO {
 		this.key = obj.getKey();
 		this.name = obj.getName();
 		// obj.getNonNullCustomFieldProvider();
+		this.uniqueKey = this.key;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getKey();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Key", new JiraConfigProperty(this.key));
+		r.put("Name", new JiraConfigProperty(this.name));
+		return r;
 	}
 
 	@Override

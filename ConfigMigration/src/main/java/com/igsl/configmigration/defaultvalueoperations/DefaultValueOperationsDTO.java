@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
@@ -40,6 +42,19 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	private JiraConfigDTO defaultValue;
 	private List<JiraConfigDTO> defaultListValue;
 	private Map<Object, JiraConfigDTO> defaultMapValue;
+	private String uniqueKey;
+	
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Value Type", new JiraConfigProperty(this.valueType.toString()));
+		r.put("Value Class", new JiraConfigProperty((this.valueClass != null)? this.valueClass.getCanonicalName() : null));
+		r.put("Default Value", new JiraConfigProperty(DefaultValueOperationsUtil.class, defaultValue));
+		// TODO JiraConfigUtil can be used safely?
+		r.put("Default List Value", new JiraConfigProperty(JiraConfigUtil.class, defaultListValue));
+		r.put("Default Map Value", new JiraConfigProperty(JiraConfigUtil.class, defaultMapValue));
+		return r;
+	}
 	
 	private JiraConfigDTO parseValueHelper(Object o, FieldConfig fieldConfig) throws Exception {
 		if (o != null) {
@@ -141,21 +156,16 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	public void fromJiraObject(Object o) throws Exception {
 		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
 		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
-		// TODO
-		// Need to find how "current date" is stored
+		// TODO Need to find how "current date" is stored
 		// For now current date/datetime will be convereted to a fixed value
 		Object defVal = obj.getDefaultValue(fieldConfig);
 		parseValue(defVal, fieldConfig);
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.hashCode());
+		this.uniqueKey = Integer.toString(this.hashCode());
 	}
 
 	@Override
 	public String getInternalId() {
-		return Integer.toString(this.hashCode());
+		return this.uniqueKey;
 	}
 
 	@Override
@@ -165,14 +175,14 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	}
 
 	@JsonIgnore
-	protected List<String> getMapIgnoredMethods() {
+	protected List<String> getConfigPropertiesIgnoredMethods() {
 		return Arrays.asList(
 				"getRawValue");
 	}
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return DefaultValueOperationsUtil.class;
 	}
 
 	@Override

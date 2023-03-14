@@ -2,6 +2,8 @@ package com.igsl.configmigration.issuetype;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.avatar.Avatar;
 import com.atlassian.jira.avatar.AvatarManager;
@@ -11,8 +13,10 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
+import com.igsl.configmigration.avatar.AvatarUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueTypeDTO extends JiraConfigDTO {
@@ -38,11 +42,17 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		this.description = obj.getDescription();
 		this.name = obj.getName();
 		this.id = obj.getId();
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Avatar", new JiraConfigProperty(AvatarUtil.class, this.avatarConfigItem));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("ID", new JiraConfigProperty(this.id));
+		return r;
 	}
 
 	@Override

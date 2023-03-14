@@ -2,12 +2,15 @@ package com.igsl.configmigration.fieldscreen;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.field.FieldDTO;
@@ -43,20 +46,31 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 		this.fieldId = o.getFieldId();
 		this.id = o.getId();
 		this.position = o.getPosition();
-		// o.getOrderableField();	Is this important?
+		// TODO o.getOrderableField();	Is this important?
 		
 		// Resolve field ID into something searchable
 		FieldUtil util = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
 		this.field = (FieldDTO) util.findByInternalId(this.fieldId);
+		if (this.field != null) {
+			// Field ID can point to deleted fields... so only grab the name if field can be found.
+			this.fieldName = this.field.getUniqueKey();
+		}
 		
-		this.fieldName = this.field.getUniqueKey();
 		FieldScreenTab tab = (FieldScreenTab) this.objectParameters[0];
 		this.tabName = tab.getName();
+		this.uniqueKey = this.tabName + "." + this.fieldName;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.tabName + "." + this.fieldName;
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Field ID", new JiraConfigProperty(this.fieldId));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Position", new JiraConfigProperty(this.position));
+		r.put("Field", new JiraConfigProperty(FieldUtil.class, this.field));
+		r.put("Field Name", new JiraConfigProperty(this.fieldName));
+		r.put("Tab Name", new JiraConfigProperty(this.tabName));
+		return r;
 	}
 
 	@Override

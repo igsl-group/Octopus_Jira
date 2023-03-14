@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 import org.ofbiz.core.entity.GenericValue;
@@ -15,6 +16,7 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEnt
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.project.ProjectDTO;
@@ -54,13 +56,29 @@ public class IssueTypeScreenSchemeDTO extends JiraConfigDTO {
 				projects.add(dto);
 			}
 		}
+		this.uniqueKey = this.name;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Entities", new JiraConfigProperty(IssueTypeScreenSchemeEntityUtil.class, this.entities));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Projects", new JiraConfigProperty(ProjectUtil.class, this.projects));
+		return r;
 	}
-
+	
+	protected void setupRelatedObjects() throws Exception {
+		super.setupRelatedObjects();
+		// Add self to associated Project's related object list
+		for (ProjectDTO proj : this.projects) {
+			proj.addRelatedObject(this);
+			removeRelatedObject(proj);
+		}
+	}
+	
 	@Override
 	public String getInternalId() {
 		return Long.toString(this.getId());

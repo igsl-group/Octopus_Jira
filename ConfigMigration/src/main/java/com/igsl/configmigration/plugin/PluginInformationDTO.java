@@ -3,11 +3,13 @@ package com.igsl.configmigration.plugin;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.plugin.PluginInformation;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -27,16 +29,23 @@ public class PluginInformationDTO extends JiraConfigDTO {
 		this.vendorName = obj.getVendorName();
 		this.venorUrl = obj.getVendorUrl();
 		this.version = obj.getVersion();
+		this.uniqueKey = this.vendorName + " - " + this.description + " - " + this.version;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getDescription() + " " + this.getVersion();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Parameters", new JiraConfigProperty(this.parameters));
+		r.put("Vendor Name", new JiraConfigProperty(this.vendorName));
+		r.put("Vendor URL", new JiraConfigProperty(this.venorUrl));
+		r.put("Version", new JiraConfigProperty(this.version));
+		return r;
 	}
 
 	@Override
 	public String getInternalId() {
-		return Integer.toString(this.hashCode());
+		return this.uniqueKey;
 	}
 
 	@Override
@@ -90,8 +99,7 @@ public class PluginInformationDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return PluginInformationUtil.class;
 	}
 
 	@Override

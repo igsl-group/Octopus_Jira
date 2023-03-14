@@ -15,7 +15,11 @@ span.sectionTitle {
 	font-weight: bold;
 }
 
-able.ConfigMigration td.different {
+table.ConfigMigration td.different {
 	background-color: yellow;
 	font-weight: bold; 
 }
+
+table.ConfigMigration tr.highlight td {
+	background-color: yellow;
+} 

@@ -4,12 +4,15 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectAttributeBean;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectBean;
@@ -56,13 +59,23 @@ public class ObjectBeanDTO extends JiraConfigDTO {
 				}
 			}
 		}
+		this.uniqueKey = this.schemaKey + "." + this.objectTypeName + "." + this.label;
 	}
 	
 	@Override
-	public String getUniqueKey() {
-		return this.schemaKey + "." + this.objectTypeName + "." + this.label;
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Label", new JiraConfigProperty(this.label));
+		r.put("Object Attribute Beans", 
+				new JiraConfigProperty(ObjectAttributeValueBeanUtil.class, this.objectAttributeBeans));
+		r.put("Object Key", new JiraConfigProperty(this.objectKey));
+		r.put("Object Type ID", new JiraConfigProperty(this.objectTypeId));
+		r.put("Schema Key", new JiraConfigProperty(this.schemaKey));
+		r.put("Object Type Name", new JiraConfigProperty(this.objectTypeName));
+		return r;
 	}
-
+	
 	@Override
 	public String getInternalId() {
 		return getObjectKey();

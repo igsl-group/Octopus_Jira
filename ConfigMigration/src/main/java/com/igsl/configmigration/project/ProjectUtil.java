@@ -175,7 +175,7 @@ public class ProjectUtil extends JiraConfigUtil {
 		Map<String, JiraConfigDTO> result = new HashMap<>();
 		for (Project p : MANAGER.getProjects()) {
 			ProjectDTO item = new ProjectDTO();
-			item.setJiraObject(p);
+			item.setJiraObject(p, params);
 			if (!matchFilter(item, filter)) {
 				continue;
 			}

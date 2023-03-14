@@ -2,11 +2,14 @@ package com.igsl.configmigration.fieldscreenscheme;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 /**
@@ -25,11 +28,16 @@ public class ScreenableIssueOperationDTO extends JiraConfigDTO {
 		this.descriptionKey = o.getDescriptionKey();
 		this.id = o.getId();
 		this.nameKey = o.getNameKey();
+		this.uniqueKey = this.nameKey;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getNameKey();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Description Key", new JiraConfigProperty(this.descriptionKey));
+		r.put("Name Key", new JiraConfigProperty(this.nameKey));
+		return r;
 	}
 
 	@Override
@@ -46,7 +54,7 @@ public class ScreenableIssueOperationDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return ScreenableIssueOperationUtil.class;
 	}
 
 	@Override

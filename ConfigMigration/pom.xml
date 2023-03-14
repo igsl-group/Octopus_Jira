@@ -19,7 +19,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.igsl</groupId>
 	<artifactId>ConfigMigration</artifactId>
-	<version>1.2.0</version>
+	<version>1.2.1</version>
 
 	<organization>
 		<name>Integrated Global Solutions Limited</name>
@@ -31,6 +31,20 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<dependencies>
+
+		<!-- Active Objects -->
+		<dependency>
+			<groupId>com.atlassian.activeobjects</groupId>
+			<artifactId>activeobjects-plugin</artifactId>
+			<version>5.2.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.collections</groupId>
+			<artifactId>google-collections</artifactId>
+			<version>1.0</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<!-- Insight -->
 		<dependency>

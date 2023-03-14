@@ -4,10 +4,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.opensymphony.module.propertyset.PropertySet;
 
@@ -27,16 +29,19 @@ public class PropertySetDTO extends JiraConfigDTO {
 			String key = String.valueOf(item);
 			this.properties.put(key, obj.getAsActualType(key));
 		}
+		this.uniqueKey = Integer.toString(this.hashCode());
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.hashCode());
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Properties", new JiraConfigProperty(this.properties));
+		return r;
 	}
-
+	
 	@Override
 	public String getInternalId() {
-		return Integer.toString(this.hashCode());
+		return this.uniqueKey;
 	}
 
 	@Override
@@ -55,8 +60,7 @@ public class PropertySetDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return PropertySetUtil.class;
 	}
 
 	@Override

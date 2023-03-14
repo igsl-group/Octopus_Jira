@@ -3,11 +3,14 @@ package com.igsl.configmigration.optionset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.fields.option.Option;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -31,11 +34,17 @@ public class OptionDTO extends JiraConfigDTO {
 		}
 		this.id = obj.getId();
 		this.name = obj.getName();
+		this.uniqueKey = this.name;
 	}
-		
+
 	@Override
-	public String getUniqueKey() {
-		return getName();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Child Options", new JiraConfigProperty(OptionUtil.class, this.childOptions));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		return r;
 	}
 
 	@Override
@@ -85,8 +94,7 @@ public class OptionDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return OptionUtil.class;
 	}
 
 	@Override

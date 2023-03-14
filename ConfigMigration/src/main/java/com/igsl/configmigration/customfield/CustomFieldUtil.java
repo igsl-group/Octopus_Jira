@@ -17,7 +17,6 @@ import com.atlassian.jira.issue.context.GlobalIssueContext;
 import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
-import com.atlassian.jira.issue.customfields.manager.OptionsManager;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
@@ -33,8 +32,6 @@ import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
-import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.insight.ObjectBeanDTO;
 import com.igsl.configmigration.insight.ObjectBeanUtil;
@@ -52,7 +49,6 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			ComponentAccessor.getCustomFieldManager();
 	private static final ManagedConfigurationItemService CONFIG_ITEM_SERVICE = 
 			ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
-	private static final OptionsManager OPTIONS_MANAGER = ComponentAccessor.getOptionsManager();
 	
 	@Override
 	public String getName() {

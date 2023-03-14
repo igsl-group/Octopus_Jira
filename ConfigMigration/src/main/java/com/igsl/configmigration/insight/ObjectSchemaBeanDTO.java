@@ -2,10 +2,13 @@ package com.igsl.configmigration.insight;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaBean;
 
@@ -27,11 +30,19 @@ public class ObjectSchemaBeanDTO extends JiraConfigDTO {
 		this.objectSchemaKey = o.getObjectSchemaKey();
 		this.objectSchemaPropertyBean = new ObjectSchemaPropertyBeanDTO();
 		this.objectSchemaPropertyBean.setJiraObject(o.getObjectSchemaPropertyBean());
+		this.uniqueKey = this.objectSchemaKey;
 	}
 
 	@Override
-	public String getUniqueKey() {
-		return this.getObjectSchemaKey();
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Object Schema Key", new JiraConfigProperty(this.objectSchemaKey));
+		r.put("Object Schema Property Bean", 
+				new JiraConfigProperty(ObjectSchemaPropertyBeanUtil.class, this.objectSchemaPropertyBean));
+		return r;
 	}
 
 	@Override

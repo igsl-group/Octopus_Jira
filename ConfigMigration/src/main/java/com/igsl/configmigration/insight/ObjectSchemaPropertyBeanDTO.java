@@ -2,10 +2,12 @@ package com.igsl.configmigration.insight;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaPropertyBean;
 
@@ -20,11 +22,7 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 		ObjectSchemaPropertyBean o = (ObjectSchemaPropertyBean) obj;
 		this.id = o.getId();
 		this.objectSchemaId = o.getObjectSchemaId();
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return Integer.toString(this.getId());
+		this.uniqueKey = Long.toString(this.hashCode());
 	}
 
 	@Override
@@ -57,13 +55,18 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		// TODO Auto-generated method stub
-		return null;
+		return ObjectSchemaPropertyBeanUtil.class;
 	}
 
 	@Override
 	public Class<?> getJiraClass() {
 		return ObjectSchemaPropertyBean.class;
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -2,6 +2,8 @@ package com.igsl.configmigration.issuetypescreencheme;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -10,6 +12,7 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEnt
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.fieldscreenscheme.FieldScreenSchemeDTO;
@@ -40,10 +43,6 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 		if (fieldScreenSchemeId != null) {
 			this.fieldScreenScheme = (FieldScreenSchemeDTO) fieldScreenSchemeUtil.findByInternalId(Long.toString(fieldScreenSchemeId));
 		}
-	}
-
-	@Override
-	public String getUniqueKey() {
 		StringBuilder s = new StringBuilder();
 		if (this.getIssueType() != null) {
 			s.append(this.getIssueType().getName());
@@ -52,7 +51,16 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 		if (this.getFieldScreenScheme() != null) {
 			s.append(this.getFieldScreenScheme().getName());
 		}
-		return s.toString();
+		this.uniqueKey = s.toString();
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Issue Type", new JiraConfigProperty(IssueTypeUtil.class, this.issueType));
+		r.put("Field Screen Scheme", new JiraConfigProperty(FieldScreenSchemeUtil.class, this.fieldScreenScheme));
+		return r;
 	}
 
 	@Override

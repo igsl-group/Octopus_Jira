@@ -3,6 +3,8 @@ package com.igsl.configmigration.customfield;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
@@ -11,14 +13,20 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
+import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsUtil;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
+import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeDTO;
 import com.igsl.configmigration.options.OptionsDTO;
+import com.igsl.configmigration.options.OptionsUtil;
 import com.igsl.configmigration.propertyset.PropertySetDTO;
+import com.igsl.configmigration.propertyset.PropertySetUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldDTO extends JiraConfigDTO {
@@ -36,6 +44,23 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	private PropertySetDTO propertySet;
 	private OptionsDTO options;
 	private DefaultValueOperationsDTO defaultValueOperations;
+	
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Name", new JiraConfigProperty(name));
+		r.put("ID", new JiraConfigProperty(id));
+		r.put("Description", new JiraConfigProperty(description));
+		r.put("Sort Order", new JiraConfigProperty(defaultSortOrder));
+		r.put("Field Name", new JiraConfigProperty(fieldName));
+		r.put("Custom Field Searcher", 
+				new JiraConfigProperty(CustomFieldSearcherUtil.class, customFieldSearcher));
+		r.put("Configuration Schemes", new JiraConfigProperty(FieldConfigSchemeUtil.class, this.configurationSchemes));
+		r.put("Property Set", new JiraConfigProperty(PropertySetUtil.class, this.propertySet));
+		r.put("Options", new JiraConfigProperty(OptionsUtil.class, this.options));
+		r.put("Default Value", new JiraConfigProperty(DefaultValueOperationsUtil.class, this.defaultValueOperations));
+		return r;
+	}
 	
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
@@ -72,11 +97,7 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null), fieldConfig);
 		this.defaultValueOperations = new DefaultValueOperationsDTO();
 		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfig);
-	}
-
-	@Override
-	public String getUniqueKey() {
-		return this.getName();
+		this.uniqueKey = obj.getName();
 	}
 
 	@Override

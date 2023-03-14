@@ -10,12 +10,18 @@
 		<vendor name="${project.organization.name}"
 			url="${project.organization.url}" />
 		<bundle-instructions>
-			<Import-Package>com.fasterxml.jackson,*;resolution:=optional</Import-Package>
+			<Import-Package>com.fasterxml.jackson,*;resolution:=optional
+			</Import-Package>
 		</bundle-instructions>
 	</plugin-info>
 
-	<resource type="i18n" name="i18n"
-		location="ConfigMigration" />
+	<!-- Active Object -->
+	<ao key="ao-module">
+		<description>Active Objects</description>
+		<entity>com.igsl.configmigration.export.v1.ExportData</entity>
+	</ao>
+
+	<resource type="i18n" name="i18n" location="ConfigMigration" />
 
 	<!-- Web resources like CSS and JS -->
 	<web-resource key="resources" name="Jira Resources">
@@ -42,16 +48,13 @@
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
 		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
 		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
+		<dependency>com.atlassian.auiplugin:aui-dialog2</dependency>
 	</web-resource>
 
 	<!-- Configuration page -->
 
-	<!-- 
-	<web-section key="ConfigMigrationSection"
-		location="admin_plugins_menu">
-		<label key="Config Migration" />
-	</web-section>
-	-->
+	<!-- <web-section key="ConfigMigrationSection" location="admin_plugins_menu"> 
+		<label key="Config Migration" /> </web-section> -->
 	<web-section key="ConfigMigrationSection"
 		location="system.admin.top.navigation.bar">
 		<label key="Config Migration" />
@@ -61,41 +64,21 @@
 		location="ConfigMigrationSection">
 		<label key="Config Migration" />
 	</web-section>
-	
-	<!-- New -->
-	<web-item key="New"
-		name="New" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
-		<description key="desc">New
-		</description>
-		<label key="new" />
-		<link linkId="NewLink">/secure/admin/plugins/handler/ExportAction2.jspa</link>
-	</web-item>
-	<webwork1 key="ExportAction2"
-		name="New" class="java.lang.Object">
-		<description>New</description>
-		<actions>
-			<action
-				name="com.igsl.configmigration.ExportAction2"
-				alias="ExportAction2">
-				<view name="input">templates/new.vm</view>
-			</action>
-		</actions>
-	</webwork1>
-	
+
 	<!-- Export -->
-	<web-item key="Export"
-		name="Export" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+	<web-item key="Export" name="Export"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Export
 		</description>
 		<label key="export" />
-		<link linkId="ExportLink">/secure/admin/plugins/handler/ExportAction.jspa</link>
+		<link linkId="ExportLink">/secure/admin/plugins/handler/ExportAction.jspa
+		</link>
 	</web-item>
-	<webwork1 key="ExportAction"
-		name="Export" class="java.lang.Object">
+	<webwork1 key="ExportAction" name="Export"
+		class="java.lang.Object">
 		<description>Export</description>
 		<actions>
-			<action
-				name="com.igsl.configmigration.ExportAction"
+			<action name="com.igsl.configmigration.ExportAction"
 				alias="ExportAction">
 				<view name="input">templates/export.vm</view>
 			</action>
@@ -103,23 +86,69 @@
 	</webwork1>
 
 	<!-- Import -->
-	<web-item key="Import"
-		name="Import" section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+	<web-item key="Import" name="Import"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Import
 		</description>
 		<label key="import" />
-		<link linkId="ImportLink">/secure/admin/plugins/handler/ImportAction.jspa</link>
+		<link linkId="ImportLink">/secure/admin/plugins/handler/ImportAction.jspa
+		</link>
 	</web-item>
-	<webwork1 key="ImportAction"
-		name="Import" class="java.lang.Object">
+	<webwork1 key="ImportAction" name="Import"
+		class="java.lang.Object">
 		<description>Import</description>
 		<actions>
-			<action
-				name="com.igsl.configmigration.ImportAction"
+			<action name="com.igsl.configmigration.ImportAction"
 				alias="ImportAction">
 				<view name="input">templates/import.vm</view>
 			</action>
 		</actions>
 	</webwork1>
+
+	<!-- New -->
+	<web-item key="Export2" name="Export2"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+		<description key="desc">Export v2
+		</description>
+		<label key="Export2" />
+		<link linkId="TestLink">/secure/admin/plugins/handler/ExportAction2.jspa
+		</link>
+	</web-item>
+	<webwork1 key="ExportAction2" name="Export2"
+		class="java.lang.Object">
+		<description>Export v2</description>
+		<actions>
+			<action name="com.igsl.configmigration.ExportAction2"
+				alias="ExportAction2">
+				<view name="input">templates/new.vm</view>
+			</action>
+		</actions>
+	</webwork1>
 	
+	<!-- Manage Export -->
+	<web-item key="ManageExports" name="Manage Exports"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+		<description key="desc">Manage Exports
+		</description>
+		<label key="Manage Exports" />
+		<link linkId="ManageExportLink">/secure/admin/plugins/handler/ManageExport.jspa
+		</link>
+	</web-item>
+	<webwork1 key="ManageExport" name="Manage Export"
+		class="java.lang.Object">
+		<description>Manage Exports</description>
+		<actions>
+			<action name="com.igsl.configmigration.ManageExport"
+				alias="ManageExport">
+				<view name="input">templates/manageExport.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	<!-- Download servlet -->
+	<servlet name="Download Servlet" key="downloadServlet" class="com.igsl.configmigration.DownloadServlet">
+		<description>ConfigMigration Download Servlet</description>
+		<url-pattern>/configmigrationdownload</url-pattern>
+	</servlet>
+ 
 </atlassian-plugin>
