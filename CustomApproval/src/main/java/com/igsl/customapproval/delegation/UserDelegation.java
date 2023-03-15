@@ -99,7 +99,7 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 			try {
 				List<ApplicationUser> list = filter.getFilteredUsers();
 				for (ApplicationUser user : list) {
-					this.settings.addAll(DelegationUtil.loadData(user.getKey(), true));
+					this.settings.addAll(DelegationUtil.loadData(user.getKey(), cleanup));
 				}
 				LOGGER.debug("User list size: " + list.size());
 			} catch (Exception ex) {

@@ -406,7 +406,7 @@ public class CustomApprovalUtil {
 		Map<String, ApplicationUser> result = new HashMap<>();
 		if (approverList != null) {
 			for (String approverKey : approverList.keySet()) {
-				List<DelegationSetting> delegateList = DelegationUtil.loadData(approverKey, false);
+				List<DelegationSetting> delegateList = DelegationUtil.loadData(approverKey, new Date());
 				for (DelegationSetting setting : delegateList) {
 					ApplicationUser delegate = setting.getDelegateToUserObject();
 					result.put(approverKey, delegate);
@@ -1198,7 +1198,7 @@ public class CustomApprovalUtil {
 					String approvalName = entry.getKey();
 					if (approvalName.equals(currentApprovalName)) {
 						hasCurrentApproval = true;
-					}				
+					}
 					ApprovalSettings settings = approvalData.getSettings().get(approvalName);
 					Map<String, ApplicationUser> approverList;
 					if (settings.isCompleted()) {
@@ -1251,7 +1251,7 @@ public class CustomApprovalUtil {
 								newHistory.setDelegated(null);
 								ApprovalPanelHistory pendingItem = new ApprovalPanelHistory(newHistory, issue, settings);
 								historyMap.put(approver.getKey(), pendingItem);
-								for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), false)) {
+								for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), new Date())) {
 									ApprovalHistory newDelegateHistory = new ApprovalHistory();
 									newDelegateHistory.setApprovedDate(null);
 									newDelegateHistory.setApproved(false);
@@ -1285,7 +1285,7 @@ public class CustomApprovalUtil {
 						newHistory.setDelegated(null);
 						ApprovalPanelHistory pendingItem = new ApprovalPanelHistory(newHistory, issue, currentApprovalSettings);
 						historyMap.put(approver.getKey(), pendingItem);
-						for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), false)) {
+						for (DelegationSetting delegate : DelegationUtil.loadData(approver.getKey(), new Date())) {
 							ApprovalHistory newDelegateHistory = new ApprovalHistory();
 							newDelegateHistory.setApprovedDate(null);
 							newDelegateHistory.setApproved(false);

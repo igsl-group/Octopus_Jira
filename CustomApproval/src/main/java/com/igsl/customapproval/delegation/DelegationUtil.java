@@ -167,6 +167,46 @@ public class DelegationUtil {
 		}
 	}
 	
+	/**
+	 * Load delegation data that are effective for provided date
+	 * @param userKey Delegator user key
+	 * @param checkDate Date to check against. If null, all records are included.
+	 * @return List<DelegationSetting>
+	 */
+	public static List<DelegationSetting> loadData(String userKey, Date checkDate) {
+		List<DelegationSetting> result = new ArrayList<>();
+		PropertySet ps = getPropertySet(userKey);
+		String s = ps.getText(PROPERTY_DELEGATION);
+		LOGGER.debug("Loaded property: " + s);
+		if (s != null) {
+			List<DelegationSetting> list = DelegationSetting.parse(s);
+			for (DelegationSetting setting : list) {
+				if (checkDate != null) {
+					Date start = setting.getStartDate();
+					Date end = setting.getEndDate();
+					// Compare start date
+					if (start.after(checkDate)) {
+						continue;
+					}
+					if (end != null) {
+						// Compare end date
+						if (end.before(checkDate)) {
+							continue;
+						}
+					}
+				}
+				result.add(setting);
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Load delegation data
+	 * @param userKey Delegator user key
+	 * @param removeOldRecords Remove records already expired from database
+	 * @return List<DelegationSetting>
+	 */
 	public static List<DelegationSetting> loadData(String userKey, boolean removeOldRecords) {
 		List<DelegationSetting> result = new ArrayList<>();
 		long threshold = CustomApprovalUtil.getDelegationHistoryRetainDays() * 1000 * 60 * 60 * 24;

@@ -112,7 +112,8 @@
 										value=""
 										autocomplete="off"
 										onchange="validateForm()"/>
-								<select class="TimePicker ajs-dirty-warning-exempt" id="startHour" name="startHour">
+								<select class="TimePicker ajs-dirty-warning-exempt" id="startHour" name="startHour"
+										onchange="validateForm()">
 									<option value=""></option>
 									#foreach ($idx in [0..23])
 										#if ($idx lt 10)
@@ -123,7 +124,8 @@
 									#end
 								</select>
 								<span>:</span>
-								<select class="TimePicker ajs-dirty-warning-exempt" id="startMinute" name="startMinute">
+								<select class="TimePicker ajs-dirty-warning-exempt" id="startMinute" name="startMinute"
+										onchange="validateForm()">
 									<option value=""></option>
 									#foreach ($idx in [0..59])
 										#if ($idx lt 10)
@@ -142,7 +144,8 @@
 										value=""
 										autocomplete="off"
 										onchange="validateForm()"/>
-								<select class="TimePicker ajs-dirty-warning-exempt" id="endHour" name="endHour">
+								<select class="TimePicker ajs-dirty-warning-exempt" id="endHour" name="endHour"
+										onchange="validateForm()">
 									<option value=""></option>
 									#foreach ($idx in [0..23])
 										#if ($idx lt 10)
@@ -153,7 +156,8 @@
 									#end
 								</select>
 								<span>:</span>
-								<select class="TimePicker ajs-dirty-warning-exempt" id="endMinute" name="endMinute">
+								<select class="TimePicker ajs-dirty-warning-exempt" id="endMinute" name="endMinute"
+										onchange="validateForm()">
 									<option value=""></option>
 									#foreach ($idx in [0..59])
 										#if ($idx lt 10)
@@ -184,6 +188,10 @@
 								<div	id="startDateError"
 										style="display: none; width: 95%">
 									Invalid date format
+								</div>
+								<div	id="dateRangeError"
+										style="display: none; width: 95%">
+									Start date/time should be less than end date/time
 								</div>
 							</td>
 							<td>
@@ -284,7 +292,10 @@
 					if (!startMin) {
 						$('#startMinute').val('00');
 					}
-				}				
+				} else {
+					$('#startHour').val('');
+					$('#startMinute').val('');
+				}
 				// Initial endHour and endMin
 				if (end) {
 					if (!endHour) {
@@ -293,10 +304,13 @@
 					if (!endMin) {
 						$('#endMinute').val('59');
 					}
+				} else {
+					$('#endHour').val('');
+					$('#endMinute').val('');
 				}
 				// Update min date on endDate
 				var minDate = new Date(start);
-				minDate.setDate(minDate.getDate() + 1);
+				minDate.setDate(minDate.getDate());
 				$('#endDate').datepicker('option', 'minDate', minDate);	// This resets the value
 				// Restore endDate value
 				if (end) {
@@ -307,8 +321,18 @@
 						$('#endDate').val(formatDate(endVal));
 					}
 				} else {
-					$('#endDate').val('');
+					$('#endDate').val('');					
 				}
+				// Compare end date/time with start date/time
+				$('#dateRangeError').hide();
+				if (start == end) {
+					var startTime = $('#startHour').val() + $('#startMinute').val();
+					var endTime = $('#endHour').val() + $('#endMinute').val();
+					if (startTime >= endTime) {
+						error = true;
+						$('#dateRangeError').show();
+					} 
+				} 
 				// Update add button
 				$('#add').prop('disabled', error);
 			}
