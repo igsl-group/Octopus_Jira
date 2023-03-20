@@ -30,6 +30,30 @@ public class AvatarDTO extends JiraConfigDTO {
 	protected String imageData;
 	
 	@Override
+	public void fromJiraObject(Object obj) throws Exception {
+		Avatar o = (Avatar) obj;
+		this.contentType = o.getContentType();
+		this.fileName = o.getFileName();
+		this.iconType = o.getIconType().toString();
+		this.id = o.getId();
+		this.owner = o.getOwner();
+		Avatar.Size size = Avatar.Size.defaultSize();
+		Base64InputStreamConsumer stream = new Base64InputStreamConsumer(false);
+		AVATAR_MANAGER.readAvatarData(o, size, stream);
+		this.imageData = stream.getEncoded();
+		// Avatar upload always changes the filename and image content
+		// So it is impossible to map it using anything but ID
+		// During migration avatars will always be created
+		// So for unique name, we just make sure it won't conflict with another avatar on the current server
+		this.uniqueKey = Long.toString(this.id);
+	}
+	
+	@Override
+	public String getConfigName() {
+		return this.fileName + " (" + this.id + ")";
+	}
+	
+	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("Owner", new JiraConfigProperty(owner));
@@ -42,21 +66,6 @@ public class AvatarDTO extends JiraConfigDTO {
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
 		return AvatarUtil.class;
-	}
-	
-	@Override
-	public void fromJiraObject(Object obj) throws Exception {
-		Avatar o = (Avatar) obj;
-		this.contentType = o.getContentType();
-		this.fileName = o.getFileName();
-		this.iconType = o.getIconType().toString();
-		this.id = o.getId();
-		this.owner = o.getOwner();
-		Avatar.Size size = Avatar.Size.defaultSize();
-		Base64InputStreamConsumer stream = new Base64InputStreamConsumer(false);
-		AVATAR_MANAGER.readAvatarData(o, size, stream);
-		this.imageData = stream.getEncoded();
-		this.uniqueKey = o.getFileName();
 	}
 	
 	@JsonIgnore

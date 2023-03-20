@@ -1,5 +1,6 @@
 package com.igsl.configmigration.insight;
 
+import java.util.Collections;
 import java.util.Map;
 
 import com.igsl.configmigration.JiraConfigDTO;
@@ -29,7 +30,7 @@ public class ObjectAttributeValueBeanUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		return null;
+		return Collections.emptyMap();
 	}
 
 	@Override

@@ -1,0 +1,96 @@
+<!-- 
+	Required variable from parent:
+	exportMode - true for Export, or false for Import
+ -->
+<!-- 
+	Note: 
+	Jira's default settings have Velocity reject setting velocity variables to null 
+	So to be able to clear value, set it to false and check it with if (var)
+-->
+#set ($viewData = $false) 
+#set ($viewStack = $false)
+#set ($clearAction = $false)
+#if ($exportMode)
+	#set ($viewData = $action.getViewExport())
+	#set ($viewStack = $action.getViewExportHistory())
+	#set ($clearAction = "viewExportClear")
+#else
+	#set ($viewData = $action.getViewImport())
+	#set ($viewStack = $action.getViewImportHistory())
+	#set ($clearAction = "viewImportClear")
+#end
+<!-- Details breadcrumb -->
+<div style="flex: 1 1 auto; overflow-y: auto">
+	#if ($viewData)
+		<input 	type="button" 
+				id="viewExportClear" 
+				onclick="submitForm('${clearAction}')" 
+				value="X"/>
+		#foreach ($item in $viewStack)
+			<span style="font-weight: bold">
+				&gt; <a href="#" onclick="viewJump(
+						${exportMode},
+						'$!{item.getUtil()}', 
+						'$!{item.getUniqueKeyJS()}')">
+					$!{item.getType()}: $!{item.getDisplay()}
+				</a>
+			</span>
+		#end
+	#end
+</div>
+<!-- Details -->
+<div style="flex: 1 1 auto; max-height: 20vh; overflow-y: auto">
+	#if ($viewData)
+		<table class="ConfigMigration" style="flex: 1 1 auto">
+			<tbody>
+				#foreach ($item in $viewData.entrySet())
+					<tr>
+						<th width="30%">
+							<div>$!{item.getKey()}</div>
+							<div>
+								#if ($item.getValue().getType() == "LIST")
+									Size: ${item.getValue().getList().size()}
+								#end
+								#if ($item.getValue().getType() == "MAP")
+									Size: ${item.getValue().getMap().size()}
+								#end
+							</div>
+						</th>
+						#if ($item.getValue().getType() == "TEXT")
+							<td width="70%">$!{item.getValue().getValue()}</td>
+						#end
+						#if ($item.getValue().getType() == "LIST")
+							<td width="70%">
+								#foreach ($prop in $item.getValue().getList())
+									<div>
+										<a href="#" onclick="viewAdd(
+												${exportMode},
+												'$!{prop.getUtil()}', 
+												'$!{prop.getUniqueKeyJS()}')">
+											$!{prop.getDisplay()}
+										</a>
+									</div>
+								#end
+							</td>
+						#end
+						#if ($item.getValue().getType() == "MAP")
+							<td width="70%">
+								#foreach ($prop in $item.getValue().getMap().entrySet())
+									<div>
+										$!{prop.getKey()}: 
+										<a href="#" onclick="viewAdd(
+												${exportMode},
+												'$!{prop.getValue().getUtil()}', 
+												'$!{prop.getValue().getUniqueKeyJS()}')">
+											$!{prop.getValue().getDisplay()}
+										</a>
+									</div>
+								#end
+							</td>
+						#end
+					</tr>
+				#end
+			</tbody>
+		</table>
+	#end
+</div>

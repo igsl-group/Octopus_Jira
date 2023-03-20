@@ -25,22 +25,6 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 	private String displayName;
 	
 	@Override
-	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
-		Map<String, JiraConfigProperty> r = new TreeMap<>();
-		r.put("Display Name", new JiraConfigProperty(displayName));
-		r.put("User Name", new JiraConfigProperty(userName));
-		r.put("Email Address", new JiraConfigProperty(emailAddress));
-		r.put("Key", new JiraConfigProperty(key));
-		r.put("ID", new JiraConfigProperty(id));
-		return r;
-	}
-	
-	@Override
-	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return ApplicationUserUtil.class;
-	}
-	
-	@Override
 	public void fromJiraObject(Object obj) throws Exception {
 		ApplicationUser o = (ApplicationUser) obj;
 		this.id = o.getId();
@@ -52,6 +36,27 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		this.uniqueKey = o.getKey();
 	}
 
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Display Name", new JiraConfigProperty(displayName));
+		r.put("User Name", new JiraConfigProperty(userName));
+		r.put("Email Address", new JiraConfigProperty(emailAddress));
+		r.put("Key", new JiraConfigProperty(key));
+		r.put("ID", new JiraConfigProperty(id));
+		return r;
+	}
+	
+	@Override
+	public String getConfigName() {
+		return this.displayName + " (" + this.name + ")";
+	}
+	
+	@Override
+	public Class<? extends JiraConfigUtil> getUtilClass() {
+		return ApplicationUserUtil.class;
+	}
+	
 	@Override
 	public String getInternalId() {
 		if (this.id != null) {

@@ -40,7 +40,7 @@ public class ObjectAttributeValueBeanDTO extends JiraConfigDTO {
 		this.referencedObjectBeanId = o.getReferencedObjectBeanId();
 		this.textValue = o.getTextValue();
 		this.value = o.getValue();
-		this.uniqueKey = Long.toString(this.hashCode());
+		this.uniqueKey = Long.toString(this.id);
 	}
 
 	@Override

@@ -72,7 +72,7 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 			IssueSecurityLevel createdJira = LEVEL_MANAGER.createIssueSecurityLevel(
 					src.getSchemeId(), src.getName(), src.getDescription());
 			IssueSecurityLevelDTO created = new IssueSecurityLevelDTO();
-			created.setJiraObject(createdJira);
+			created.setJiraObject(createdJira, src.getObjectParameters());
 			return created;
 		}
 	}

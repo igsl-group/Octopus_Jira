@@ -30,6 +30,8 @@ public class FieldDTO extends JiraConfigDTO {
 		this.id = o.getId();
 		this.name = o.getName();
 		this.nameKey = o.getNameKey();
+		// Field is Jira system fields, they are not migrated and only used as references. 
+		// So simply use name.
 		this.uniqueKey = this.name;
 	}
 	

@@ -33,7 +33,7 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 	private String tabName;
 	
 	/**
-	 * #0: FieldScreenTab
+	 * #0: FieldScreenTabDTO
 	 */
 	@Override
 	protected int getObjectParameterCount() {
@@ -56,9 +56,9 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 			this.fieldName = this.field.getUniqueKey();
 		}
 		
-		FieldScreenTab tab = (FieldScreenTab) this.objectParameters[0];
+		FieldScreenTabDTO tab = (FieldScreenTabDTO) this.objectParameters[0];
 		this.tabName = tab.getName();
-		this.uniqueKey = this.tabName + "." + this.fieldName;
+		this.uniqueKey = tab.getUniqueKey() + "." + this.fieldName + "." + this.id;
 	}
 
 	@Override

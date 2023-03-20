@@ -120,7 +120,7 @@
 		<actions>
 			<action name="com.igsl.configmigration.ExportAction2"
 				alias="ExportAction2">
-				<view name="input">templates/new.vm</view>
+				<view name="input">templates/export2.vm</view>
 			</action>
 		</actions>
 	</webwork1>

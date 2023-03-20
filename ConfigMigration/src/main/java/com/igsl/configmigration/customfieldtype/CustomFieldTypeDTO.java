@@ -30,6 +30,11 @@ public class CustomFieldTypeDTO extends JiraConfigDTO {
 		// obj.getNonNullCustomFieldProvider();
 		this.uniqueKey = this.key;
 	}
+	
+	@Override
+	public String getConfigName() {
+		return this.name;
+	}
 
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {

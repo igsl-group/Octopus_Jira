@@ -1,5 +1,6 @@
 package com.igsl.configmigration.fieldconfig;
 
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -81,7 +82,7 @@ public class FieldConfigUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		throw new Exception("Search is impossible for FieldConfig");
+		return Collections.emptyMap();
 	}
 
 }

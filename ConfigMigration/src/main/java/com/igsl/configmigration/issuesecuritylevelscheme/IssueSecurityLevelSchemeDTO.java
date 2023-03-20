@@ -36,16 +36,17 @@ public class IssueSecurityLevelSchemeDTO extends JiraConfigDTO {
 		this.description = obj.getDescription();
 		this.name = obj.getName();
 		this.defaultSecurityLevelId = obj.getDefaultSecurityLevelId();
+		this.uniqueKey = this.name;
+		// Levels
 		this.issueSecurityLevels = new ArrayList<>();
 		for (IssueSecurityLevel level : LEVEL_MANAGER.getIssueSecurityLevels(obj.getId())) {
 			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
-			item.setJiraObject(level);
+			item.setJiraObject(level, this);
 			this.issueSecurityLevels.add(item);
 			if (this.defaultSecurityLevelId != null && this.defaultSecurityLevelId.equals(item.getId())) {
 				this.defaultSecurityLevelName = item.getName();
 			}
 		}
-		this.uniqueKey = this.name;
 	}
 
 	@Override

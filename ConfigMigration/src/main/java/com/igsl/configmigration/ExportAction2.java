@@ -1,9 +1,12 @@
 package com.igsl.configmigration;
 
+import java.io.File;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +15,8 @@ import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
+import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +28,15 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.project.ProjectUtil;
+
+import webwork.action.ServletActionContext;
+import webwork.multipart.MultiPartRequestWrapper;
 
 public class ExportAction2 extends JiraWebActionSupport {
 
@@ -37,6 +46,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	// Selection data class.
 	// UI will pass an array of SelectionData for updated items
 	public static class SelectionData {
+		public boolean exportStore;
 		public String utilName;
 		public String uniqueKey;
 		public boolean selected;
@@ -44,15 +54,16 @@ public class ExportAction2 extends JiraWebActionSupport {
 
 	// Data stored in HTTP session
 	public static class SessionData {
-		public DTOStore exportStore = new DTOStore();
-		public DTOStore importDataStore = new DTOStore(); // Store for deserialized data
-		public DTOStore importServerStore = new DTOStore(); // Store for existing server data
+		public DTOStore exportStore = new DTOStore();	// Store for data in server
+		public DTOStore importStore = new DTOStore(); // Store for imported data
 		public String objectType = ProjectUtil.class.getCanonicalName();
 		public String exportFilter = "";
 		public String importFilter = "";
 		public StringBuilder errorMessage = new StringBuilder();
-		public Map<String, JiraConfigProperty> view;
-		public Stack<JiraConfigRef> viewHistory = new Stack<>();
+		public Map<String, JiraConfigProperty> viewExport;
+		public Stack<JiraConfigRef> viewExportHistory = new Stack<>();
+		public Map<String, JiraConfigProperty> viewImport;
+		public Stack<JiraConfigRef> viewImportHistory = new Stack<>();
 		public boolean selectNested = true;
 	}
 
@@ -67,35 +78,48 @@ public class ExportAction2 extends JiraWebActionSupport {
 	private static final String SESSION_DATA = "ExportAction2SessionData";
 
 	// Actions
-	private static final String ACTION_OBJECT_TYPE = "objectType";
-	private static final String ACTION_EXPORT_FILTER = "exportFilter";
-	private static final String ACTION_EXPORT_VIEW = "viewExport";
-	private static final String ACTION_EXPORT_VIEW_ADD = "viewExportAdd";
-	private static final String ACTION_EXPORT_VIEW_JUMP = "viewExportJump";
-	private static final String ACTION_EXPORT = "export";
+	public static final String ACTION_OBJECT_TYPE = "objectType";
+	public static final String ACTION_EXPORT_FILTER = "exportFilter";
+	public static final String ACTION_IMPORT_FILTER = "importFilter";
+	public static final String ACTION_VIEW = "view";
+	public static final String ACTION_VIEW_ADD = "viewAdd";
+	public static final String ACTION_VIEW_JUMP = "viewJump";
+	public static final String ACTION_VIEW_EXPORT_CLEAR = "viewExportClear";
+	public static final String ACTION_VIEW_IMPORT_CLEAR = "viewImportClear";
+	public static final String ACTION_EXPORT = "export";
+	public static final String ACTION_RELOAD = "reload";
+	public static final String ACTION_IMPORT = "import";
+	public static final String ACTION_MERGE = "merge";
 
-	private static final String ACTION_RELOAD = "reload";
-	private static final String ACTION_IMPORT = "import";
-	private static final String ACTION_UPLOAD = "upload";
-
-	// Form data
-	private static final String PARAM_ACTION = "action";
-	private static final String PARAM_SELECT_NESTED = "selectNested";
-	private static final String PARAM_OBJECT_TYPE = "objectType";
-	private static final String PARAM_EXPORT_FILTER = "exportFilter";
-	private static final String PARAM_SELECTED_EXPORTS = "selectedExports";
-	private static final String PARAM_VIEW_EXPORT = "viewExport";
-	private static final String PARAM_EXPORT_DESC = "exportDesc";
+	// Form fields
+	public static final String PARAM_ACTION = "action";
+	public static final String PARAM_SELECT_NESTED = "selectNested";
+	public static final String PARAM_OBJECT_TYPE = "objectType";
+	public static final String PARAM_EXPORT_FILTER = "exportFilter";
+	public static final String PARAM_IMPORT_FILTER = "importFilter";
+	public static final String PARAM_SELECTED_OBJECTS = "selectedObjects";
+	public static final String PARAM_VIEW_TYPE = "viewType";
+	public static final String PARAM_VIEW_OBJECT = "viewObject";
+	public static final String PARAM_EXPORT_DESC = "exportDesc";
+	public static final String PARAM_IMPORT_FILE = "importFile";
+	
+	// Form field values
+	public static final String PARAM_VIEW_TYPE_EXPORT = "viewExport";
+	public static final String PARAM_VIEW_TYPE_IMPORT = "viewImport";
 	
 	private static Logger LOGGER = LoggerFactory.getLogger(ExportAction2.class);
 	private static ObjectMapper OM;
-	private static ObjectReader OR;
-
+	private static ObjectReader OR_SELECTION;
+	private static ObjectReader OR_IMPORT_DATA;
+	
 	private SessionData data = new SessionData();
 
 	static {
 		OM = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
-		OR = OM.readerFor(SelectionData.class);
+		OR_SELECTION = OM.readerFor(SelectionData.class);
+		TypeReference<Map<String, List<JiraConfigDTO>>> importType = 
+				new TypeReference<Map<String,List<JiraConfigDTO>>>(){};
+		OR_IMPORT_DATA = OM.readerFor(importType);
 	}
 
 	public ExportAction2(@ComponentImport ActiveObjects ao) {
@@ -103,24 +127,28 @@ public class ExportAction2 extends JiraWebActionSupport {
 		this.ao = ao;
 	}
 
-	public Map<String, JiraConfigProperty> getView() {
-		return this.data.view;
+	public Map<String, JiraConfigProperty> getViewExport() {
+		return this.data.viewExport;
 	}
 
-	public List<JiraConfigRef> getViewHistory() {
-		return this.data.viewHistory;
+	public Map<String, JiraConfigProperty> getViewImport() {
+		return this.data.viewImport;
+	}
+	
+	public List<JiraConfigRef> getViewExportHistory() {
+		return this.data.viewExportHistory;
 	}
 
+	public List<JiraConfigRef> getViewImportHistory() {
+		return this.data.viewImportHistory;
+	}
+	
 	public DTOStore getExportStore() {
 		return this.data.exportStore;
 	}
 
-	public DTOStore getImportDataStore() {
-		return this.data.importDataStore;
-	}
-
-	public DTOStore getImportServerStore() {
-		return this.data.importServerStore;
+	public DTOStore getImportStore() {
+		return this.data.importStore;
 	}
 
 	public boolean getSelectNested() {
@@ -172,7 +200,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	 */
 	public Map<String, String> getObjectTypes() {
 		Map<String, String> result = new TreeMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(true)) {
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
 			result.put(util.getName(), util.getClass().getCanonicalName());
 		}
 		return result;
@@ -221,16 +249,6 @@ public class ExportAction2 extends JiraWebActionSupport {
 				LOGGER.debug("Distinct objects registered: " + count);
 			}
 			session.setAttribute(SESSION_DATA, this.data);
-			LOGGER.debug("Export Store: ");
-			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
-				Map m = this.data.exportStore.getTypeStore(util);
-				try {
-					LOGGER.debug("[STORE]: " + util.getName() + "(" + m.size() + "): " + OM.writeValueAsString(m));
-				} catch (Exception ex) {
-					LOGGER.error("[STORE]: " + util.getName() + "(" + m.size() + "): " + "OM Error", ex);
-				}
-			}
-			LOGGER.debug("End of Export Store");
 		}
 	}
 
@@ -251,7 +269,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 			if (nested) {
 				// Select related objects
 				for (JiraConfigRef ref : dto.getRelatedObjects()) {
-					Map<String, JiraConfigDTO> s = this.data.exportStore.getTypeStore(ref.getUtil());
+					Map<String, JiraConfigDTO> s = store.getTypeStore(ref.getUtil());
 					if (s != null) {
 						JiraConfigDTO nestedDTO = s.get(ref.getUniqueKey());
 						if (nestedDTO != null && (nestedDTO.isSelected() != select)) {
@@ -262,34 +280,53 @@ public class ExportAction2 extends JiraWebActionSupport {
 			}
 		}
 	}
-	
+
 	@Override
 	protected String doExecute() throws Exception {
 		LOGGER.debug("doExecute");
-
+		
 		HttpServletRequest req = this.getHttpRequest();
 		loadData(req);
-
+		
 		String action = req.getParameter(PARAM_ACTION);
-
+		// Check if it is file upload
+		File uploaded = null;
+		HttpServletRequest wrapperReq = ServletActionContext.getRequest();
+		if (wrapperReq != null && wrapperReq instanceof MultiPartRequestWrapper) {
+			action = ACTION_IMPORT;
+			MultiPartRequestWrapper mpr = (MultiPartRequestWrapper) wrapperReq;
+			uploaded = mpr.getFile(PARAM_IMPORT_FILE);
+		}
+		
 		// Update selected items
 		String nested = req.getParameter(PARAM_SELECT_NESTED);
 		LOGGER.debug("Update nested: " + nested);
 		if (nested != null && !nested.isEmpty()) {
 			this.data.selectNested = Boolean.parseBoolean(nested);
 		}
-		String selectedExports = req.getParameter(PARAM_SELECTED_EXPORTS);
-		LOGGER.debug("Update selection: " + selectedExports);
-		if (selectedExports != null) {
-			MappingIterator<SelectionData> it = OR.readValues(selectedExports);
+		String selectedObjects = req.getParameter(PARAM_SELECTED_OBJECTS);
+		LOGGER.debug("Update selection: " + selectedObjects);
+		if (selectedObjects != null) {
+			MappingIterator<SelectionData> it = OR_SELECTION.readValues(selectedObjects);
 			while (it.hasNext()) {
 				SelectionData data = it.next();
-				Map<String, JiraConfigDTO> typeStore = this.data.exportStore.getTypeStore(data.utilName);
-				if (typeStore != null && typeStore.containsKey(data.uniqueKey)) {
-					JiraConfigDTO dto = typeStore.get(data.uniqueKey);
-					LOGGER.debug("Object: " + dto.getConfigName() + ": " + data.selected);
-					selectDTO(this.data.exportStore, dto, data.selected, this.data.selectNested);
-				}
+				if (data.exportStore) {
+					// Select objects in export store
+					Map<String, JiraConfigDTO> typeStore = this.data.exportStore.getTypeStore(data.utilName);
+					if (typeStore != null && typeStore.containsKey(data.uniqueKey)) {
+						JiraConfigDTO dto = typeStore.get(data.uniqueKey);
+						LOGGER.debug("Object: " + dto.getConfigName() + ": " + data.selected);
+						selectDTO(this.data.exportStore, dto, data.selected, this.data.selectNested);
+					}
+				} else {
+					// Select objects in import store
+					Map<String, JiraConfigDTO> typeStore = this.data.importStore.getTypeStore(data.utilName);
+					if (typeStore != null && typeStore.containsKey(data.uniqueKey)) {
+						JiraConfigDTO dto = typeStore.get(data.uniqueKey);
+						LOGGER.debug("Object: " + dto.getConfigName() + ": " + data.selected);
+						selectDTO(this.data.importStore, dto, data.selected, this.data.selectNested);
+					}
+				}				
 			}
 		}
 
@@ -297,8 +334,38 @@ public class ExportAction2 extends JiraWebActionSupport {
 		// Perform action
 		if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
-		} else if (ACTION_UPLOAD.equals(action)) {
-			// Reload import items
+			if (uploaded != null) {
+				LOGGER.debug("Uploaded file: " + uploaded.getAbsolutePath());
+				try {
+					this.data.importStore.clear();
+					Map<String, List<JiraConfigDTO>> importData = OR_IMPORT_DATA.readValue(uploaded);
+					LOGGER.debug("Import data parsed, size: " + importData.size());
+					for (Map.Entry<String, List<JiraConfigDTO>> entry : importData.entrySet()) {
+						JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(entry.getKey());
+						if (util != null) {
+							for (JiraConfigDTO dto : entry.getValue()) {
+								util.register(this.data.importStore, dto);
+							}
+							for (JiraConfigDTO dto : entry.getValue()) {
+								dto.setupRelatedObjects();
+							}
+						}
+					}
+				} catch (Exception ex) {
+					LOGGER.error("Failed to parse import data", ex);
+				}
+			} else {
+				// Display error
+				LOGGER.debug("File upload failed");
+			}
+		} else if (ACTION_VIEW_EXPORT_CLEAR.equals(action)) {
+			// Clear export view
+			this.data.viewExport = null;
+			this.data.viewExportHistory.clear();
+		} else if (ACTION_VIEW_IMPORT_CLEAR.equals(action)) {
+			// Clear import view
+			this.data.viewImport = null;
+			this.data.viewImportHistory.clear();
 		} else if (ACTION_RELOAD.equals(action)) {
 			// Reload export items
 			req.getSession().removeAttribute(SESSION_DATA);
@@ -342,55 +409,93 @@ public class ExportAction2 extends JiraWebActionSupport {
 		} else if (ACTION_EXPORT_FILTER.equals(action)) {
 			// Update filter
 			this.data.exportFilter = req.getParameter(PARAM_EXPORT_FILTER);
-		} else if (ACTION_EXPORT_VIEW.equals(action)) {
-			String item = req.getParameter(PARAM_VIEW_EXPORT);
-			SelectionData data = OR.readValue(item);
-			if (data != null) {
-				this.data.view = null;
-				this.data.viewHistory = new Stack<>();
-				JiraConfigDTO dto = this.data.exportStore.getTypeStore(data.utilName).get(data.uniqueKey);
-				if (dto != null) {
-					this.data.view = dto.getConfigProperties();
-					LOGGER.debug("View: " + OM.writeValueAsString(this.data.view));
-					this.data.viewHistory.add(new JiraConfigRef(dto));
+		} else if (ACTION_IMPORT_FILTER.equals(action)) {
+			// Update filter
+			this.data.importFilter = req.getParameter(PARAM_IMPORT_FILTER);
+		} else if (ACTION_VIEW.equals(action)) {
+			String item = req.getParameter(PARAM_VIEW_OBJECT);
+			SelectionData viewObject = OR_SELECTION.readValue(item);
+			if (viewObject != null) {
+				LOGGER.debug("Viewing: " + viewObject.exportStore);
+				if (viewObject.exportStore) {
+					this.data.viewExport = null;
+					this.data.viewExportHistory = new Stack<>();
+					JiraConfigDTO dto = this.data.exportStore.getTypeStore(viewObject.utilName)
+							.get(viewObject.uniqueKey);
+					if (dto != null) {
+						this.data.viewExport = dto.getConfigProperties();
+						this.data.viewExportHistory.add(new JiraConfigRef(dto));
+					}
+				} else {
+					this.data.viewImport = null;
+					this.data.viewImportHistory = new Stack<>();
+					JiraConfigDTO dto = this.data.importStore.getTypeStore(viewObject.utilName)
+							.get(viewObject.uniqueKey);
+					if (dto != null) {
+						this.data.viewImport = dto.getConfigProperties();
+						this.data.viewImportHistory.add(new JiraConfigRef(dto));
+					}
 				}
 			}
-		} else if (ACTION_EXPORT_VIEW_ADD.equals(action)) {
-			String item = req.getParameter(PARAM_VIEW_EXPORT);
-			SelectionData data = OR.readValue(item);
+			LOGGER.debug("Current export view: " + this.data.viewExport);
+			LOGGER.debug("Current import view: " + this.data.viewImport);
+		} else if (ACTION_VIEW_ADD.equals(action)) {
+			String item = req.getParameter(PARAM_VIEW_OBJECT);
+			SelectionData data = OR_SELECTION.readValue(item);
 			if (data != null) {
-				JiraConfigDTO dto = this.data.exportStore.getTypeStore(data.utilName).get(data.uniqueKey);
-				if (dto != null) {
-					this.data.view = dto.getConfigProperties();
-					LOGGER.debug("View add: " + OM.writeValueAsString(this.data.view));
-					this.data.viewHistory.push(new JiraConfigRef(dto));
+				if (data.exportStore) {
+					JiraConfigDTO dto = this.data.exportStore.getTypeStore(data.utilName).get(data.uniqueKey);
+					if (dto != null) {
+						this.data.viewExport = dto.getConfigProperties();
+						this.data.viewExportHistory.push(new JiraConfigRef(dto));
+					}
+				} else {
+					JiraConfigDTO dto = this.data.importStore.getTypeStore(data.utilName).get(data.uniqueKey);
+					if (dto != null) {
+						this.data.viewImport = dto.getConfigProperties();
+						this.data.viewImportHistory.push(new JiraConfigRef(dto));
+					}
 				}
 			}
-		} else if (ACTION_EXPORT_VIEW_JUMP.equals(action)) {
-			String item = req.getParameter(PARAM_VIEW_EXPORT);
-			SelectionData data = OR.readValue(item);
+		} else if (ACTION_VIEW_JUMP.equals(action)) {
+			String item = req.getParameter(PARAM_VIEW_OBJECT);
+			SelectionData data = OR_SELECTION.readValue(item);
 			if (data != null) {
-				JiraConfigDTO dto = this.data.exportStore.getTypeStore(data.utilName).get(data.uniqueKey);
-				if (dto != null) {
-					this.data.view = dto.getConfigProperties();
-					while (!this.data.viewHistory.isEmpty()) {
-						JiraConfigRef ref = this.data.viewHistory.peek();
-						if (ref == null) {
-							// Add current item
-							this.data.viewHistory.push(new JiraConfigRef(dto));
-							break;
-						} else if (dto.getUtilClass().getCanonicalName().equals(ref.getUtil())
-								&& dto.getUniqueKey().equals(ref.getUniqueKey())) {
-							// Stop processing
-							break;
-						} else {
-							// Not requested item, remove it
-							this.data.viewHistory.pop();
-						}
+				if (data.exportStore) {
+					JiraConfigDTO dto = this.data.exportStore.getTypeStore(data.utilName).get(data.uniqueKey);
+					if (dto != null) {
+						this.data.viewExport = dto.getConfigProperties();
+						adjustViewStack(dto, this.data.viewExportHistory);
+					}
+				} else {
+					JiraConfigDTO dto = this.data.importStore.getTypeStore(data.utilName).get(data.uniqueKey);
+					if (dto != null) {
+						this.data.viewImport = dto.getConfigProperties();
+						adjustViewStack(dto, this.data.viewImportHistory);
 					}
 				}
 			}
 		}
 		return JiraWebActionSupport.INPUT;
 	}
+
+	// Adjust stack to find provided DTO
+	private void adjustViewStack(JiraConfigDTO dto, Stack<JiraConfigRef> viewStack) {
+		while (!viewStack.isEmpty()) {
+			JiraConfigRef ref = viewStack.peek();
+			if (ref == null) {
+				// Add current item
+				viewStack.push(new JiraConfigRef(dto));
+				break;
+			} else if (dto.getUtilClass().getCanonicalName().equals(ref.getUtil())
+					&& dto.getUniqueKey().equals(ref.getUniqueKey())) {
+				// Stop processing
+				break;
+			} else {
+				// Not requested item, remove it
+				viewStack.pop();
+			}
+		}
+	}
+	
 }

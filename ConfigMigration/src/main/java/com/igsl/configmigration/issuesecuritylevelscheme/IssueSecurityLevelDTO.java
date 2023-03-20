@@ -21,13 +21,20 @@ public class IssueSecurityLevelDTO extends JiraConfigDTO {
 	private Long schemeId;
 	
 	@Override
+	protected int getObjectParameterCount() {
+		// 0: IssueSecurityLevelSchemeDTO
+		return 1;
+	}
+	
+	@Override
 	public void fromJiraObject(Object o) throws Exception {
+		IssueSecurityLevelSchemeDTO level = (IssueSecurityLevelSchemeDTO) this.objectParameters[0];
 		IssueSecurityLevel obj = (IssueSecurityLevel) o;
 		this.id = obj.getId();
 		this.description = obj.getDescription();
 		this.name = obj.getName();
 		this.schemeId = obj.getSchemeId();
-		this.uniqueKey = this.name;
+		this.uniqueKey = level.getUniqueKey() + "." + this.name;
 	}
 	
 	@Override

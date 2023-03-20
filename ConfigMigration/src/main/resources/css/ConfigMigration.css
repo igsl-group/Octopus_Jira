@@ -1,6 +1,8 @@
 table.ConfigMigration {
 	width: 100%;
+	/*
 	border: solid 1px !important;
+	*/
 }
 
 table.ConfigMigration td, table.ConfigMigration th {

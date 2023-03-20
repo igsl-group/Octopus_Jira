@@ -42,6 +42,7 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 		this.updateAuthorName = wf.getUpdateAuthorName();
 		this.updatedDate = wf.getUpdatedDate();
 		this.xml = com.atlassian.jira.workflow.WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
+		this.uniqueKey = this.name;
 	}
 
 	@Override
@@ -58,11 +59,6 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 		return r;
 	}
 	
-	@Override
-	public String getUniqueKey() {
-		return this.getName();
-	}
-
 	@Override
 	public String getInternalId() {
 		return this.getName();

@@ -23,6 +23,15 @@ public class GeneralDTO extends JiraConfigDTO {
 	private String valueClass;
 	
 	@Override
+	protected void fromJiraObject(Object obj) throws Exception {
+		this.value = obj;
+		if (this.value != null) {
+			this.valueClass = this.value.getClass().getCanonicalName();
+		}
+		this.uniqueKey = Integer.toString(this.hashCode());
+	}
+
+	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("Value", new JiraConfigProperty(this.value));
@@ -49,15 +58,6 @@ public class GeneralDTO extends JiraConfigDTO {
 	@Override
 	public String getInternalId() {
 		return this.uniqueKey;
-	}
-
-	@Override
-	protected void fromJiraObject(Object obj) throws Exception {
-		this.value = obj;
-		if (this.value != null) {
-			this.valueClass = this.value.getClass().getCanonicalName();
-		}
-		this.uniqueKey = Integer.toString(this.hashCode());
 	}
 
 	public String getValueClass() {

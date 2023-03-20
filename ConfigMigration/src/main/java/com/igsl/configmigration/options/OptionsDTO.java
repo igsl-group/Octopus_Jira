@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionsDTO extends JiraConfigDTO {
@@ -42,7 +41,7 @@ public class OptionsDTO extends JiraConfigDTO {
 		}
 		this.uniqueKey = Integer.toString(this.hashCode());
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

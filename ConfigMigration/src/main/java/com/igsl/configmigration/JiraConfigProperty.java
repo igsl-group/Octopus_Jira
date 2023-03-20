@@ -42,7 +42,9 @@ public class JiraConfigProperty {
 				}
 				sb.append(", ");
 			}
-			this.value = sb.toString().substring(0, sb.length() - 2);
+			if (sb.toString().endsWith(", ")) {
+				this.value = sb.toString().substring(0, sb.length() - 2);
+			}
 		}
 	}
 	public JiraConfigProperty(List<?> value) {
@@ -57,7 +59,7 @@ public class JiraConfigProperty {
 				}
 				sb.append(", ");
 			}
-			if (value.size() != 0) {
+			if (sb.toString().endsWith(", ")) {
 				this.value = sb.toString().substring(0, sb.length() - 2);
 			}
 		}
@@ -72,7 +74,9 @@ public class JiraConfigProperty {
 	}
 	public JiraConfigProperty(Long value) {
 		this.type = JiraConfigPropertyType.TEXT;
-		this.value = Long.toString(value);
+		if (value != null) {
+			this.value = Long.toString(value);
+		}
 	}
 	public JiraConfigProperty(Date value) {
 		this.type = JiraConfigPropertyType.TEXT;

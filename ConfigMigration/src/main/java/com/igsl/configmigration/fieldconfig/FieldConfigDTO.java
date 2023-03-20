@@ -33,7 +33,15 @@ public class FieldConfigDTO extends JiraConfigDTO {
 		this.description = o.getDescription();
 		this.fieldId = o.getFieldId();
 		//o.getConfigurableField();
-		this.uniqueKey = this.getName();
+		
+		// Field config is nested object under CustomField and cannot be mapped.
+		// So simply use the id.
+		this.uniqueKey = Long.toString(this.id);
+	}
+	
+	@Override
+	public String getConfigName() {
+		return this.name;
 	}
 
 	@Override

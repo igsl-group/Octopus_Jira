@@ -53,7 +53,12 @@ public class OptionDTO extends JiraConfigDTO {
 			this.childOptions.add(item);
 		}
 		this.sequence = obj.getSequence();
-		this.uniqueKey = this.value;
+		this.uniqueKey = this.value;	// TODO?
+	}
+	
+	@Override
+	public String getConfigName() {
+		return this.value;
 	}
 
 	@Override

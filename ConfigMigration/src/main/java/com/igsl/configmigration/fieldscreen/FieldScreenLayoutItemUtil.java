@@ -67,7 +67,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		}
 		FieldScreenLayoutItem originalJira = (original != null)? (FieldScreenLayoutItem) original.getJiraObject(): null;
 		FieldScreenLayoutItemDTO src = (FieldScreenLayoutItemDTO) newItem;
-		FieldScreenTab tab = (FieldScreenTab) src.getObjectParameters()[0];
+		FieldScreenTabDTO tab = (FieldScreenTabDTO) src.getObjectParameters()[0];
 		FieldScreenLayoutItem createdJira = null;
 		FieldUtil fieldUtil = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
 		FieldDTO field = (FieldDTO) fieldUtil.findByDTO(src.getField());
@@ -75,7 +75,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 			if (original != null) {
 				// Update
 				originalJira.setFieldId(field.getId());
-				originalJira.setFieldScreenTab(tab);
+				originalJira.setFieldScreenTab((FieldScreenTab) tab.getJiraObject());
 				originalJira.setPosition(src.getPosition());
 				LOGGER.debug("Update Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.updateFieldScreenLayoutItem(originalJira);
@@ -84,7 +84,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 				// Create
 				createdJira = new FieldScreenLayoutItemImpl(MANAGER, FIELD_MANAGER);
 				createdJira.setFieldId(field.getId());
-				createdJira.setFieldScreenTab(tab);
+				createdJira.setFieldScreenTab((FieldScreenTab) tab.getJiraObject());
 				createdJira.setPosition(src.getPosition());
 				LOGGER.debug("Create Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.createFieldScreenLayoutItem(createdJira);

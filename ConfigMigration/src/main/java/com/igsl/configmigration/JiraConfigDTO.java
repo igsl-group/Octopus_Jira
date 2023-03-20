@@ -41,6 +41,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigDTO {
 
+	public static final String NULL_KEY = "[NULL_KEY]";
+	
 	private static final Logger LOGGER = Logger.getLogger(JiraConfigDTO.class);
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
@@ -293,7 +295,7 @@ public abstract class JiraConfigDTO {
 		} catch (Exception ex) {
 			sb = "Failed to convert relatedObjects to string: " + ex.getMessage();
 		}
-		result.put("Related Objects", new JiraConfigProperty(sb));
+		result.put("Related Objects (" + this.getRelatedObjects().size() + ")", new JiraConfigProperty(sb));
 
 		return result;
 	}
@@ -601,6 +603,8 @@ public abstract class JiraConfigDTO {
 				JiraConfigDTO nestedDTO = (JiraConfigDTO) propDesc.getReadMethod().invoke(this);
 				if (nestedDTO != null) {
 					this.addRelatedObject(nestedDTO);
+					// Recursively setup nested objects
+					nestedDTO.setupRelatedObjects();
 				}
 			} else if (Collection.class.isAssignableFrom(propDesc.getPropertyType())) {
 				Collection oldData = (Collection) propDesc.getReadMethod().invoke(this);
@@ -609,6 +613,8 @@ public abstract class JiraConfigDTO {
 						if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
 							JiraConfigDTO dtoItem = (JiraConfigDTO) item;
 							this.addRelatedObject(dtoItem);
+							// Recursively setup nested objects
+							dtoItem.setupRelatedObjects();
 						}
 					}
 				}
@@ -620,6 +626,8 @@ public abstract class JiraConfigDTO {
 						if (e.getValue() != null && JiraConfigDTO.class.isAssignableFrom(e.getValue().getClass())) {
 							JiraConfigDTO dtoItem = (JiraConfigDTO) e.getValue();
 							this.addRelatedObject(dtoItem);
+							// Recursively setup nested objects
+							dtoItem.setupRelatedObjects();
 						}
 					}
 				}
@@ -628,6 +636,8 @@ public abstract class JiraConfigDTO {
 				JiraConfigDTO[] oldData = (JiraConfigDTO[]) propDesc.getReadMethod().invoke(this);
 				for (JiraConfigDTO item : oldData) {
 					this.addRelatedObject(item);
+					// Recursively setup nested objects
+					item.setupRelatedObjects();
 				}
 			}
 		}
@@ -656,14 +666,26 @@ public abstract class JiraConfigDTO {
 	 * Return a string-based unique key (e.g. issue key, project key) that is 
 	 * not internal ID (which can change across environments)
 	 * 
+	 * Because JSON does not allow null as map keys, null is transformed into constant NULL_KEY.
+	 * Which will be reverted in setUniqueKey().
+	 * Subclasses should set uniqueKey member directly.
+	 * 
 	 * The result should be consistent with makeUniqueKey().
 	 */
 	protected String uniqueKey;
-	public String getUniqueKey() {
-		return this.uniqueKey;
+	public final String getUniqueKey() {
+		if (this.uniqueKey != null) {
+			return this.uniqueKey;
+		} else {
+			return NULL_KEY;
+		}
 	}
-	public void setUniqueKey(String uniqueKey) {
-		this.uniqueKey = uniqueKey;
+	public final void setUniqueKey(String uniqueKey) {
+		if (!NULL_KEY.equals(uniqueKey)) {
+			this.uniqueKey = uniqueKey;
+		} else {
+			this.uniqueKey = null;
+		}
 	}
 	
 	/**
@@ -690,12 +712,18 @@ public abstract class JiraConfigDTO {
 	
 	/**
 	 * Display name for UI, defaults to unique key.
+	 * Converts NULL_KEY into (Default).
 	 * Override as needed.
 	 * @return String
 	 */
 	@JsonIgnore
 	public String getConfigName() {
-		return getUniqueKey();
+		String s = getUniqueKey();
+		if (NULL_KEY.equals(s)) {
+			return "(Default)";
+		} else {
+			return getUniqueKey();
+		}
 	}
 	
 	/**

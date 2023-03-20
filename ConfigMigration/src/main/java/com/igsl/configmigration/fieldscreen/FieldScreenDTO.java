@@ -32,12 +32,13 @@ public class FieldScreenDTO extends JiraConfigDTO {
 		this.id = o.getId();
 		this.name = o.getName();
 		this.tabs = new ArrayList<>();
+		this.uniqueKey = this.name;
+		// Tabs
 		for (FieldScreenTab item : o.getTabs()) {
 			FieldScreenTabDTO dto = new FieldScreenTabDTO();
-			dto.setJiraObject(item, o);
+			dto.setJiraObject(item, this);
 			tabs.add(dto);
 		}
-		this.uniqueKey = this.name;
 	}
 
 	@Override

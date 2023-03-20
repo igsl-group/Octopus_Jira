@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.issue.fields.screen.FieldScreenScheme;
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -19,6 +21,8 @@ import com.igsl.configmigration.JiraConfigUtil;
  */
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldScreenSchemeDTO extends JiraConfigDTO {
+	
+	private static final Logger LOGGER = Logger.getLogger(FieldScreenSchemeDTO.class);
 	
 	private String description;
 	private Long id;
@@ -38,13 +42,14 @@ public class FieldScreenSchemeDTO extends JiraConfigDTO {
 		this.id = o.getId();
 		this.name = o.getName();
 		this.uniqueKey = this.name;
+		LOGGER.debug("ScreenScheme [" + name + "] has scheme items: " + this.fieldScreenSchemeItems.size());
 	}
 
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("Description", new JiraConfigProperty(this.description));
-		r.put("Field Screen Schemes", 
+		r.put("Field Screen Scheme Items", 
 				new JiraConfigProperty(FieldScreenSchemeUtil.class, this.fieldScreenSchemeItems));
 		r.put("ID", new JiraConfigProperty(this.id));
 		r.put("Name", new JiraConfigProperty(this.name));

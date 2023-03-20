@@ -34,7 +34,7 @@ public class ObjectAttributeBeanDTO extends JiraConfigDTO {
 		}
 		this.objectId = o.getObjectId();
 		this.objectTypeAttributeId = o.getObjectTypeAttributeId();
-		this.uniqueKey = Long.toString(this.hashCode());
+		this.uniqueKey = Long.toString(this.objectId);
 	}
 	
 	@Override

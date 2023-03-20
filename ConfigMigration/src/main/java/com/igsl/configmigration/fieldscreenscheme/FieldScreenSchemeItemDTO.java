@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -21,6 +23,8 @@ import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(FieldScreenSchemeItemDTO.class);
+	
 	private FieldScreenDTO fieldScreen;
 	private Long id;
 	private ScreenableIssueOperationDTO issueOperation;
@@ -34,10 +38,15 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 		this.id = o.getId();
 		this.issueOperation = new ScreenableIssueOperationDTO();
 		this.issueOperation.setJiraObject(o.getIssueOperation());
-		this.issueOperationName = o.getIssueOperationName();
-		this.uniqueKey = this.issueOperationName;
+		this.issueOperationName = o.getIssueOperationName();	// TODO This is i18n key, how to translate?
+		this.uniqueKey = Long.toString(this.id);
 	}
 
+	@Override
+	public String getConfigName() {
+		return this.issueOperation.getConfigName();
+	}
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

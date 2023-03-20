@@ -38,17 +38,30 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	
 	private ValueType valueType;
 	// Class of defaultValue, or individual item in case of array, map and collection
-	private Class<?> valueClass;
+	private String valueClass;
 	private JiraConfigDTO defaultValue;
 	private List<JiraConfigDTO> defaultListValue;
 	private Map<Object, JiraConfigDTO> defaultMapValue;
 	private String uniqueKey;
 	
 	@Override
+	public void fromJiraObject(Object o) throws Exception {
+		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
+		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
+		// TODO Need to find how "current date" is stored
+		// For now current date/datetime will be convereted to a fixed value
+		Object defVal = obj.getDefaultValue(fieldConfig);
+		parseValue(defVal, fieldConfig);
+		// DefaultValueOperations do not need to be mapped, it is a nested object in CustomField, always created.
+		// So simply use hashCode.
+		this.uniqueKey = Integer.toString(this.hashCode());
+	}
+
+	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("Value Type", new JiraConfigProperty(this.valueType.toString()));
-		r.put("Value Class", new JiraConfigProperty((this.valueClass != null)? this.valueClass.getCanonicalName() : null));
+		r.put("Value Class", new JiraConfigProperty((this.valueClass != null)? this.valueClass : null));
 		r.put("Default Value", new JiraConfigProperty(DefaultValueOperationsUtil.class, defaultValue));
 		// TODO JiraConfigUtil can be used safely?
 		r.put("Default List Value", new JiraConfigProperty(JiraConfigUtil.class, defaultListValue));
@@ -92,7 +105,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 					JiraConfigDTO dto = parseValueHelper(item, fieldConfig);
 					this.defaultListValue.add(dto);
 					if (dto != null) {
-						this.valueClass = dto.getClass();
+						this.valueClass = dto.getClass().getCanonicalName();
 					}
 				}
 				this.valueType = ValueType.ARRAY;
@@ -109,7 +122,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 					JiraConfigDTO val = parseValueHelper(entry.getValue(), fieldConfig);
 					this.defaultMapValue.put(key, val);
 					if (val != null) {
-						this.valueClass = val.getClass();
+						this.valueClass = val.getClass().getCanonicalName();
 					}
 				}
 				this.valueType = ValueType.MAP;
@@ -120,20 +133,20 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 					JiraConfigDTO val = parseValueHelper(item, fieldConfig);
 					this.defaultListValue.add(val);
 					if (val != null) {
-						this.valueClass = val.getClass();
+						this.valueClass = val.getClass().getCanonicalName();
 					}
 				}
 				this.valueType = ValueType.LIST;
 			} else if (JiraConfigDTO.class.isAssignableFrom(valueClass)) {
 				this.defaultValue = (JiraConfigDTO) value;		
 				if (this.defaultValue != null) {
-					this.valueClass = this.defaultValue.getClass();
+					this.valueClass = this.defaultValue.getClass().getCanonicalName();
 				}
 				this.valueType = ValueType.OBJECT;
 			} else {
 				this.defaultValue = parseValueHelper(value, fieldConfig);
 				if (this.defaultValue != null) {
-					this.valueClass = this.defaultValue.getClass();
+					this.valueClass = this.defaultValue.getClass().getCanonicalName();
 				}
 				this.valueType = ValueType.OBJECT;
 			}
@@ -152,17 +165,6 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 		return 1;
 	}
 	
-	@Override
-	public void fromJiraObject(Object o) throws Exception {
-		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
-		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
-		// TODO Need to find how "current date" is stored
-		// For now current date/datetime will be convereted to a fixed value
-		Object defVal = obj.getDefaultValue(fieldConfig);
-		parseValue(defVal, fieldConfig);
-		this.uniqueKey = Integer.toString(this.hashCode());
-	}
-
 	@Override
 	public String getInternalId() {
 		return this.uniqueKey;
@@ -222,11 +224,11 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 		this.defaultMapValue = defaultMapValue;
 	}
 
-	public Class<?> getValueClass() {
+	public String getValueClass() {
 		return valueClass;
 	}
 
-	public void setValueClass(Class<?> valueClass) {
+	public void setValueClass(String valueClass) {
 		this.valueClass = valueClass;
 	}
 

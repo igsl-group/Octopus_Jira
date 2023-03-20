@@ -1,5 +1,6 @@
 package com.igsl.configmigration.options;
 
+import java.util.Collections;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -80,7 +81,7 @@ public class OptionUtil extends JiraConfigUtil {
 
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
-		throw new Exception("Not implemented, Option is not searchable");
+		return Collections.emptyMap();
 	}
 
 }

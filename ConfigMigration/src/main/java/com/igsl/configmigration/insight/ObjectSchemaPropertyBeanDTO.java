@@ -22,7 +22,7 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 		ObjectSchemaPropertyBean o = (ObjectSchemaPropertyBean) obj;
 		this.id = o.getId();
 		this.objectSchemaId = o.getObjectSchemaId();
-		this.uniqueKey = Long.toString(this.hashCode());
+		this.uniqueKey = Long.toString(this.id);
 	}
 
 	@Override

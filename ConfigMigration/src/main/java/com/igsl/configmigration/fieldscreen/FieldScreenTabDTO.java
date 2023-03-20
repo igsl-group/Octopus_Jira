@@ -28,7 +28,7 @@ public class FieldScreenTabDTO extends JiraConfigDTO {
 	private List<FieldScreenLayoutItemDTO> fieldScreenLayoutItems;
 	
 	/**
-	 * #0: FieldScreen
+	 * #0: FieldScreenDTO
 	 */
 	@Override
 	protected int getObjectParameterCount() {
@@ -37,17 +37,28 @@ public class FieldScreenTabDTO extends JiraConfigDTO {
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
+		FieldScreenDTO screen = (FieldScreenDTO) this.objectParameters[0];
 		FieldScreenTab o = (FieldScreenTab) obj;
 		this.id = o.getId();
 		this.name = o.getName();
 		this.position = o.getPosition();
+		// Unique key needs to represent the tab in the parent field screen.
+		// Name alone will have conflicts as the default tab in all screens are the same.
+		// ID will result in the same tab created multiple times. 
+		// So the solution is to include the screen's name 
+		this.uniqueKey = screen.getUniqueKey() + "." + this.name;
+		// Items in tab
 		this.fieldScreenLayoutItems = new ArrayList<>();
 		for (FieldScreenLayoutItem item : o.getFieldScreenLayoutItems()) {
 			FieldScreenLayoutItemDTO dto = new FieldScreenLayoutItemDTO();
-			dto.setJiraObject(item, o);
+			dto.setJiraObject(item, this);
 			fieldScreenLayoutItems.add(dto);
 		}
-		this.uniqueKey = this.name;
+	}
+	
+	@Override
+	public String getConfigName() {
+		return this.name;
 	}
 
 	@Override

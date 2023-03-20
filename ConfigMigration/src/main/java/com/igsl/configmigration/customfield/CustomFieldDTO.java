@@ -46,23 +46,6 @@ public class CustomFieldDTO extends JiraConfigDTO {
 	private DefaultValueOperationsDTO defaultValueOperations;
 	
 	@Override
-	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
-		Map<String, JiraConfigProperty> r = new TreeMap<>();
-		r.put("Name", new JiraConfigProperty(name));
-		r.put("ID", new JiraConfigProperty(id));
-		r.put("Description", new JiraConfigProperty(description));
-		r.put("Sort Order", new JiraConfigProperty(defaultSortOrder));
-		r.put("Field Name", new JiraConfigProperty(fieldName));
-		r.put("Custom Field Searcher", 
-				new JiraConfigProperty(CustomFieldSearcherUtil.class, customFieldSearcher));
-		r.put("Configuration Schemes", new JiraConfigProperty(FieldConfigSchemeUtil.class, this.configurationSchemes));
-		r.put("Property Set", new JiraConfigProperty(PropertySetUtil.class, this.propertySet));
-		r.put("Options", new JiraConfigProperty(OptionsUtil.class, this.options));
-		r.put("Default Value", new JiraConfigProperty(DefaultValueOperationsUtil.class, this.defaultValueOperations));
-		return r;
-	}
-	
-	@Override
 	public void fromJiraObject(Object o) throws Exception {
 		CustomField obj = (CustomField) o;
 		this.associatedIssueTypes = new ArrayList<>();
@@ -100,6 +83,23 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		this.uniqueKey = obj.getName();
 	}
 
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Name", new JiraConfigProperty(name));
+		r.put("ID", new JiraConfigProperty(id));
+		r.put("Description", new JiraConfigProperty(description));
+		r.put("Sort Order", new JiraConfigProperty(defaultSortOrder));
+		r.put("Field Name", new JiraConfigProperty(fieldName));
+		r.put("Custom Field Searcher", 
+				new JiraConfigProperty(CustomFieldSearcherUtil.class, customFieldSearcher));
+		r.put("Configuration Schemes", new JiraConfigProperty(FieldConfigSchemeUtil.class, this.configurationSchemes));
+		r.put("Property Set", new JiraConfigProperty(PropertySetUtil.class, this.propertySet));
+		r.put("Options", new JiraConfigProperty(OptionsUtil.class, this.options));
+		r.put("Default Value", new JiraConfigProperty(DefaultValueOperationsUtil.class, this.defaultValueOperations));
+		return r;
+	}
+	
 	@Override
 	public String getInternalId() {
 		return this.getId();
