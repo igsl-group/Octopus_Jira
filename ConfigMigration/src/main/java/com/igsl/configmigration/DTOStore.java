@@ -31,21 +31,25 @@ public class DTOStore {
 	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
 	 * @return long
 	 */
-	public final long getTotalCount(String utilName) {
+	public final long getTotalCount(String utilName, boolean showAll) {
 		long count = 0;
 		if (utilName != null && !utilName.isEmpty()) {
 			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
-			if (util != null && util.isVisible()) {
-				Map<String, JiraConfigDTO> store = getTypeStore(utilName);
-				if (store != null) {
-					count = store.size();
+			if (util != null) {
+				if (showAll || util.isVisible()) {
+					Map<String, JiraConfigDTO> store = getTypeStore(utilName);
+					if (store != null) {
+						count = store.size();
+					}
 				}
 			}
 		} else {
 			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
 				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
-				if (util != null && util.isVisible()) {
-					count += s.getValue().size();
+				if (util != null) {
+					if (showAll || util.isVisible()) {
+						count += s.getValue().size();
+					}
 				}
 			}
 		}
@@ -57,16 +61,18 @@ public class DTOStore {
 	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
 	 * @return long
 	 */
-	public final long getSelectedCount(String utilName) {
+	public final long getSelectedCount(String utilName, boolean showAll) {
 		long count = 0;
 		if (utilName != null && !utilName.isEmpty()) {
 			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
-			if (util != null && util.isVisible()) {
-				Map<String, JiraConfigDTO> store = getTypeStore(utilName);
-				if (store != null) {
-					for (JiraConfigDTO dto : store.values()) {
-						if (dto.isSelected()) {
-							count++;
+			if (util != null) {
+				if (showAll || util.isVisible()) {
+					Map<String, JiraConfigDTO> store = getTypeStore(utilName);
+					if (store != null) {
+						for (JiraConfigDTO dto : store.values()) {
+							if (dto.isSelected()) {
+								count++;
+							}
 						}
 					}
 				}
@@ -74,10 +80,12 @@ public class DTOStore {
 		} else {
 			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
 				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
-				if (util != null && util.isVisible()) {
-					for (JiraConfigDTO dto : s.getValue().values()) {
-						if (dto.isSelected()) {
-							count++;
+				if (util != null) {
+					if (showAll || util.isVisible()) {
+						for (JiraConfigDTO dto : s.getValue().values()) {
+							if (dto.isSelected()) {
+								count++;
+							}
 						}
 					}
 				}

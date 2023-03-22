@@ -5,13 +5,18 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -34,6 +39,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.project.ProjectUtil;
+import com.igsl.configmigration.report.v1.MergeReport;
 
 import webwork.action.ServletActionContext;
 import webwork.multipart.MultiPartRequestWrapper;
@@ -65,6 +71,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		public Map<String, JiraConfigProperty> viewImport;
 		public Stack<JiraConfigRef> viewImportHistory = new Stack<>();
 		public boolean selectNested = true;
+		public boolean showAllUtils = true;
 	}
 
 	private static final long serialVersionUID = 1L;
@@ -94,6 +101,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	// Form fields
 	public static final String PARAM_ACTION = "action";
 	public static final String PARAM_SELECT_NESTED = "selectNested";
+	public static final String PARAM_SHOW_ALL_UTILS = "showAllUtils";
 	public static final String PARAM_OBJECT_TYPE = "objectType";
 	public static final String PARAM_EXPORT_FILTER = "exportFilter";
 	public static final String PARAM_IMPORT_FILTER = "importFilter";
@@ -154,6 +162,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public boolean getSelectNested() {
 		return this.data.selectNested;
 	}
+	
+	public boolean getShowAllUtils() {
+		return this.data.showAllUtils;
+	}
 
 	public String getObjectType() {
 		return this.data.objectType;
@@ -193,14 +205,37 @@ public class ExportAction2 extends JiraWebActionSupport {
 	}
 
 	/**
+	 * Get a compare key guide between export and import stores.
+	 * Velocity template can then use the key list to list both stores with matching items aligned.
+	 * @return Map<String, Set<String>>
+	 */
+	public Map<JiraConfigUtil, Set<String>> getCompareKeyGuide() {
+		Map<JiraConfigUtil, Set<String>> result = new LinkedHashMap<>();
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {		
+			Set<String> keySet = new HashSet<>();
+			Map<String, JiraConfigDTO> exportStore = this.data.exportStore.getTypeStore(util);
+			if (exportStore != null) {
+				keySet.addAll(exportStore.keySet());
+			}
+			Map<String, JiraConfigDTO> importStore = this.data.importStore.getTypeStore(util);
+			if (importStore != null) {
+				keySet.addAll(importStore.keySet());
+			}
+			LOGGER.debug("getCompareKeyGuide: " + util.getName() + ": " + keySet);
+			result.put(util, keySet);
+		}
+		return result;
+	}
+	
+	/**
 	 * Get map of object types (Util), sorted by name
 	 * 
 	 * @return Map<String, String>. Key is JiraConfigUtil.getName(), value is
 	 *         JiraConfigUtil class name.
 	 */
-	public Map<String, String> getObjectTypes() {
+	public Map<String, String> getObjectTypes(boolean showAll) {
 		Map<String, String> result = new TreeMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(!showAll)) {
 			result.put(util.getName(), util.getClass().getCanonicalName());
 		}
 		return result;
@@ -280,6 +315,26 @@ public class ExportAction2 extends JiraWebActionSupport {
 			}
 		}
 	}
+	
+	private void merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
+		if (newObj != null) {
+			JiraConfigDTO oldObj = 
+					this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
+			util.merge(oldObj, newObj);
+			for (JiraConfigRef ref : newObj.getRelatedObjects()) {
+				if (ref != null) {
+					JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(ref.getType());
+					if (nestedUtil != null) {
+						JiraConfigDTO nestedObj = 
+								this.data.importStore.getTypeStore(nestedUtil).get(ref.getUniqueKey());
+						if (nestedObj != null) {
+							merge(nestedUtil, nestedObj);
+						}
+					}
+				}
+			}
+		}
+	}
 
 	@Override
 	protected String doExecute() throws Exception {
@@ -297,7 +352,11 @@ public class ExportAction2 extends JiraWebActionSupport {
 			MultiPartRequestWrapper mpr = (MultiPartRequestWrapper) wrapperReq;
 			uploaded = mpr.getFile(PARAM_IMPORT_FILE);
 		}
-		
+		// Update show all utils flag
+		String showAll = req.getParameter(PARAM_SHOW_ALL_UTILS);
+		if (showAll != null && !showAll.isEmpty()) {
+			this.data.showAllUtils = Boolean.parseBoolean(showAll);
+		}
 		// Update selected items
 		String nested = req.getParameter(PARAM_SELECT_NESTED);
 		LOGGER.debug("Update nested: " + nested);
@@ -332,7 +391,26 @@ public class ExportAction2 extends JiraWebActionSupport {
 
 		LOGGER.debug("Action: " + action);
 		// Perform action
-		if (ACTION_IMPORT.equals(action)) {
+		if (ACTION_MERGE.equals(action)) {
+			// Create report
+			final MergeReport mr = ao.create(MergeReport.class);
+			// Merge selected objects
+			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
+				for (Map.Entry<String, JiraConfigDTO> entry : this.data.importStore.getTypeStore(util).entrySet()) {
+					if (entry.getValue().isSelected()) {
+						merge(util, entry.getValue());
+					}
+				}
+			}
+			// Save report
+			ao.executeInTransaction(new TransactionCallback<MergeReport>() {
+				@Override
+				public MergeReport doInTransaction() {
+					mr.save();
+					return mr;
+				}
+			});
+		} else if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
 			if (uploaded != null) {
 				LOGGER.debug("Uploaded file: " + uploaded.getAbsolutePath());

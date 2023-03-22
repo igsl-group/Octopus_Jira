@@ -65,6 +65,7 @@
 			// checkboxClass - List of checkbox with this class to toggle. If null, all classes will be toggled.
 			// allCheckboxClass - The "select all" checkbox with this class to uncheck. If null, all will be toggled.
 			function updateSelection(exportStore, checkboxControl, checkboxClass, allCheckboxClass) {
+				console.log('updateSelection() invoked');
 				if (checkboxControl) {
 					// Select single checkbox
 					var util = $(checkboxControl).attr('util');
@@ -98,10 +99,15 @@
 				}
 				// Update selection hidden field
 				var out = [];
+				var selectedCount = 0;
 				var valueList = Object.values(selectedObjects);
 				for (var i in valueList) {
 					out.push(valueList[i]);
+					if (valueList[i].selected) {
+						selectedCount++;
+					}
 				}
+				console.log('selectedObjects size: ' + selectedCount + '/' + valueList.length);
 				// Turn off select all util class checkbox
 				if (allCheckboxClass) {
 					// For specific util class only
@@ -113,17 +119,16 @@
 				disableUpdateSelectionButton(false);
 			}
 
-			var selectAllState = false;
-			// Select all or nothing base on selectAllState
 			function selectAll(exportStore, selectClass, value) {
 				if (selectClass != null) {
 					// Specific util class only
 					$('input[type="checkbox"].' + selectClass).attr('checked', value);
 				} else {
+					var typeClass = (exportStore)? "export" : "import";
 					// All util class
-					$('input[type="checkbox"][util][uniqueKey]').attr('checked', value);
-					selectAllState = value;
+					$('input[type="checkbox"][util][uniqueKey].' + typeClass).attr('checked', value);
 				}
+				console.log('selectAll() invoking updateSelection()');
 				updateSelection(exportStore, null, selectClass, null);
 			}
 			
@@ -246,9 +251,28 @@
 					<!-- Toolbar -->
 					<div style="flex: 1 1 auto">
 						<div>
-							<span style="font-weight: bold">Select/Deselect Dependencies</span>
+							<span style="font-weight: bold">Filter by Object Type: </span>
+							<select id="objectType" name="objectType"
+									value="$!{action.getObjectType()}" 
+									style="width: 150px"
+									onchange="submitForm('objectType')">
+								#if ($action.getObjectType().length() == 0) 
+									<option selected value="">All</option>
+								#else
+									<option value="">All</option>
+								#end
+								#foreach ($item in $action.getObjectTypes($action.getShowAllUtils()).entrySet())
+									#if ($item.getValue() == $action.getObjectType())
+										<option selected value="$!{item.getValue()}">${item.getKey()}</option>
+									#else
+										<option value="$!{item.getValue()}">${item.getKey()}</option>
+									#end
+								#end
+							</select>
+							<span style="font-weight: bold">Select Dependencies</span>
 							<select id="selectNested" name="selectNested" 
-									onchange="disableUpdateSelectionButton(false)">
+									onchange="disableUpdateSelectionButton(false)"
+									style="width: 120px">
 								#if ($action.getSelectNested() == $true)
 									<option value="true" selected>Automatically</option>
 									<option value="false">Manually</option>
@@ -257,284 +281,232 @@
 									<option value="false" selected>Manually</option>
 								#end
 							</select>
-							<span style="font-weight: bold">Filter by Object Type: </span>
-							<select id="objectType" name="objectType"
-									value="$!{action.getObjectType()}" 
-									style="width: 20%"
-									onchange="submitForm('objectType')">
-								#if ($action.getObjectType().length() == 0) 
-									<option selected value="">All</option>
+							<input 	type="button" 
+									id="updateSelectionButton" 
+									value="Update Selection" 
+									onclick="submitForm('')" disabled/>
+							<span style="font-weight: bold">Show All Object Types: </span>
+							<select id="showAllUtils" name="showAllUtils"
+									onchange="submitForm('')"
+									style="width: 50px">
+								#if ($action.getShowAllUtils())
+									<option value="true" selected>Yes</option>
+									<option value="false">No</option>
 								#else
-									<option value="">All</option>
-								#end
-								#foreach ($item in $action.getObjectTypes().entrySet())
-									#if ($item.getValue() == $action.getObjectType())
-										<option selected value="$!{item.getValue()}">${item.getKey()}</option>
-									#else
-										<option value="$!{item.getValue()}">${item.getKey()}</option>
-									#end
+									<option value="true">Yes</option>
+									<option value="false" selected>No</option>
 								#end
 							</select>
 						</div>
 					</div>
 					<!-- 2 columns for export and import objects -->
-					<div style="flex: 1 1 auto; max-height: 35vh; overflow-y: auto">
+					<div style="flex: 1 1 auto; overflow-y: scroll">
 						<table class="ConfigMigration" style="flex: 1 1 auto; width: 100%; table-layout: fixed;">
 							<tr>
-								<td style="min-width: 50%; max-width: 50%">
-									<table class="ConfigMigration">
-									<thead>
-										<tr>
-											<td colspan="100%">
-												<div>
-													<span style="font-weight: bold">Filter by Name: </span>
-													<input 	type="text" 
-															id="exportFilter" 
-															name="exportFilter"
-															value="$!{action.getExportFilter()}" 
-															style="width: 35%" 
-															onkeydown="if (event.key == 'Enter') { $('input#exportFilterApply').click(); }"
-															onkeyup="$('input#exportFilterApply').attr('disabled', false)"/>
-													<input 	type="button"
-															id="exportFilterApply"
-															disabled
-															value="Apply"
-															onclick="submitForm('exportFilter')"/>
-												</div>
-												<div>
-													<input 	type="button" 
-															id="reload" 
-															value="Refresh" 
-															onclick="submitForm('reload')"/>
-													<input 	type="button" 
-															id="updateSelectionButton" 
-															value="Update Selection" 
-															onclick="submitForm('')" disabled/>
-													<input 	type="button" 
-															value="Select All/None"
-															onclick="selectAll(true, null, !selectAllState)"
-													/>
-													<input 	type="button" 
-															id="export" 
-															value="Export" 
-															onclick="exportData()"/>
-												</div>
-												<div>
-													#if ($action.getObjectType() != "") 
-														<span style="font-weight: bold">
-															Selected $!{action.getObjectTypeName()}: 
-															$!{action.getExportStore().getSelectedCount($action.getObjectType())} 
-															/ 
-															$!{action.getExportStore().getTotalCount($action.getObjectType())}
-														</span>
-													#end
-													<span style="font-weight: bold">
-														Selected Objects: 
-														$!{action.getExportStore().getSelectedCount($null)} 
-														/ 
-														$!{action.getExportStore().getTotalCount($null)}
-													</span>
-												</div>
-											</td>
-										</tr>
-									</thead>
-									<tbody>
-									#foreach ($util in $action.getExportStore().getUtils())
-										#set ($showUtil = $true)
-										#if ($action.getObjectType().length() != 0)
-											#if (!$util.getImplementation().equals($action.getObjectType()))
-												#set ($showUtil = $false)
-											#end
+								<td width="50%">
+									<div>
+										<span style="font-weight: bold">Filter by Name: </span>
+										<input 	type="button" 
+												id="reload" 
+												value="Refresh" 
+												onclick="submitForm('reload')"/>
+										<input 	type="text" 
+												id="exportFilter" 
+												name="exportFilter"
+												value="$!{action.getExportFilter()}" 
+												style="width: 35%" 
+												onkeydown="if (event.key == 'Enter') { $('input#exportFilterApply').click(); }"
+												onkeyup="$('input#exportFilterApply').attr('disabled', false)"/>
+										<input 	type="button"
+												id="exportFilterApply"
+												disabled
+												value="Apply"
+												onclick="submitForm('exportFilter')"/>
+										<input 	type="button" 
+												id="export" 
+												value="Export" 
+												onclick="exportData()"/>
+									</div>
+									<div>
+										#if ($action.getObjectType() != "") 
+											<span style="font-weight: bold">
+												Selected $!{action.getObjectTypeName()}: 
+												$!{action.getExportStore().getSelectedCount($action.getObjectType(), $action.getShowAllUtils())} 
+												/ 
+												$!{action.getExportStore().getTotalCount($action.getObjectType(), $action.getShowAllUtils())}
+											</span>
 										#end
-										#if ($showUtil)			
-											#set ($selectClass = "export-" + $util.getImplementationCSS())
-											#set ($selectAllClass = $selectClass + "-All")
-											<tr>
-												<th colspan="100%">
-													<input 	type="checkbox"
-															class="$!{selectAllClass} selectAll"
-															onchange="selectAll(true, '$!{selectClass}', this.checked)"
-													/>
-													${util.getName()}
-												</th>
-											</tr>
-											#if ($action.getExportStore().getTypeStore($util).size() == 0)
-												<tr>
-													<td colspan="100%">No objects found</td>
-												</tr>
-											#else
-												#set ($objFound = $false)
-												#foreach ($obj in $action.getExportStore().getTypeStore($util))
-													#if ($util.matchFilter($obj, $action.getExportFilter()))
-														#set ($objFound = $true)
-														#if ($obj.isSelected())
-															#set ($checked = "checked")
-														#else
-															#set ($checked = "")
-														#end
-														<tr>
-															<td>
-																<input 	type="checkbox" 
-																		class="$!{selectClass}"
-																		$!{checked}
-																		util="$!{util.getImplementation()}"
-																		uniqueKey="$!{obj.getUniqueKey()}"
-																		onchange="updateSelection(true, this, null, '${selectAllClass}')"/>
-															</td>
-															<td width="100%">
-																<a href="#" onclick="view(
-																		true,
-																		'$!{util.getImplementation()}', 
-																		'$!{obj.getUniqueKeyJS()}')">
-																	#if ($obj.getConfigName())
-																		$!{obj.getConfigName()}
-																	#else
-																		(Default)
-																	#end
-																</a>
-															</td>
-														</tr>
-													#end
-												#end
-												#if ($objFound == $false)
-													<tr>
-														<td colspan="2">No objects match filter</td>
-													</tr>
-												#end
-											#end
-										#end
-									#end
-									</tbody>
-									</table>
+										<span style="font-weight: bold">
+											Selected Objects: 
+											$!{action.getExportStore().getSelectedCount($null, $action.getShowAllUtils())} 
+											/ 
+											$!{action.getExportStore().getTotalCount($null, $action.getShowAllUtils())}
+										</span>
+									</div>								
 								</td>
-								<td style="min-width: 50%; max-width: 50%">
-									<!-- Imported data -->
-									<table class="ConfigMigration">
-									<thead>
-										<tr>
-											<td colspan="100%">
-												<div>
-													<span style="font-weight: bold">Filter by Name: </span>
-													<input 	type="text" 
-															id="importFilter" 
-															name="importFilter"
-															value="$!{action.getImportFilter()}" 
-															style="width: 35%" 
-															onkeydown="if (event.key == 'Enter') { $('input#importFilterApply').click(); }"
-															onkeyup="$('input#importFilterApply').attr('disabled', false)"/>
-													<input 	type="button"
-															id="importFilterApply"
-															disabled
-															value="Apply"
-															onclick="submitForm('importFilter')"/>
-												</div>
-												<div>
-													<input 	type="button" 
-															id="import" 
-															value="Import" 
-															onclick="importData()"/>
-													<input 	type="button" 
-															id="updateSelectionButton" 
-															value="Update Selection" 
-															onclick="submitForm('')" disabled/>
-													<input 	type="button" 
-															value="Select All/None"
-															onclick="selectAll(false, null, !selectAllState)"
-													/>
-													<input 	type="button" 
-															id="merge" 
-															value="Merge" 
-															onclick=""/>
-												</div>
-												<div>
-													#if ($action.getObjectType() != "") 
-														<span style="font-weight: bold">
-															Selected $!{action.getObjectTypeName()}: 
-															$!{action.getimportStore().getSelectedCount($action.getObjectType())} 
-															/ 
-															$!{action.getImportStore().getTotalCount($action.getObjectType())}
-														</span>
-													#end
-													<span style="font-weight: bold">
-														Selected Objects: 
-														$!{action.getImportStore().getSelectedCount($null)} 
-														/ 
-														$!{action.getImportStore().getTotalCount($null)}
-													</span>
-												</div>
-											</td>
-										</tr>
-									</thead>
-									<tbody>
-									#foreach ($util in $action.getImportStore().getUtils())
-										#set ($showUtil = $true)
-										#if ($action.getObjectType().length() != 0)
-											#if (!$util.getImplementation().equals($action.getObjectType()))
-												#set ($showUtil = $false)
-											#end
+								<td width="50%">
+									<div>
+										<span style="font-weight: bold">Filter by Name: </span>
+										<input 	type="button" 
+												id="import" 
+												value="Import" 
+												onclick="importData()"/>
+										<input 	type="text" 
+												id="importFilter" 
+												name="importFilter"
+												value="$!{action.getImportFilter()}" 
+												style="width: 35%" 
+												onkeydown="if (event.key == 'Enter') { $('input#importFilterApply').click(); }"
+												onkeyup="$('input#importFilterApply').attr('disabled', false)"/>
+										<input 	type="button"
+												id="importFilterApply"
+												disabled
+												value="Apply"
+												onclick="submitForm('importFilter')"/>
+										<input 	type="button" 
+												id="merge" 
+												value="Merge" 
+												onclick=""/>
+									</div>
+									<div>
+										#if ($action.getObjectType() != "") 
+											<span style="font-weight: bold">
+												Selected $!{action.getObjectTypeName()}: 
+												$!{action.getImportStore().getSelectedCount($action.getObjectType(), $action.getShowAllUtils())} 
+												/ 
+												$!{action.getImportStore().getTotalCount($action.getObjectType(), $action.getShowAllUtils())}
+											</span>
 										#end
-										#if ($showUtil)			
-											#set ($selectClass = "import-" + $util.getImplementationCSS())
-											#set ($selectAllClass = $selectClass + "-All")
-											<tr>
-												<th colspan="100%">
-													<input 	type="checkbox"
-															class="$!{selectAllClass} selectAll"
-															onchange="selectAll(true, '$!{selectClass}', this.checked)"
-													/>
-													${util.getName()}
-												</th>
-											</tr>
-											#if ($action.getImportStore().getTypeStore($util).size() == 0)
-												<tr>
-													<td colspan="100%">No objects found</td>
-												</tr>
-											#else
-												#set ($objFound = $false)
-												#foreach ($obj in $action.getImportStore().getTypeStore($util))
-													#if ($util.matchFilter($obj, $action.getExportFilter()))
-														#set ($objFound = $true)
-														#if ($obj.isSelected())
-															#set ($checked = "checked")
-														#else
-															#set ($checked = "")
-														#end
-														<tr>
-															<td>
-																<input 	type="checkbox" 
-																		class="$!{selectClass}"
-																		$!{checked}
-																		util="$!{util.getImplementation()}"
-																		uniqueKey="$!{obj.getUniqueKey()}"
-																		onchange="updateSelection(false, this, null, '${selectAllClass}')"/>
-															</td>
-															<td width="100%">
-																<a href="#" onclick="view(
-																		false,
-																		'$!{util.getImplementation()}', 
-																		'$!{obj.getUniqueKeyJS()}')">
-																	#if ($obj.getConfigName())
-																		$!{obj.getConfigName()}
-																	#else
-																		(Default)
-																	#end
-																</a>
-															</td>
-														</tr>
-													#end
-												#end
-												#if ($objFound == $false)
-													<tr>
-														<td colspan="2">No objects match filter</td>
-													</tr>
-												#end
-											#end
-										#end
-									#end
-									</tbody>
-									</table>
+										<span style="font-weight: bold">
+											Selected Objects: 
+											$!{action.getImportStore().getSelectedCount($null, $action.getShowAllUtils())} 
+											/ 
+											$!{action.getImportStore().getTotalCount($null, $action.getShowAllUtils())}
+										</span>
+									</div>
 								</td>
 							</tr>
+							<tr>
+								<th>
+									<input 	type="checkbox" 
+											onclick="selectAll(true, null, this.checked)"
+									/>
+									Current Objects
+								</th>
+								<th>
+									<input 	type="checkbox" 
+											onclick="selectAll(false, null, this.checked)"
+									/>
+									Imported Objects
+								</th>
+							</tr>
+						</table>
+					</div>
+					<div style="flex: 1 1 auto; max-height: 20vh; overflow-y: scroll">
+						<table class="ConfigMigration" style="flex: 1 1 auto; width: 100%; table-layout: fixed;">
+							#foreach ($keyGuide in $action.getCompareKeyGuide().entrySet())
+								#set ($util = $keyGuide.getKey())
+								#set ($showUtil = $true)
+								#if ($action.getObjectType().length() != 0)
+									#if (!$util.getImplementation().equals($action.getObjectType()))
+										#set ($showUtil = $false)
+									#end
+								#end
+								#if ($showUtil)
+									#set ($exportClass = "export-" + $util.getImplementationCSS())
+									#set ($exportAllClass = $exportClass + "-All")
+									#set ($importClass = "import-" + $util.getImplementationCSS())
+									#set ($importAllClass = $importClass + "-All")
+									<!-- Util name -->
+									<tr>
+										<th width="3%">
+											<input 	type="checkbox"
+													class="$!{exportAllClass} selectAll"
+													onchange="selectAll(true, '$!{exportClass}', this.checked)"
+											/>
+										</th>
+										<th width="47%">
+											${util.getName()}
+										</th>
+										<th width="3%">
+											<input 	type="checkbox"
+													class="$!{importAllClass} selectAll"
+													onchange="selectAll(false, '$!{importClass}', this.checked)"
+											/>
+										</th>
+										<th width="47%">
+											${util.getName()}
+										</th>
+									</tr>
+									<!-- Matching pairs of data -->
+									#foreach ($key in $keyGuide.getValue())
+										#set ($exportStore = $action.getExportStore().getTypeStore($util))
+										#set ($importStore = $action.getImportStore().getTypeStore($util))
+										<tr>
+											#if ($exportStore.containsKey($key))
+												#set ($obj = $exportStore.get($key))
+												#if ($util.matchFilter($obj, $action.getExportFilter()))
+													#if ($obj.isSelected())
+														#set ($checked = "checked")
+													#else
+														#set ($checked = "")
+													#end
+													<td>
+														<input 	type="checkbox" 
+																class="$!{exportClass} export"
+																$!{checked}
+																util="$!{util.getImplementation()}"
+																uniqueKey="$!{obj.getUniqueKey()}"
+																onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
+													</td>
+													<td>
+														<a href="#" onclick="view(
+																true,
+																'$!{util.getImplementation()}', 
+																'$!{obj.getUniqueKeyJS()}')">
+															#if ($obj.getConfigName())
+																$!{obj.getConfigName()}
+															#else
+																(Default)
+															#end
+														</a>
+													</td>
+												#end
+											#end
+											#if ($importStore.containsKey($key))
+												#set ($obj = $importStore.get($key))
+												#if ($util.matchFilter($obj, $action.getImportFilter()))
+													#if ($obj.isSelected())
+														#set ($checked = "checked")
+													#else
+														#set ($checked = "")
+													#end
+													<td>
+														<input 	type="checkbox" 
+																class="$!{importClass} import"
+																$!{checked}
+																util="$!{util.getImplementation()}"
+																uniqueKey="$!{obj.getUniqueKey()}"
+																onchange="updateSelection(false, this, null, '${importAllClass}')"/>
+													</td>
+													<td>
+														<a href="#" onclick="view(
+																false,
+																'$!{util.getImplementation()}', 
+																'$!{obj.getUniqueKeyJS()}')">
+															#if ($obj.getConfigName())
+																$!{obj.getConfigName()}
+															#else
+																(Default)
+															#end
+														</a>
+													</td>
+												#end
+											#end
+										</tr>
+									#end
+								#end
+							#end
 						</table>
 					</div>
 					<!-- Details -->
