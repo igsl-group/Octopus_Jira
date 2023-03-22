@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.project.ProjectDTO;
 
 /**
  * Status wrapper.
@@ -35,7 +36,14 @@ public class StatusDTO extends JiraConfigDTO {
 		statusCategoryConfigItem.setJiraObject(o.getStatusCategory());
 		this.uniqueKey = this.name;
 	}
-
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		super.setupRelatedObjects();
+		// Remove status category, category cannot be created
+		removeRelatedObject(this.statusCategoryConfigItem);
+	}
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

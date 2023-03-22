@@ -281,10 +281,6 @@
 									<option value="false" selected>Manually</option>
 								#end
 							</select>
-							<input 	type="button" 
-									id="updateSelectionButton" 
-									value="Update Selection" 
-									onclick="submitForm('')" disabled/>
 							<span style="font-weight: bold">Show All Object Types: </span>
 							<select id="showAllUtils" name="showAllUtils"
 									onchange="submitForm('')"
@@ -342,6 +338,10 @@
 											/ 
 											$!{action.getExportStore().getTotalCount($null, $action.getShowAllUtils())}
 										</span>
+										<input 	type="button" 
+												id="updateSelectionButton" 
+												value="Update Selection" 
+												onclick="submitForm('')" disabled/>
 									</div>								
 								</td>
 								<td width="50%">
@@ -366,7 +366,7 @@
 										<input 	type="button" 
 												id="merge" 
 												value="Merge" 
-												onclick=""/>
+												onclick="submitForm('merge')"/>
 									</div>
 									<div>
 										#if ($action.getObjectType() != "") 
@@ -383,6 +383,10 @@
 											/ 
 											$!{action.getImportStore().getTotalCount($null, $action.getShowAllUtils())}
 										</span>
+										<input 	type="button" 
+												id="updateSelectionButton" 
+												value="Update Selection" 
+												onclick="submitForm('')" disabled/>
 									</div>
 								</td>
 							</tr>
@@ -402,7 +406,12 @@
 							</tr>
 						</table>
 					</div>
-					<div style="flex: 1 1 auto; max-height: 20vh; overflow-y: scroll">
+					#if ($action.getViewExport() || $action.getViewImport())
+						#set ($listSize = "20vh")
+					#else
+						#set ($listSize = "40vh")
+					#end
+					<div style="flex: 1 1 auto; max-height: ${listSize}; overflow-y: scroll">
 						<table class="ConfigMigration" style="flex: 1 1 auto; width: 100%; table-layout: fixed;">
 							#foreach ($keyGuide in $action.getCompareKeyGuide().entrySet())
 								#set ($util = $keyGuide.getKey())

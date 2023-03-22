@@ -40,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.report.v1.MergeReport;
+import com.igsl.configmigration.report.v1.MergeReportData;
 
 import webwork.action.ServletActionContext;
 import webwork.multipart.MultiPartRequestWrapper;
@@ -79,6 +80,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	// Custom field configuration URL
 	private static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction2.jspa";
 	private static final String DOWNLOAD_URL = "/secure/admin/plugins/handler/ManageExport.jspa?action=download&idList=";
+	private static final String REPORT_URL = "/secure/admin/plugins/handler/ManageReport.jspa?action=download&idList=";
 	private static final String NEWLINE = "\r\n";
 
 	// Session variable
@@ -316,24 +318,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 		}
 	}
 	
-	private void merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
-		if (newObj != null) {
-			JiraConfigDTO oldObj = 
-					this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
-			util.merge(oldObj, newObj);
-			for (JiraConfigRef ref : newObj.getRelatedObjects()) {
-				if (ref != null) {
-					JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(ref.getType());
-					if (nestedUtil != null) {
-						JiraConfigDTO nestedObj = 
-								this.data.importStore.getTypeStore(nestedUtil).get(ref.getUniqueKey());
-						if (nestedObj != null) {
-							merge(nestedUtil, nestedObj);
-						}
-					}
-				}
-			}
-		}
+	private JiraConfigDTO merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
+		JiraConfigDTO oldObj = this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
+		return util.merge(oldObj, newObj);
 	}
 
 	@Override
@@ -394,15 +381,57 @@ public class ExportAction2 extends JiraWebActionSupport {
 		if (ACTION_MERGE.equals(action)) {
 			// Create report
 			final MergeReport mr = ao.create(MergeReport.class);
+			mr.setMergeDate(new Date());
+			mr.setMergeUser(ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getName());
+			long objCountTotal = 0;
+			long objCountSuccess = 0;
+			long objCountFailed = 0;
+			long projCountTotal = 0;
+			long projCountSuccess = 0;
+			long projCountFailed = 0;
+			List<MergeReportData> reportData = new ArrayList<>();
 			// Merge selected objects
 			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
 				for (Map.Entry<String, JiraConfigDTO> entry : this.data.importStore.getTypeStore(util).entrySet()) {
-					if (entry.getValue().isSelected()) {
-						merge(util, entry.getValue());
+					JiraConfigDTO dto = entry.getValue();
+					if (dto.isSelected()) {
+						objCountTotal++;
+						if (util instanceof ProjectUtil) {
+							projCountTotal++;
+						}
+						MergeReportData rd = new MergeReportData(dto);
+						reportData.add(rd);
+						try {
+							JiraConfigDTO newDTO = merge(util, dto);
+							if (newDTO != null) {
+								rd.setResult(true);
+								rd.setNewDTO(newDTO);
+								objCountSuccess++;
+								if (util instanceof ProjectUtil) {
+									projCountSuccess++;
+								}
+							} else {
+								throw new Exception("Unable to create object");
+							}
+						} catch (Exception ex) {
+							rd.setResult(false);
+							rd.addError(ex.getMessage());
+							objCountFailed++;
+							if (util instanceof ProjectUtil) {
+								projCountFailed++;
+							}
+						}
 					}
 				}
 			}
 			// Save report
+			mr.setContent(OM.writeValueAsString(reportData));
+			mr.setTotalObjectCount(objCountTotal);
+			mr.setSuccessObjectCount(objCountSuccess);
+			mr.setFailedObjectCount(objCountFailed);
+			mr.setTotalProjectCount(projCountTotal);
+			mr.setSuccessProjectCount(projCountSuccess);
+			mr.setFailedProjectCount(projCountFailed);
 			ao.executeInTransaction(new TransactionCallback<MergeReport>() {
 				@Override
 				public MergeReport doInTransaction() {
@@ -410,6 +439,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 					return mr;
 				}
 			});
+			return getRedirect(REPORT_URL + mr.getID());
 		} else if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
 			if (uploaded != null) {

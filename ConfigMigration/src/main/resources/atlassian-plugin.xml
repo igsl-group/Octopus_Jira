@@ -19,6 +19,7 @@
 	<ao key="ao-module">
 		<description>Active Objects</description>
 		<entity>com.igsl.configmigration.export.v1.ExportData</entity>
+		<entity>com.igsl.configmigration.report.v1.MergeReport</entity>
 	</ao>
 
 	<resource type="i18n" name="i18n" location="ConfigMigration" />
@@ -149,6 +150,33 @@
 	<servlet name="Download Servlet" key="downloadServlet" class="com.igsl.configmigration.DownloadServlet">
 		<description>ConfigMigration Download Servlet</description>
 		<url-pattern>/configmigrationdownload</url-pattern>
+	</servlet>
+ 
+ 
+ 	<!-- Manage Report -->
+	<web-item key="ManageReports" name="Manage Reports"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+		<description key="desc">Manage Reports
+		</description>
+		<label key="Manage Reports" />
+		<link linkId="ManageReportLink">/secure/admin/plugins/handler/ManageReport.jspa
+		</link>
+	</web-item>
+	<webwork1 key="ManageReport" name="Manage Report"
+		class="java.lang.Object">
+		<description>Manage Reports</description>
+		<actions>
+			<action name="com.igsl.configmigration.ManageReport"
+				alias="ManageReport">
+				<view name="input">templates/manageReport.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	 <!-- Report servlet -->
+	<servlet name="Report Servlet" key="reportServlet" class="com.igsl.configmigration.ReportServlet">
+		<description>ConfigMigration Report Servlet</description>
+		<url-pattern>/configmigrationreport</url-pattern>
 	</servlet>
  
 </atlassian-plugin>

@@ -77,6 +77,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		return r;
 	}
 	
+	@Override
 	protected void setupRelatedObjects() throws Exception {
 		super.setupRelatedObjects();
 		// Add self to associated Project's related object list

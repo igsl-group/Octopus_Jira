@@ -53,7 +53,7 @@ public class PluginUtil extends JiraConfigUtil {
 	
 	@Override
 	public String getName() {
-		return "Plugin (Plugin data and license not included)";
+		return "Plugin";
 	}
 	
 	@Override

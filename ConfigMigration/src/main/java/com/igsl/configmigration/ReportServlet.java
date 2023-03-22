@@ -20,14 +20,14 @@ import com.atlassian.jira.security.GlobalPermissionManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.JiraImport;
-import com.igsl.configmigration.export.v1.ExportData;
+import com.igsl.configmigration.report.v1.MergeReport;
 
 import net.java.ao.Query;
 
-public class DownloadServlet extends HttpServlet {
+public class ReportServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
-	private static final Logger LOGGER = LoggerFactory.getLogger(DownloadServlet.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ReportServlet.class);
 	private static final String PARAM_ID = "id";
 	private static final int BUFFER_SIZE = 10240;
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyyMMdd HHmmss");
@@ -35,7 +35,7 @@ public class DownloadServlet extends HttpServlet {
 	@JiraImport
 	private ActiveObjects ao;
 	
-	public DownloadServlet(@ComponentImport ActiveObjects ao) {
+	public ReportServlet(@ComponentImport ActiveObjects ao) {
 		this.ao = ao;
 	}
 	
@@ -49,17 +49,15 @@ public class DownloadServlet extends HttpServlet {
 		}
 		// Read content and construct download
 		String id = req.getParameter(PARAM_ID);
-		ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", id));
+		MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", id));
 		if (data != null && data.length == 1) {
 			resp.setContentType("text/plain");
-			ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getExportUser());
+			ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
 			String fileName = 
-					"Export" + 
+					"Merge Report" + 
 					((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
-					" on " + SDF.format(data[0].getExportDate()) + 
-					" - " + 
-					data[0].getDescription() + 
-					".json";
+					" on " + SDF.format(data[0].getMergeDate()) + 
+					".txt";
 	        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
 	        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes()); 
 	        		OutputStream out = resp.getOutputStream()) {
