@@ -22,7 +22,8 @@ public class ManageReport extends JiraWebActionSupport {
 	private static final long serialVersionUID = 1L;
 	
 	private static final String ACTION_DELETE = "delete";
-	private static final String ACTION_DOWNLOAD = "download";
+	private static final String ACTION_DOWNLOAD_REPORT = "downloadReport";
+	private static final String ACTION_DOWNLOAD_IMPORT_DATA = "downloadImportData";
 	
 	private static final String PARAM_ACTION = "action";
 	private static final String PARAM_ID_LIST = "idList";
@@ -61,6 +62,11 @@ public class ManageReport extends JiraWebActionSupport {
 		return this.autoDownload;
 	}
 	
+	private String type = null;
+	public String getType() {
+		return this.type;
+	}
+	
 	@Override
 	protected String doExecute() throws Exception {
 		autoDownload = null;
@@ -71,8 +77,12 @@ public class ManageReport extends JiraWebActionSupport {
 		if (data != null && data.length == 1) {
 			if (ACTION_DELETE.equals(action)) {
 				ao.delete(data[0]);
-			} else if (ACTION_DOWNLOAD.equals(action)) {
+			} else if (ACTION_DOWNLOAD_REPORT.equals(action)) {
 				autoDownload = Integer.toString(data[0].getID());
+				type = ReportServlet.PARAM_TYPE_REPORT;
+			} else if (ACTION_DOWNLOAD_IMPORT_DATA.equals(action)) {
+				autoDownload = Integer.toString(data[0].getID());
+				type = ReportServlet.PARAM_TYPE_IMPORT_DATA;
 			}
 		}
 		return JiraWebActionSupport.INPUT;

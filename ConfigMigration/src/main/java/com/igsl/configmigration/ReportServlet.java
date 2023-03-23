@@ -29,6 +29,9 @@ public class ReportServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(ReportServlet.class);
 	private static final String PARAM_ID = "id";
+	private static final String PARAM_TYPE = "type";
+	public static final String PARAM_TYPE_REPORT = "report";
+	public static final String PARAM_TYPE_IMPORT_DATA = "importData";
 	private static final int BUFFER_SIZE = 10240;
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyyMMdd HHmmss");
 	
@@ -49,17 +52,30 @@ public class ReportServlet extends HttpServlet {
 		}
 		// Read content and construct download
 		String id = req.getParameter(PARAM_ID);
+		String type = req.getParameter(PARAM_TYPE);
 		MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", id));
 		if (data != null && data.length == 1) {
 			resp.setContentType("text/plain");
-			ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
-			String fileName = 
+			ApplicationUser mergeUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
+			String fileName;
+			byte[] content;
+			if (PARAM_TYPE_REPORT.equals(type)) {
+				fileName = 
 					"Merge Report" + 
-					((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
+					((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
 					" on " + SDF.format(data[0].getMergeDate()) + 
 					".txt";
+				content = data[0].getReport().getBytes();
+			} else {
+				fileName = 
+					"Merge Data" + 
+					((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
+					" on " + SDF.format(data[0].getMergeDate()) + 
+					".json";
+				content = data[0].getImportData().getBytes();
+			}
 	        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
-	        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes()); 
+	        try (	InputStream in = new ByteArrayInputStream(content); 
 	        		OutputStream out = resp.getOutputStream()) {
 	        	byte[] buffer = new byte[BUFFER_SIZE];
 	            int numBytesRead;

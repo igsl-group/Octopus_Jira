@@ -16,8 +16,12 @@ public interface MergeReport extends Entity {
 	String getMergeUser();
 	
 	@StringLength(value = StringLength.UNLIMITED)
-	void setContent(String content);
-	String getContent();
+	void setImportData(String importData);
+	String getImportData();
+	
+	@StringLength(value = StringLength.UNLIMITED)
+	void setReport(String report);
+	String getReport();
 
 	void setTotalProjectCount(long count);
 	long getTotalProjectCount();

@@ -80,7 +80,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	// Custom field configuration URL
 	private static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction2.jspa";
 	private static final String DOWNLOAD_URL = "/secure/admin/plugins/handler/ManageExport.jspa?action=download&idList=";
-	private static final String REPORT_URL = "/secure/admin/plugins/handler/ManageReport.jspa?action=download&idList=";
+	private static final String REPORT_URL = "/secure/admin/plugins/handler/ManageReport.jspa?action=downloadReport&idList=";
 	private static final String NEWLINE = "\r\n";
 
 	// Session variable
@@ -382,6 +382,18 @@ public class ExportAction2 extends JiraWebActionSupport {
 			// Create report
 			final MergeReport mr = ao.create(MergeReport.class);
 			mr.setMergeDate(new Date());
+			Map<String, List<JiraConfigDTO>> importDataMap = new LinkedHashMap<>();
+			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
+				List<JiraConfigDTO> items = new ArrayList<>();
+				importDataMap.put(util.getImplementation(), items);
+				for (JiraConfigDTO dto : this.data.importStore.getTypeStore(util).values()) {
+					if (dto.isSelected()) {
+						items.add(dto);
+					}
+				}
+			}
+			String importData = OM.writeValueAsString(importDataMap);
+			mr.setImportData(importData);
 			mr.setMergeUser(ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getName());
 			long objCountTotal = 0;
 			long objCountSuccess = 0;
@@ -425,7 +437,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 				}
 			}
 			// Save report
-			mr.setContent(OM.writeValueAsString(reportData));
+			mr.setReport(OM.writeValueAsString(reportData));
 			mr.setTotalObjectCount(objCountTotal);
 			mr.setSuccessObjectCount(objCountSuccess);
 			mr.setFailedObjectCount(objCountFailed);
