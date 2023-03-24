@@ -53,38 +53,45 @@ public class ReportServlet extends HttpServlet {
 		// Read content and construct download
 		String id = req.getParameter(PARAM_ID);
 		String type = req.getParameter(PARAM_TYPE);
-		MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", id));
-		if (data != null && data.length == 1) {
-			resp.setContentType("text/plain");
-			ApplicationUser mergeUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
-			String fileName;
-			byte[] content;
-			if (PARAM_TYPE_REPORT.equals(type)) {
-				fileName = 
-					"Merge Report" + 
-					((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
-					" on " + SDF.format(data[0].getMergeDate()) + 
-					".txt";
-				content = data[0].getReport().getBytes();
+		if (id != null && !id.isEmpty()) {
+			int idAsInt = Integer.parseInt(id);
+			MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", idAsInt));
+			if (data != null && data.length == 1) {
+				resp.setContentType("text/plain");
+				ApplicationUser mergeUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
+				String fileName;
+				byte[] content;
+				if (PARAM_TYPE_REPORT.equals(type)) {
+					fileName = 
+						"Merge Report" + 
+						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
+						" on " + SDF.format(data[0].getMergeDate()) + 
+						" - " + data[0].getDescription() + 
+						".txt";
+					content = data[0].getReport().getBytes();
+				} else {
+					fileName = 
+						"Merge Data" + 
+						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
+						" on " + SDF.format(data[0].getMergeDate()) + 
+						" - " + data[0].getDescription() + 
+						".json";
+					content = data[0].getImportData().getBytes();
+				}
+		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
+		        try (	InputStream in = new ByteArrayInputStream(content); 
+		        		OutputStream out = resp.getOutputStream()) {
+		        	byte[] buffer = new byte[BUFFER_SIZE];
+		            int numBytesRead;
+		            while ((numBytesRead = in.read(buffer)) > 0) {
+		            	out.write(buffer, 0, numBytesRead);
+		            }
+		        }
 			} else {
-				fileName = 
-					"Merge Data" + 
-					((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
-					" on " + SDF.format(data[0].getMergeDate()) + 
-					".json";
-				content = data[0].getImportData().getBytes();
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
 			}
-	        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
-	        try (	InputStream in = new ByteArrayInputStream(content); 
-	        		OutputStream out = resp.getOutputStream()) {
-	        	byte[] buffer = new byte[BUFFER_SIZE];
-	            int numBytesRead;
-	            while ((numBytesRead = in.read(buffer)) > 0) {
-	            	out.write(buffer, 0, numBytesRead);
-	            }
-	        }
 		} else {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter id is not provided");
 		}
 	}
 }

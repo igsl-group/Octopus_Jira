@@ -9,23 +9,16 @@
 -->
 #set ($viewData = $false) 
 #set ($viewStack = $false)
-#set ($clearAction = $false)
 #if ($exportMode)
 	#set ($viewData = $action.getViewExport())
 	#set ($viewStack = $action.getViewExportHistory())
-	#set ($clearAction = "viewExportClear")
 #else
 	#set ($viewData = $action.getViewImport())
 	#set ($viewStack = $action.getViewImportHistory())
-	#set ($clearAction = "viewImportClear")
 #end
 <!-- Details breadcrumb -->
 <div style="flex: 1 1 auto; overflow-y: auto">
 	#if ($viewData)
-		<input 	type="button" 
-				id="viewExportClear" 
-				onclick="submitForm('${clearAction}')" 
-				value="X"/>
 		#foreach ($item in $viewStack)
 			<span style="font-weight: bold">
 				&gt; <a href="#" onclick="viewJump(

@@ -49,28 +49,33 @@ public class DownloadServlet extends HttpServlet {
 		}
 		// Read content and construct download
 		String id = req.getParameter(PARAM_ID);
-		ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", id));
-		if (data != null && data.length == 1) {
-			resp.setContentType("text/plain");
-			ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getExportUser());
-			String fileName = 
-					"Export" + 
-					((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
-					" on " + SDF.format(data[0].getExportDate()) + 
-					" - " + 
-					data[0].getDescription() + 
-					".json";
-	        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
-	        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes()); 
-	        		OutputStream out = resp.getOutputStream()) {
-	        	byte[] buffer = new byte[BUFFER_SIZE];
-	            int numBytesRead;
-	            while ((numBytesRead = in.read(buffer)) > 0) {
-	            	out.write(buffer, 0, numBytesRead);
-	            }
-	        }
+		if (id != null && !id.isEmpty()) {
+			int idAsInt = Integer.parseInt(id);
+			ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", idAsInt));
+			if (data != null && data.length == 1) {
+				resp.setContentType("text/plain");
+				ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getExportUser());
+				String fileName = 
+						"Export" + 
+						((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
+						" on " + SDF.format(data[0].getExportDate()) + 
+						" - " + 
+						data[0].getDescription() + 
+						".json";
+		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
+		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes()); 
+		        		OutputStream out = resp.getOutputStream()) {
+		        	byte[] buffer = new byte[BUFFER_SIZE];
+		            int numBytesRead;
+		            while ((numBytesRead = in.read(buffer)) > 0) {
+		            	out.write(buffer, 0, numBytesRead);
+		            }
+		        }
+			} else {
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
+			}
 		} else {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Parameter id is not provided");
 		}
 	}
 }

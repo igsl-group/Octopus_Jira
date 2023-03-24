@@ -13,9 +13,7 @@
 				document.body.removeChild(element);
 			}
 		
-			function deleteExport(id) {
-				$('input#action').val('delete');
-				$('input#idList').val(id);
+			function deleteExport() {
 				document.forms['main'].submit();
 			}
 		</script>
@@ -23,10 +21,12 @@
 	<body>
 		<div class="ConfigMigration">
 			<form action="ManageExport.jspa" method="POST" id="main">
-				<input type="hidden" id="action" name="action" value=""/>
-				<input type="hidden" id="idList" name="idList" value=""/>
+				<input type="hidden" id="action" name="action" value="delete"/>
 				<table>
 					<thead>
+						<th>
+							<input type="checkbox" onclick="$('input#idList').attr('checked', this.checked)"/>
+						</th>
 						<th>Description</th>
 						<th>Export By</th>
 						<th>Export Date</th>
@@ -35,22 +35,24 @@
 					<tbody>
 						#if ($action.getExportData().size() != 0)
 							#foreach ($item in $action.getExportData())
-								#if ($action.getAutoDownload() == $item.getID())
-									<tr class="highlight">
-								#else
-									<tr>
-								#end
+								<tr>
+									<td>
+										<input type="checkbox" id="idList" name="idList" value="${item.getID()}"/>
+									</td>
 									<td>$!{item.getDescription()}</td>
 									<td>$!{action.getUserInfo($item.getExportUser())}</td>
 									<td>$!{action.formatDate($item.getExportDate())}</td>	
 									<td>
 										<input type="button" value="Download" 
 											onclick="downloadExport('${item.getID()}')"/>
-										<input type="button" value="Delete" 
-											onclick="deleteExport('${item.getID()}')"/>
 									</td>				
 								</tr>
 							#end
+							<tr>
+								<td colspan="100%">
+									<input type="button" value="Delete Selected" onclick="deleteExport()"/>
+								</td>
+							</tr>
 						#else
 							<tr>
 								<td colspan="100%">No Export Data</td>
@@ -60,10 +62,5 @@
 				</table>
 			</form>
 		</div>
-		<script type="text/javascript">
-			#if ($action.getAutoDownload())
-				downloadExport(${action.getAutoDownload()});
-			#end
-		</script>
 	</body>
 </html>

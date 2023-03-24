@@ -13,9 +13,7 @@
 				document.body.removeChild(element);
 			}
 		
-			function deleteExport(id) {
-				$('input#action').val('delete');
-				$('input#idList').val(id);
+			function deleteExport() {
 				document.forms['main'].submit();
 			}
 		</script>
@@ -23,11 +21,14 @@
 	<body>
 		<div class="ConfigMigration">
 			<form action="ManageReport.jspa" method="POST" id="main">
-				<input type="hidden" id="action" name="action" value=""/>
-				<input type="hidden" id="idList" name="idList" value=""/>
+				<input type="hidden" id="action" name="action" value="delete"/>
 				<table>
 					<thead>
 						<tr>
+							<th rowspan="2">
+								<input type="checkbox" onclick="$('input#idList').attr('checked', this.checked)"/>
+							</th>
+							<th rowspan="2">Description</th>
 							<th colspan="3">No. of Projects</th>
 							<th colspan="3">No. of Objects</th>
 							<th rowspan="2">Merged By</th>
@@ -46,11 +47,11 @@
 					<tbody>
 						#if ($action.getReportData().size() != 0)
 							#foreach ($item in $action.getReportData())
-								#if ($action.getAutoDownload() == $item.getID())
-									<tr class="highlight">
-								#else
-									<tr>
-								#end
+								<tr>
+									<td>
+										<input type="checkbox" id="idList" name="idList" value="${item.getID()}"/>
+									</td>
+									<td>$!{item.getDescription()}</td>
 									<td>$!{item.getSuccessProjectCount()}</td>
 									<td>$!{item.getFailedProjectCount()}</td>
 									<td>$!{item.getTotalProjectCount()}</td>
@@ -64,11 +65,14 @@
 											onclick="download('${item.getID()}', 'report')"/>
 										<input type="button" value="Import Data" 
 											onclick="download('${item.getID()}', 'importData')"/>
-										<input type="button" value="Delete" 
-											onclick="deleteExport('${item.getID()}')"/>
-									</td>			
+									</td>
 								</tr>
 							#end
+							<tr>
+								<td colspan="100%">
+									<input type="button" value="Delete Selected" onclick="deleteExport()"/>
+								</td>
+							</tr>
 						#else
 							<tr>
 								<td colspan="100%">No Report Data</td>
@@ -78,10 +82,5 @@
 				</table>
 			</form>
 		</div>
-		<script type="text/javascript">
-			#if ($action.getAutoDownload())
-				download('${action.getAutoDownload()}', '${action.getType()}');
-			#end
-		</script>
 	</body>
 </html>

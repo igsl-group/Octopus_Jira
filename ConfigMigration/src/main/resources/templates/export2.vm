@@ -141,6 +141,10 @@
 				AJS.dialog2('#import-dialog').show();
 			}
 			
+			function mergeData() {
+				AJS.dialog2('#merge-dialog').show();
+			}
+			
 			// Dialog event handlers
 			AJS.$(document).on('click', '#export-dialogOK', function (e) {
 			    e.preventDefault();
@@ -161,9 +165,56 @@
 			    e.preventDefault();
 			    AJS.dialog2('#import-dialog').hide();
 			});
+			AJS.$(document).on('click', '#merge-dialogOK', function (e) {
+			    e.preventDefault();
+			    var desc = $('input#mergeDescInput').val();
+			    AJS.dialog2("#merge-dialog").hide();
+			    $('input#mergeDesc').val(desc);
+			    submitForm('merge');
+			});
+			AJS.$(document).on('click', '#merge-dialogCancel', function (e) {
+			    e.preventDefault();
+			    AJS.dialog2("#merge-dialog").hide();
+			});
 		</script>
 	</head>
 	<body>
+		<form id="downloadForm" action="" method="GET">
+		</form>
+	
+		<!-- Merge dialog -->
+		<section 	id="merge-dialog" 
+					class="aui-dialog2 aui-dialog2-medium aui-layer" 
+					aria-hidden="true"
+					role="dialog">
+		    <!-- Dialog header -->
+		    <header class="aui-dialog2-header">
+		        <!-- The dialog's title -->
+		        <h2 class="aui-dialog2-header-main">Please enter a description for the merge</h2>
+		        <!-- Close icon -->
+		        <!-- 
+		        <a class="aui-dialog2-header-close">
+		            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+		        </a>
+		        -->
+		    </header>
+		    <!-- Main dialog content -->
+		    <div class="aui-dialog2-content">
+				<span>Description: </span>
+				<input type="text" id="mergeDescInput" name="mergeDesc" value=""/>
+		    </div>
+		    <!-- Dialog footer -->
+		    <footer class="aui-dialog2-footer">
+		        <!-- Actions to render on the right of the footer -->
+		        <div class="aui-dialog2-footer-actions">
+		            <button id="merge-dialogOK" class="aui-button aui-button-primary">OK</button>
+		            <button id="merge-dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		        </div>
+		        <!-- Hint text is rendered on the left of the footer -->
+		        <div class="aui-dialog2-footer-hint"></div>
+		    </footer>
+		</section>
+		
 		<!-- Import dialog -->
 		<section 	id="import-dialog" 
 					class="aui-dialog2 aui-dialog2-medium aui-layer" 
@@ -187,6 +238,7 @@
 					<input 	type="file" 
 							id="importFile" 
 							name="importFile" 
+							accept=".json"
 							value=""/>
 				</form>
 		    </div>
@@ -247,6 +299,9 @@
 				<input  type="hidden"
 						id="exportDesc" name="exportDesc"
 						value=""/>
+				<input 	type="hidden"
+						id="mergeDesc" name="mergeDesc"
+						value=""/>
 				<div style="display: flex; flex-flow: column nowrap; max-height: 100%">
 					<!-- Toolbar -->
 					<div style="flex: 1 1 auto">
@@ -272,13 +327,13 @@
 							<span style="font-weight: bold">Select Dependencies</span>
 							<select id="selectNested" name="selectNested" 
 									onchange="disableUpdateSelectionButton(false)"
-									style="width: 120px">
+									style="width: 60px">
 								#if ($action.getSelectNested() == $true)
-									<option value="true" selected>Automatically</option>
-									<option value="false">Manually</option>
+									<option value="true" selected>Auto</option>
+									<option value="false">Manual</option>
 								#else
-									<option value="true">Automatically</option>
-									<option value="false" selected>Manually</option>
+									<option value="true">Auto</option>
+									<option value="false" selected>Manual</option>
 								#end
 							</select>
 							<span style="font-weight: bold">Show All Object Types: </span>
@@ -293,6 +348,14 @@
 									<option value="false" selected>No</option>
 								#end
 							</select>
+							<input 	type="button" 
+									id="updateSelectionButton" 
+									value="Update Selection" 
+									onclick="submitForm('')" disabled/>
+							<input 	type="button" 
+									id="viewClear" 
+									onclick="submitForm('viewClear')" 
+									value="Close Details"/>
 						</div>
 					</div>
 					<!-- 2 columns for export and import objects -->
@@ -301,23 +364,18 @@
 							<tr>
 								<td width="50%">
 									<div>
-										<span style="font-weight: bold">Filter by Name: </span>
 										<input 	type="button" 
 												id="reload" 
 												value="Refresh" 
 												onclick="submitForm('reload')"/>
+										<span style="font-weight: bold">Filter by Name: </span>
 										<input 	type="text" 
 												id="exportFilter" 
 												name="exportFilter"
 												value="$!{action.getExportFilter()}" 
 												style="width: 35%" 
-												onkeydown="if (event.key == 'Enter') { $('input#exportFilterApply').click(); }"
-												onkeyup="$('input#exportFilterApply').attr('disabled', false)"/>
-										<input 	type="button"
-												id="exportFilterApply"
-												disabled
-												value="Apply"
-												onclick="submitForm('exportFilter')"/>
+												onchange="submitForm('exportFilter')"
+												onkeydown="if (event.key == 'Enter') { submitForm('exportFilter'); }"/>
 										<input 	type="button" 
 												id="export" 
 												value="Export" 
@@ -338,35 +396,26 @@
 											/ 
 											$!{action.getExportStore().getTotalCount($null, $action.getShowAllUtils())}
 										</span>
-										<input 	type="button" 
-												id="updateSelectionButton" 
-												value="Update Selection" 
-												onclick="submitForm('')" disabled/>
 									</div>								
 								</td>
 								<td width="50%">
 									<div>
-										<span style="font-weight: bold">Filter by Name: </span>
 										<input 	type="button" 
 												id="import" 
 												value="Import" 
 												onclick="importData()"/>
+										<span style="font-weight: bold">Filter by Name: </span>
 										<input 	type="text" 
 												id="importFilter" 
 												name="importFilter"
 												value="$!{action.getImportFilter()}" 
 												style="width: 35%" 
-												onkeydown="if (event.key == 'Enter') { $('input#importFilterApply').click(); }"
-												onkeyup="$('input#importFilterApply').attr('disabled', false)"/>
-										<input 	type="button"
-												id="importFilterApply"
-												disabled
-												value="Apply"
-												onclick="submitForm('importFilter')"/>
+												onchange="submitForm('importFilter')"
+												onkeydown="if (event.key == 'Enter') { submitForm('importFilter'); }"/>
 										<input 	type="button" 
 												id="merge" 
 												value="Merge" 
-												onclick="submitForm('merge')"/>
+												onclick="mergeData()"/>
 									</div>
 									<div>
 										#if ($action.getObjectType() != "") 
@@ -383,10 +432,6 @@
 											/ 
 											$!{action.getImportStore().getTotalCount($null, $action.getShowAllUtils())}
 										</span>
-										<input 	type="button" 
-												id="updateSelectionButton" 
-												value="Update Selection" 
-												onclick="submitForm('')" disabled/>
 									</div>
 								</td>
 							</tr>
@@ -450,12 +495,25 @@
 									<!-- Matching pairs of data -->
 									#foreach ($key in $keyGuide.getValue())
 										#set ($exportStore = $action.getExportStore().getTypeStore($util))
+										#set ($exportObj = $false)
 										#set ($importStore = $action.getImportStore().getTypeStore($util))
-										<tr>
-											#if ($exportStore.containsKey($key))
-												#set ($obj = $exportStore.get($key))
-												#if ($util.matchFilter($obj, $action.getExportFilter()))
-													#if ($obj.isSelected())
+										#set ($importObj = $false)
+										#if ($exportStore.containsKey($key))
+											#set ($exportObj = $exportStore.get($key))
+											#if (!$util.matchFilter($exportObj, $action.getExportFilter()))
+												#set ($exportObj = $false)
+											#end
+										#end
+										#if ($importStore.containsKey($key))
+											#set ($importObj = $importStore.get($key))
+											#if (!$util.matchFilter($importObj, $action.getImportFilter()))
+												#set ($importObj = $false)
+											#end
+										#end
+										#if ($exportObj || $importObj)
+											<tr>
+												#if ($exportObj)
+													#if ($exportObj.isSelected())
 														#set ($checked = "checked")
 													#else
 														#set ($checked = "")
@@ -465,27 +523,28 @@
 																class="$!{exportClass} export"
 																$!{checked}
 																util="$!{util.getImplementation()}"
-																uniqueKey="$!{obj.getUniqueKey()}"
+																uniqueKey="$!{exportObj.getUniqueKey()}"
 																onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
 													</td>
 													<td>
 														<a href="#" onclick="view(
 																true,
 																'$!{util.getImplementation()}', 
-																'$!{obj.getUniqueKeyJS()}')">
-															#if ($obj.getConfigName())
-																$!{obj.getConfigName()}
+																'$!{exportObj.getUniqueKeyJS()}')">
+															#if ($exportObj.getConfigName())
+																$!{exportObj.getConfigName()}
 															#else
 																(Default)
 															#end
 														</a>
 													</td>
+												#else
+													#if ($importObj) 
+														<td/><td/>
+													#end
 												#end
-											#end
-											#if ($importStore.containsKey($key))
-												#set ($obj = $importStore.get($key))
-												#if ($util.matchFilter($obj, $action.getImportFilter()))
-													#if ($obj.isSelected())
+												#if ($importObj)
+													#if ($importObj.isSelected())
 														#set ($checked = "checked")
 													#else
 														#set ($checked = "")
@@ -495,24 +554,28 @@
 																class="$!{importClass} import"
 																$!{checked}
 																util="$!{util.getImplementation()}"
-																uniqueKey="$!{obj.getUniqueKey()}"
+																uniqueKey="$!{importObj.getUniqueKey()}"
 																onchange="updateSelection(false, this, null, '${importAllClass}')"/>
 													</td>
 													<td>
 														<a href="#" onclick="view(
 																false,
 																'$!{util.getImplementation()}', 
-																'$!{obj.getUniqueKeyJS()}')">
-															#if ($obj.getConfigName())
-																$!{obj.getConfigName()}
+																'$!{importObj.getUniqueKeyJS()}')">
+															#if ($importObj.getConfigName())
+																$!{importObj.getConfigName()}
 															#else
 																(Default)
 															#end
 														</a>
 													</td>
+												#else
+													#if ($exportObj)
+														<td/><td/>
+													#end
 												#end
-											#end
-										</tr>
+											</tr>
+										#end
 									#end
 								#end
 							#end
@@ -539,5 +602,20 @@
 				</div>
 			</form>
 		</div>
+		<script type="text/javascript">
+			// Check if download is pending
+			#if ($action.getDownloadAction())
+				var downloadForm = $('form#downloadForm');
+				downloadForm.attr('action', AJS.contextPath() + '${action.getDownloadAction()}');
+				#foreach ($item in $action.getDownloadParameters().entrySet())
+					var input = $("<input>")
+               						.attr("type", "hidden")
+              						.attr("name", "${item.getKey()}").val("${item.getValue()}");
+					downloadForm.append(input);
+				#end
+				window.onbeforeunload = null;
+				downloadForm.submit();
+			#end
+		</script>
 	</body>
 </html>

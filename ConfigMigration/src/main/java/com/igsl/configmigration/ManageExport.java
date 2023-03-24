@@ -21,8 +21,6 @@ public class ManageExport extends JiraWebActionSupport {
 	private static final long serialVersionUID = 1L;
 	
 	private static final String ACTION_DELETE = "delete";
-	private static final String ACTION_DOWNLOAD = "download";
-	
 	private static final String PARAM_ACTION = "action";
 	private static final String PARAM_ID_LIST = "idList";
 	
@@ -55,23 +53,21 @@ public class ManageExport extends JiraWebActionSupport {
 		return null;
 	}
 	
-	private String autoDownload = null;
-	public String getAutoDownload() {
-		return this.autoDownload;
-	}
-	
 	@Override
 	protected String doExecute() throws Exception {
-		autoDownload = null;
 		String action = getHttpRequest().getParameter(PARAM_ACTION);
-		String id = getHttpRequest().getParameter(PARAM_ID_LIST);
-		LOGGER.debug("Action: " + action + ", ID: " + id);
-		ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", id));
-		if (data != null && data.length == 1) {
-			if (ACTION_DELETE.equals(action)) {
-				ao.delete(data[0]);
-			} else if (ACTION_DOWNLOAD.equals(action)) {
-				autoDownload = Integer.toString(data[0].getID());
+		String[] idList = getHttpRequest().getParameterValues(PARAM_ID_LIST);
+		if (idList != null) {
+			for (String id : idList) {
+				if (id != null && !id.isEmpty()) {
+					int idAsInt = Integer.parseInt(id);
+					ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", idAsInt));
+					if (data != null && data.length == 1) {
+						if (ACTION_DELETE.equals(action)) {
+							ao.delete(data[0]);
+						}
+					}
+				}
 			}
 		}
 		return JiraWebActionSupport.INPUT;

@@ -73,14 +73,16 @@ public class ExportAction2 extends JiraWebActionSupport {
 		public Stack<JiraConfigRef> viewImportHistory = new Stack<>();
 		public boolean selectNested = true;
 		public boolean showAllUtils = true;
+		public String downloadAction = null;
+		public Map<String, String> downloadParameters = new HashMap<>();
 	}
 
 	private static final long serialVersionUID = 1L;
 
 	// Custom field configuration URL
 	private static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction2.jspa";
-	private static final String DOWNLOAD_URL = "/secure/admin/plugins/handler/ManageExport.jspa?action=download&idList=";
-	private static final String REPORT_URL = "/secure/admin/plugins/handler/ManageReport.jspa?action=downloadReport&idList=";
+	private static final String DOWNLOAD_URL = "/plugins/servlet/configmigrationdownload";
+	private static final String REPORT_URL = "/plugins/servlet/configmigrationreport";
 	private static final String NEWLINE = "\r\n";
 
 	// Session variable
@@ -93,8 +95,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public static final String ACTION_VIEW = "view";
 	public static final String ACTION_VIEW_ADD = "viewAdd";
 	public static final String ACTION_VIEW_JUMP = "viewJump";
-	public static final String ACTION_VIEW_EXPORT_CLEAR = "viewExportClear";
-	public static final String ACTION_VIEW_IMPORT_CLEAR = "viewImportClear";
+	public static final String ACTION_VIEW_CLEAR = "viewClear";
 	public static final String ACTION_EXPORT = "export";
 	public static final String ACTION_RELOAD = "reload";
 	public static final String ACTION_IMPORT = "import";
@@ -112,6 +113,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public static final String PARAM_VIEW_OBJECT = "viewObject";
 	public static final String PARAM_EXPORT_DESC = "exportDesc";
 	public static final String PARAM_IMPORT_FILE = "importFile";
+	public static final String PARAM_MERGE_DESC = "mergeDesc";
 	
 	// Form field values
 	public static final String PARAM_VIEW_TYPE_EXPORT = "viewExport";
@@ -135,6 +137,14 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public ExportAction2(@ComponentImport ActiveObjects ao) {
 		LOGGER.debug("Inject ActiveObjects: " + ao);
 		this.ao = ao;
+	}
+	
+	public String getDownloadAction() {
+		return this.data.downloadAction;
+	}
+	
+	public Map<String, String> getDownloadParameters() {
+		return this.data.downloadParameters;
 	}
 
 	public Map<String, JiraConfigProperty> getViewExport() {
@@ -252,12 +262,12 @@ public class ExportAction2 extends JiraWebActionSupport {
 		return this.data.errorMessage.toString();
 	}
 
-	private void loadData(HttpServletRequest req) {
+	private void loadData(HttpServletRequest req, boolean reload) {
 		// Load all objects
 		boolean doInit = true;
 		HttpSession session = req.getSession();
 		Object data = session.getAttribute(SESSION_DATA);
-		if (data != null) {
+		if (data != null && !reload) {
 			try {
 				this.data = (SessionData) data;
 				doInit = false;
@@ -287,10 +297,6 @@ public class ExportAction2 extends JiraWebActionSupport {
 			}
 			session.setAttribute(SESSION_DATA, this.data);
 		}
-	}
-
-	private void mapData() {
-		// TODO Import logic
 	}
 
 	@Override
@@ -328,10 +334,12 @@ public class ExportAction2 extends JiraWebActionSupport {
 		LOGGER.debug("doExecute");
 		
 		HttpServletRequest req = this.getHttpRequest();
-		loadData(req);
+		loadData(req, false);
 		
-		String action = req.getParameter(PARAM_ACTION);
+		// Clear download
+		this.data.downloadAction = null;
 		// Check if it is file upload
+		String action = req.getParameter(PARAM_ACTION);
 		File uploaded = null;
 		HttpServletRequest wrapperReq = ServletActionContext.getRequest();
 		if (wrapperReq != null && wrapperReq instanceof MultiPartRequestWrapper) {
@@ -380,7 +388,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 		// Perform action
 		if (ACTION_MERGE.equals(action)) {
 			// Create report
+			String mergeDesc = req.getParameter(PARAM_MERGE_DESC);
 			final MergeReport mr = ao.create(MergeReport.class);
+			mr.setDescription(mergeDesc);
 			mr.setMergeDate(new Date());
 			Map<String, List<JiraConfigDTO>> importDataMap = new LinkedHashMap<>();
 			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
@@ -451,7 +461,11 @@ public class ExportAction2 extends JiraWebActionSupport {
 					return mr;
 				}
 			});
-			return getRedirect(REPORT_URL + mr.getID());
+			// Reload export items
+			loadData(req, true);
+			this.data.downloadAction = REPORT_URL;
+			this.data.downloadParameters.clear();
+			this.data.downloadParameters.put("id", Integer.toString(mr.getID()));
 		} else if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
 			if (uploaded != null) {
@@ -478,21 +492,15 @@ public class ExportAction2 extends JiraWebActionSupport {
 				// Display error
 				LOGGER.debug("File upload failed");
 			}
-		} else if (ACTION_VIEW_EXPORT_CLEAR.equals(action)) {
+		} else if (ACTION_VIEW_CLEAR.equals(action)) {
 			// Clear export view
 			this.data.viewExport = null;
 			this.data.viewExportHistory.clear();
-		} else if (ACTION_VIEW_IMPORT_CLEAR.equals(action)) {
-			// Clear import view
 			this.data.viewImport = null;
 			this.data.viewImportHistory.clear();
 		} else if (ACTION_RELOAD.equals(action)) {
 			// Reload export items
-			req.getSession().removeAttribute(SESSION_DATA);
-			loadData(req);
-			// Restore settings
-			this.data.objectType = req.getParameter(PARAM_OBJECT_TYPE);
-			this.data.exportFilter = req.getParameter(PARAM_EXPORT_FILTER);
+			loadData(req, true);
 		} else if (ACTION_EXPORT.equals(action)) {
 			// Export selected items in export store
 			Map<String, List<JiraConfigDTO>> output = new LinkedHashMap<>();
@@ -521,8 +529,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 					return ed;
 				}
 			});
-			// Move to download page
-			return getRedirect(DOWNLOAD_URL + data.getID());
+			this.data.downloadAction = DOWNLOAD_URL;
+			this.data.downloadParameters.clear();
+			this.data.downloadParameters.put("type", "report");
+			this.data.downloadParameters.put("id", Integer.toString(data.getID()));
 		} else if (ACTION_OBJECT_TYPE.equals(action)) {
 			// Change objectType
 			this.data.objectType = req.getParameter(PARAM_OBJECT_TYPE);
@@ -533,28 +543,25 @@ public class ExportAction2 extends JiraWebActionSupport {
 			// Update filter
 			this.data.importFilter = req.getParameter(PARAM_IMPORT_FILTER);
 		} else if (ACTION_VIEW.equals(action)) {
+			// View both export and import, if possible
 			String item = req.getParameter(PARAM_VIEW_OBJECT);
 			SelectionData viewObject = OR_SELECTION.readValue(item);
 			if (viewObject != null) {
-				LOGGER.debug("Viewing: " + viewObject.exportStore);
-				if (viewObject.exportStore) {
-					this.data.viewExport = null;
-					this.data.viewExportHistory = new Stack<>();
-					JiraConfigDTO dto = this.data.exportStore.getTypeStore(viewObject.utilName)
-							.get(viewObject.uniqueKey);
-					if (dto != null) {
-						this.data.viewExport = dto.getConfigProperties();
-						this.data.viewExportHistory.add(new JiraConfigRef(dto));
-					}
-				} else {
-					this.data.viewImport = null;
-					this.data.viewImportHistory = new Stack<>();
-					JiraConfigDTO dto = this.data.importStore.getTypeStore(viewObject.utilName)
-							.get(viewObject.uniqueKey);
-					if (dto != null) {
-						this.data.viewImport = dto.getConfigProperties();
-						this.data.viewImportHistory.add(new JiraConfigRef(dto));
-					}
+				this.data.viewExport = null;
+				this.data.viewExportHistory = new Stack<>();
+				JiraConfigDTO exportDTO = this.data.exportStore.getTypeStore(viewObject.utilName)
+						.get(viewObject.uniqueKey);
+				if (exportDTO != null) {
+					this.data.viewExport = exportDTO.getConfigProperties();
+					this.data.viewExportHistory.add(new JiraConfigRef(exportDTO));
+				}
+				this.data.viewImport = null;
+				this.data.viewImportHistory = new Stack<>();
+				JiraConfigDTO importDTO = this.data.importStore.getTypeStore(viewObject.utilName)
+						.get(viewObject.uniqueKey);
+				if (importDTO != null) {
+					this.data.viewImport = importDTO.getConfigProperties();
+					this.data.viewImportHistory.add(new JiraConfigRef(importDTO));
 				}
 			}
 			LOGGER.debug("Current export view: " + this.data.viewExport);

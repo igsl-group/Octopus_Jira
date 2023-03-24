@@ -9,6 +9,10 @@ import net.java.ao.schema.Table;
 @Table(value = "MergeReport")
 public interface MergeReport extends Entity {
 
+	@StringLength(value = StringLength.UNLIMITED)
+	void setDescription(String description);
+	String getDescription();
+	
 	void setMergeDate(Date mergeDate);
 	Date getMergeDate();
 	
