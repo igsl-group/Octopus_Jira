@@ -44,6 +44,11 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 		this.xml = com.atlassian.jira.workflow.WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
 		this.uniqueKey = this.name;
 	}
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		// Do nothing
+	}
 
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {

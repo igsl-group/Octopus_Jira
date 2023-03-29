@@ -23,6 +23,11 @@ public class JiraConfigProperty {
 	private Map<Object, JiraConfigRef> map = new TreeMap<>();
 	private JiraConfigPropertyType type;
 	
+	public JiraConfigProperty() {
+		this.type = null;
+		this.value = null;
+	}
+	
 	public JiraConfigProperty(Object value) {
 		this.type = JiraConfigPropertyType.TEXT;
 		if (value != null) {

@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.project.Project;
@@ -34,6 +36,8 @@ import com.igsl.configmigration.version.VersionUtil;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectDTO extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(ProjectDTO.class);
+	
 	protected Long id;
 	protected String key;
 	protected String name;
@@ -96,6 +100,41 @@ public class ProjectDTO extends JiraConfigDTO {
 			this.versions.add(dto);
 		}
 		this.uniqueKey = this.name;
+	}
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		if (this.avatar != null) {
+			LOGGER.debug("Project related avatar: " + this.avatar);
+			addRelatedObject(this.avatar);
+			this.avatar.addReferencedObject(this);
+		}
+		if (this.components != null) {
+			for (ProjectComponentDTO comp : this.components) {
+				LOGGER.debug("Project related components: " + comp);
+				addRelatedObject(comp);
+				comp.addReferencedObject(this);
+			}
+		}
+		if (this.issueTypes != null) {
+			for (IssueTypeDTO issueType : this.issueTypes) {
+				LOGGER.debug("Project related issueType: " + issueType);
+				addRelatedObject(issueType);
+				issueType.addReferencedObject(this);
+			}
+		}
+		if (this.category != null) {
+			LOGGER.debug("Project related category: " + this.category);
+			addRelatedObject(this.category);
+			this.category.addReferencedObject(this);
+		}
+		if (this.versions != null) {
+			for (VersionDTO version : this.versions) {
+				LOGGER.debug("Project related version: " + version);
+				addRelatedObject(version);
+				version.addReferencedObject(this);
+			}
+		}
 	}
 	
 	@Override

@@ -70,12 +70,16 @@ public class IssueTypeScreenSchemeDTO extends JiraConfigDTO {
 		return r;
 	}
 	
+	@Override
 	protected void setupRelatedObjects() throws Exception {
-		super.setupRelatedObjects();
 		// Add self to associated Project's related object list
 		for (ProjectDTO proj : this.projects) {
 			proj.addRelatedObject(this);
-			removeRelatedObject(proj);
+			this.addReferencedObject(proj);
+		}
+		for (IssueTypeScreenSchemeEntityDTO entity : this.entities) {
+			this.addRelatedObject(entity);
+			entity.addReferencedObject(this);
 		}
 	}
 	

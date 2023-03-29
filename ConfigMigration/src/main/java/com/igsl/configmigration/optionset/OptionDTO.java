@@ -36,7 +36,7 @@ public class OptionDTO extends JiraConfigDTO {
 		this.name = obj.getName();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

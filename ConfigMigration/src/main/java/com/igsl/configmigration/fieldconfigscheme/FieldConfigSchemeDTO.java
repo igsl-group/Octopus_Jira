@@ -99,18 +99,20 @@ public class FieldConfigSchemeDTO extends JiraConfigDTO {
 	}
 	
 	protected void setupRelatedObjects() throws Exception {
-		super.setupRelatedObjects();
 		// Add self to associated Project's related object list
 		// But remove projects from relatedObjects
 		for (ProjectDTO proj : this.assocatedProjectObjects) {
 			proj.addRelatedObject(this);
-			removeRelatedObject(proj);
+			this.addReferencedObject(proj);
 		}
 		for (ProjectDTO proj : this.projectId) {
 			proj.addRelatedObject(this);
-			removeRelatedObject(proj);
+			this.addReferencedObject(proj);
 		}
-		
+		for (IssueTypeDTO issueType : this.associatedIssueTypes) {
+			addRelatedObject(issueType);
+			issueType.addReferencedObject(this);
+		}
 	}
 	
 	@Override

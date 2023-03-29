@@ -31,7 +31,7 @@ public class ConditionDescriptorDTO extends AbstractDescriptorDTO {
 		this.type = cd.getType();
 		this.uniqueKey = Long.toString(this.entityId);
 	}
-
+	
 	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList();

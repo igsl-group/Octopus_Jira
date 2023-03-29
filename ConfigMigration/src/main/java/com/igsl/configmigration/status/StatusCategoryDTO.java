@@ -41,7 +41,7 @@ public class StatusCategoryDTO extends JiraConfigDTO {
 		this.translatedName = o.getTranslatedName();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

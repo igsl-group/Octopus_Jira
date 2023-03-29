@@ -119,12 +119,14 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
-		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
-			IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
-			IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
-			item.setJiraObject(e, itss);
-			result.put(item.getUniqueKey(), item);
+		if (params != null && params.length == 1) {
+			IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
+			for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
+				IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
+				IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
+				item.setJiraObject(e, itss);
+				result.put(item.getUniqueKey(), item);
+			}
 		}
 		return result;
 	}

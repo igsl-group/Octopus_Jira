@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigRef;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
@@ -82,7 +83,15 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfig);
 		this.uniqueKey = obj.getName();
 	}
-
+	
+	@Override
+	public void setupRelatedObjects() throws Exception {
+		for (IssueTypeDTO issueType : this.associatedIssueTypes) {
+			addRelatedObject(issueType);
+			issueType.addReferencedObject(this);
+		}
+	}
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

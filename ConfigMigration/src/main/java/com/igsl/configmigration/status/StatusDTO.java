@@ -38,13 +38,6 @@ public class StatusDTO extends JiraConfigDTO {
 	}
 	
 	@Override
-	protected void setupRelatedObjects() throws Exception {
-		super.setupRelatedObjects();
-		// Remove status category, category cannot be created
-		removeRelatedObject(this.statusCategoryConfigItem);
-	}
-	
-	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("ID", new JiraConfigProperty(this.id));

@@ -46,6 +46,14 @@ public class FieldScreenSchemeDTO extends JiraConfigDTO {
 	}
 
 	@Override
+	protected void setupRelatedObjects() throws Exception {
+		for (FieldScreenSchemeItemDTO item : this.fieldScreenSchemeItems) {
+			addRelatedObject(item);
+			item.addReferencedObject(this);
+		}
+	}
+	
+	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("Description", new JiraConfigProperty(this.description));

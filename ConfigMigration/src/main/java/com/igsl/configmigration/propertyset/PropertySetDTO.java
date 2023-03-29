@@ -31,7 +31,7 @@ public class PropertySetDTO extends JiraConfigDTO {
 		}
 		this.uniqueKey = Integer.toString(this.hashCode());
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

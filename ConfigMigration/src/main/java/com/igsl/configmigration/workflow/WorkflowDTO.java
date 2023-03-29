@@ -56,7 +56,7 @@ public class WorkflowDTO extends JiraConfigDTO {
 		this.updatedDate = wf.getUpdatedDate();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	public String getInternalId() {
 		return this.getName();

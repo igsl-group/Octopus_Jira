@@ -40,7 +40,7 @@ public class VersionDTO extends JiraConfigDTO {
 		this.archived = o.isArchived();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

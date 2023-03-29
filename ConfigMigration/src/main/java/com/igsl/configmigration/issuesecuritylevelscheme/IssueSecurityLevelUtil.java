@@ -92,10 +92,12 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
-			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
-			item.setJiraObject(s);
-			result.put(item.getUniqueKey(), item);
+		if (params != null && params.length == 1) {
+			for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
+				IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
+				item.setJiraObject(s, params);
+				result.put(item.getUniqueKey(), item);
+			}
 		}
 		return result;
 	}

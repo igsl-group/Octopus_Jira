@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -14,6 +16,7 @@ import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaPropertyBea
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(ObjectSchemaPropertyBeanDTO.class);
 	private Integer id;
 	private Integer objectSchemaId;
 	
@@ -22,7 +25,11 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 		ObjectSchemaPropertyBean o = (ObjectSchemaPropertyBean) obj;
 		this.id = o.getId();
 		this.objectSchemaId = o.getObjectSchemaId();
-		this.uniqueKey = Long.toString(this.id);
+		if (this.id != null) {
+			this.uniqueKey = Long.toString(this.id);
+		} else {
+			this.uniqueKey = Integer.toString(this.hashCode());
+		}
 	}
 
 	@Override

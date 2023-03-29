@@ -42,7 +42,7 @@ public class ObjectAttributeValueBeanDTO extends JiraConfigDTO {
 		this.value = o.getValue();
 		this.uniqueKey = Long.toString(this.id);
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

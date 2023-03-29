@@ -1,14 +1,7 @@
 package com.igsl.configmigration;
 
-import java.io.File;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,19 +9,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
-import javax.ws.rs.core.MediaType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.transaction.TransactionCallback;
@@ -41,9 +30,6 @@ import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.report.v1.MergeReport;
 import com.igsl.configmigration.report.v1.MergeReportData;
-
-import webwork.action.ServletActionContext;
-import webwork.multipart.MultiPartRequestWrapper;
 
 public class ExportAction2 extends JiraWebActionSupport {
 
@@ -59,34 +45,16 @@ public class ExportAction2 extends JiraWebActionSupport {
 		public boolean selected;
 	}
 
-	// Data stored in HTTP session
-	public static class SessionData {
-		public DTOStore exportStore = new DTOStore();	// Store for data in server
-		public DTOStore importStore = new DTOStore(); // Store for imported data
-		public String objectType = ProjectUtil.class.getCanonicalName();
-		public String exportFilter = "";
-		public String importFilter = "";
-		public StringBuilder errorMessage = new StringBuilder();
-		public Map<String, JiraConfigProperty> viewExport;
-		public Stack<JiraConfigRef> viewExportHistory = new Stack<>();
-		public Map<String, JiraConfigProperty> viewImport;
-		public Stack<JiraConfigRef> viewImportHistory = new Stack<>();
-		public boolean selectNested = true;
-		public boolean showAllUtils = true;
-		public String downloadAction = null;
-		public Map<String, String> downloadParameters = new HashMap<>();
-	}
-
 	private static final long serialVersionUID = 1L;
 
 	// Custom field configuration URL
-	private static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction2.jspa";
+	public static final String PAGE_URL = "/secure/admin/plugins/handler/ExportAction2.jspa";
 	private static final String DOWNLOAD_URL = "/plugins/servlet/configmigrationdownload";
 	private static final String REPORT_URL = "/plugins/servlet/configmigrationreport";
 	private static final String NEWLINE = "\r\n";
 
 	// Session variable
-	private static final String SESSION_DATA = "ExportAction2SessionData";
+	public static final String SESSION_DATA = "ExportAction2SessionData";
 
 	// Actions
 	public static final String ACTION_OBJECT_TYPE = "objectType";
@@ -124,7 +92,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	private static ObjectReader OR_SELECTION;
 	private static ObjectReader OR_IMPORT_DATA;
 	
-	private SessionData data = new SessionData();
+	private ExportAction2SessionData data = new ExportAction2SessionData();
 
 	static {
 		OM = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
@@ -269,7 +237,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		Object data = session.getAttribute(SESSION_DATA);
 		if (data != null && !reload) {
 			try {
-				this.data = (SessionData) data;
+				this.data = (ExportAction2SessionData) data;
 				doInit = false;
 			} catch (Exception ex) {
 				LOGGER.debug("Unable to cast session data, will reinitialze");
@@ -278,7 +246,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		if (doInit) {
 			// Initialize
 			this.data.exportStore.clear();
-			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(true)) {
+			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(!this.getShowAllUtils())) {
 				int count = 0;
 				try {
 					LOGGER.debug("Loading data for " + util.getName());
@@ -340,13 +308,25 @@ public class ExportAction2 extends JiraWebActionSupport {
 		this.data.downloadAction = null;
 		// Check if it is file upload
 		String action = req.getParameter(PARAM_ACTION);
-		File uploaded = null;
-		HttpServletRequest wrapperReq = ServletActionContext.getRequest();
-		if (wrapperReq != null && wrapperReq instanceof MultiPartRequestWrapper) {
-			action = ACTION_IMPORT;
-			MultiPartRequestWrapper mpr = (MultiPartRequestWrapper) wrapperReq;
-			uploaded = mpr.getFile(PARAM_IMPORT_FILE);
-		}
+//		File uploaded = null;
+//		HttpServletRequest wrapperReq = ServletActionContext.getRequest();
+//		if (wrapperReq != null && wrapperReq instanceof MultiPartRequestWrapper) {
+//			action = ACTION_IMPORT;
+//			MultiPartRequestWrapper mpr = (MultiPartRequestWrapper) wrapperReq;
+//			LOGGER.debug("Filenames found: ");
+//			Enumeration fileNames = mpr.getFileNames();
+//			while (fileNames.hasMoreElements()) {
+//				String s = String.valueOf(fileNames.nextElement());
+//				LOGGER.debug(
+//						s + ": " + 
+//						mpr.getFile(s) + "; " + 
+//						mpr.getFilesystemName(s) + "; " + 
+//						mpr.getMemoryFileContents(s)
+//				);
+//			}
+//			uploaded = mpr.getFile(PARAM_IMPORT_FILE);
+//			LOGGER.debug("Upload located: " + uploaded);
+//		}
 		// Update show all utils flag
 		String showAll = req.getParameter(PARAM_SHOW_ALL_UTILS);
 		if (showAll != null && !showAll.isEmpty()) {
@@ -468,11 +448,12 @@ public class ExportAction2 extends JiraWebActionSupport {
 			this.data.downloadParameters.put("id", Integer.toString(mr.getID()));
 		} else if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
-			if (uploaded != null) {
-				LOGGER.debug("Uploaded file: " + uploaded.getAbsolutePath());
+			this.data.viewImport = null;
+			this.data.viewImportHistory.clear();
+			if (this.data.upload != null) {
 				try {
 					this.data.importStore.clear();
-					Map<String, List<JiraConfigDTO>> importData = OR_IMPORT_DATA.readValue(uploaded);
+					Map<String, List<JiraConfigDTO>> importData = OR_IMPORT_DATA.readValue(this.data.upload);
 					LOGGER.debug("Import data parsed, size: " + importData.size());
 					for (Map.Entry<String, List<JiraConfigDTO>> entry : importData.entrySet()) {
 						JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(entry.getKey());
@@ -499,6 +480,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 			this.data.viewImport = null;
 			this.data.viewImportHistory.clear();
 		} else if (ACTION_RELOAD.equals(action)) {
+			this.data.viewExport = null;
+			this.data.viewExportHistory.clear();
 			// Reload export items
 			loadData(req, true);
 		} else if (ACTION_EXPORT.equals(action)) {

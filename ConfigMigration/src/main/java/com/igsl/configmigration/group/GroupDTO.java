@@ -23,7 +23,7 @@ public class GroupDTO extends JiraConfigDTO {
 		this.name = o.getName();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

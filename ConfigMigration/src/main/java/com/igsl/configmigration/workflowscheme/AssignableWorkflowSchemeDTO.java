@@ -18,9 +18,13 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigRef;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.project.ProjectDTO;
 import com.igsl.configmigration.project.ProjectUtil;
+import com.igsl.configmigration.workflow.WorkflowDTO2;
+import com.igsl.configmigration.workflow.WorkflowUtil;
 
 /**
  * Status wrapper.
@@ -38,11 +42,28 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 	private Map<String, String> mappings;
 	private String name;
 	private List<ProjectDTO> projects;
+	private List<WorkflowDTO2> relatedWorkflows = new ArrayList<>();
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
 		AssignableWorkflowScheme wf = (AssignableWorkflowScheme) obj;
 		this.configuredDefaultWorkflow = wf.getConfiguredDefaultWorkflow();
+		WorkflowUtil wfUtil = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(WorkflowUtil.class);
+		Map<String, JiraConfigDTO> workflows = wfUtil.search(null);
+		// Locate default workflow
+		if (workflows.containsKey(this.configuredDefaultWorkflow)) {
+			WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(this.configuredDefaultWorkflow);
+			this.relatedWorkflows.add(relatedWorkflow);
+		}
+		// Locate workflow for each project mapping
+		if (this.mappings != null) {
+			for (String workflowName : this.mappings.values()) {
+				if (workflows.containsKey(workflowName)) {
+					WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(workflowName);
+					this.relatedWorkflows.add(relatedWorkflow);
+				}
+			}
+		}
 		this.description = wf.getDescription();
 		this.id = wf.getId();
 		this.mappings = new HashMap<>();
@@ -64,7 +85,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		}
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
@@ -79,11 +100,17 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		super.setupRelatedObjects();
 		// Add self to associated Project's related object list
 		for (ProjectDTO proj : this.projects) {
 			proj.addRelatedObject(this);
-			removeRelatedObject(proj);
+			this.addReferencedObject(proj);
+		}
+		// Add related workflows
+		if (this.relatedWorkflows != null) {
+			for (WorkflowDTO2 relatedWorkflow : this.relatedWorkflows) {
+				addRelatedObject(relatedWorkflow);
+				relatedWorkflow.addReferencedObject(this);
+			}
 		}
 	}
 
@@ -157,6 +184,14 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 
 	public void setProjects(List<ProjectDTO> projects) {
 		this.projects = projects;
+	}
+
+	public List<WorkflowDTO2> getRelatedWorkflows() {
+		return relatedWorkflows;
+	}
+
+	public void setRelatedWorkflows(List<WorkflowDTO2> relatedWorkflows) {
+		this.relatedWorkflows = relatedWorkflows;
 	}
 
 }

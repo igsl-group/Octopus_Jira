@@ -57,6 +57,14 @@ public class FieldScreenTabDTO extends JiraConfigDTO {
 	}
 	
 	@Override
+	protected void setupRelatedObjects() throws Exception {
+		for (FieldScreenLayoutItemDTO item : this.fieldScreenLayoutItems) {
+			addRelatedObject(item);
+			item.addReferencedObject(this);
+		}
+	}
+	
+	@Override
 	public String getConfigName() {
 		return this.name;
 	}

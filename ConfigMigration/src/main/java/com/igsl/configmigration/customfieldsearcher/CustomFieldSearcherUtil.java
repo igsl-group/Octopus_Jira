@@ -69,11 +69,13 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter is ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
-		for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
-			CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
-			item.setJiraObject(s, params);
-			result.put(item.getUniqueKey(), item);
+		if (params != null && params.length == 1) {
+			CustomFieldType<?, ?> customFieldType = (CustomFieldType<?, ?>) params[0];
+			for (CustomFieldSearcher s : MANAGER.getSearchersValidFor(customFieldType)) {
+				CustomFieldSearcherDTO item = new CustomFieldSearcherDTO();
+				item.setJiraObject(s, params);
+				result.put(item.getUniqueKey(), item);
+			}
 		}
 		return result;
 	}

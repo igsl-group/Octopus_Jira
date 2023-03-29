@@ -56,7 +56,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 		// So simply use hashCode.
 		this.uniqueKey = Integer.toString(this.hashCode());
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

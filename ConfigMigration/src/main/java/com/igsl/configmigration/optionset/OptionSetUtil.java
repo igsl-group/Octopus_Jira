@@ -92,9 +92,11 @@ public class OptionSetUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter ignored
-		JiraConfigDTO dto = findByInternalId(null, params);
 		Map<String, JiraConfigDTO> result = new HashMap<>();
-		result.put(dto.getUniqueKey(), dto);
+		if (params != null && params.length == 1) {
+			JiraConfigDTO dto = findByInternalId(null, params);
+			result.put(dto.getUniqueKey(), dto);
+		}
 		return result;
 	}
 

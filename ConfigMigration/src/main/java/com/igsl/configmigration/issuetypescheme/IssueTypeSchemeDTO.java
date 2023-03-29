@@ -93,11 +93,14 @@ public class IssueTypeSchemeDTO extends JiraConfigDTO {
 	}
 
 	protected void setupRelatedObjects() throws Exception {
-		super.setupRelatedObjects();
 		// Add self to associated Project's related object list
 		for (ProjectDTO proj : this.associatedProjects) {
 			proj.addRelatedObject(this);
-			removeRelatedObject(proj);
+			this.addReferencedObject(proj);
+		}
+		for (IssueTypeDTO issueType : associatedIssueTypes) {
+			addRelatedObject(issueType);
+			issueType.addReferencedObject(this);
 		}
 	}
 	

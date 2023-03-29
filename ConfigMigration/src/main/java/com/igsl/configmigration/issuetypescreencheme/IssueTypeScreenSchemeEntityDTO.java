@@ -53,6 +53,18 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 		}
 		this.uniqueKey = s.toString();
 	}
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		if (this.issueType != null) {
+			this.addRelatedObject(this.issueType);
+			this.issueType.addReferencedObject(this);
+		}
+		if (this.issueType != null) {
+			this.addRelatedObject(this.fieldScreenScheme);
+			this.fieldScreenScheme.addReferencedObject(this);
+		}
+	}
 
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {

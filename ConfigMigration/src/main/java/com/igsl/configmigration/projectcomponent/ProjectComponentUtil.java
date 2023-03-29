@@ -101,12 +101,14 @@ public class ProjectComponentUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter ignored
-		Long projectId = (Long) params[0];
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (ProjectComponent it : MANAGER.getComponents(Arrays.asList(projectId))) {
-			ProjectComponentDTO item = new ProjectComponentDTO();
-			item.setJiraObject(it);
-			result.put(item.getUniqueKey(), item);
+		if (params != null && params.length == 1) {
+			Long projectId = (Long) params[0];
+			for (ProjectComponent it : MANAGER.getComponents(Arrays.asList(projectId))) {
+				ProjectComponentDTO item = new ProjectComponentDTO();
+				item.setJiraObject(it);
+				result.put(item.getUniqueKey(), item);
+			}
 		}
 		return result;
 	}

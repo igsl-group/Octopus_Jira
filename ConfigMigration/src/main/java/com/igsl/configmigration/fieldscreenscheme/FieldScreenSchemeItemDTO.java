@@ -41,7 +41,19 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 		this.issueOperationName = o.getIssueOperationName();	// TODO This is i18n key, how to translate?
 		this.uniqueKey = Long.toString(this.id);
 	}
-
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		if (this.fieldScreen != null) {
+			this.addRelatedObject(this.fieldScreen);
+			this.fieldScreen.addReferencedObject(this);
+		}
+		if (this.issueOperation != null) {
+			this.addRelatedObject(this.issueOperation);
+			this.issueOperation.addReferencedObject(this);
+		}
+	}
+	
 	@Override
 	public String getConfigName() {
 		return this.issueOperation.getConfigName();

@@ -44,7 +44,7 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		this.id = obj.getId();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

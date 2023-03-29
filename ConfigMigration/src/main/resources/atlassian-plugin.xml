@@ -178,5 +178,11 @@
 		<description>ConfigMigration Report Servlet</description>
 		<url-pattern>/configmigrationreport</url-pattern>
 	</servlet>
+	
+	<!-- Upload servlet -->
+ 	<servlet name="Upload Servlet" key="uploadServlet" class="com.igsl.configmigration.UploadServlet">
+		<description>ConfigMigration Upload Servlet</description>
+		<url-pattern>/configmigrationupload</url-pattern>
+	</servlet>
  
 </atlassian-plugin>

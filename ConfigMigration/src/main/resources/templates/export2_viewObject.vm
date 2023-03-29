@@ -32,7 +32,7 @@
 	#end
 </div>
 <!-- Details -->
-<div style="flex: 1 1 auto; max-height: 20vh; overflow-y: auto">
+<div style="flex: 1 1 auto; max-height: 30vh; overflow-y: auto">
 	#if ($viewData)
 		<table class="ConfigMigration" style="flex: 1 1 auto">
 			<tbody>

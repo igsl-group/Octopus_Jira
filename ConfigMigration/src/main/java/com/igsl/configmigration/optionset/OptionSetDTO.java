@@ -51,7 +51,7 @@ public class OptionSetDTO extends JiraConfigDTO {
 		Collections.sort(this.optionIds);
 		this.uniqueKey = Long.toString(this.hashCode());
 	}
-		
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

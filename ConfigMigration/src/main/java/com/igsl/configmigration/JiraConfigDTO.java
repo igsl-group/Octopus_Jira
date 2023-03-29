@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.JiraConfigProperty.JiraConfigPropertyType;
 
 /*
  * Class to represent a Jira configuration item to be exported/imported.
@@ -289,14 +290,23 @@ public abstract class JiraConfigDTO {
 		}
 		
 		// TODO Debug adding relatedObjects
-		String sb = "";
-		try {
-			sb = OM.writeValueAsString(this.getRelatedObjects());
-		} catch (Exception ex) {
-			sb = "Failed to convert relatedObjects to string: " + ex.getMessage();
+		{
+			List<JiraConfigRef> list = new ArrayList<>();
+			list.addAll(this.getRelatedObjects());
+			JiraConfigProperty prop = new JiraConfigProperty();
+			prop.setType(JiraConfigPropertyType.LIST);
+			prop.setList(list);
+			result.put("Related Objects", prop);
 		}
-		result.put("Related Objects (" + this.getRelatedObjects().size() + ")", new JiraConfigProperty(sb));
-
+		{
+			List<JiraConfigRef> list = new ArrayList<>();
+			list.addAll(this.getReferencedObjects());
+			JiraConfigProperty prop = new JiraConfigProperty();
+			prop.setType(JiraConfigPropertyType.LIST);
+			prop.setList(list);
+			result.put("Referenced Objects", prop);
+		}
+	
 		return result;
 	}
 	
@@ -545,6 +555,42 @@ public abstract class JiraConfigDTO {
 	}
 	
 	@JsonIgnore
+	protected Map<String, JiraConfigRef> referencedObjects = new HashMap<>();
+	public final Collection<JiraConfigRef> getReferencedObjects() {
+		return this.referencedObjects.values();
+	}
+	public final boolean addReferencedObject(JiraConfigDTO dto) {
+		if (dto != null) {
+			return addReferencedObject(new JiraConfigRef(dto));
+		}
+		return false;
+	}
+	public final boolean addReferencedObject(JiraConfigRef ref) {
+		if (ref != null) {
+			if (!this.referencedObjects.containsKey(ref.getRefKey())) {
+				this.referencedObjects.put(ref.getRefKey(), ref);
+				return true;
+			}
+		}
+		return false;
+	}
+	public final boolean removeReferencedObject(JiraConfigDTO dto) {
+		if (dto != null) {
+			return removeReferencedObject(new JiraConfigRef(dto));
+		}
+		return false;
+	}
+	public final boolean removeReferencedObject(JiraConfigRef ref) {
+		if (ref != null) {
+			if (this.referencedObjects.containsKey(ref.getRefKey())) {
+				this.referencedObjects.remove(ref.getRefKey());
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	@JsonIgnore
 	protected Map<String, JiraConfigRef> relatedObjects = new HashMap<>();
 	public final Collection<JiraConfigRef> getRelatedObjects() {
 		return this.relatedObjects.values();
@@ -581,11 +627,23 @@ public abstract class JiraConfigDTO {
 	}
 	
 	/**
-	 * Add nested objects of the DTO as related objects via reflection.
-	 * Override as needed.
+	 * Setup relatedObjects after DTO has been initialized.
+	 * 
+	 * Related objects are used to automatically select dependencies. 
+	 * And as a result, such objects will be created via their respective JiraConfigUtil.
+	 * 
+	 * For nested objects that should not be created by itself, keep them out of relatedObjects. 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected void setupRelatedObjects() throws Exception {
+		// Do nothing
+	}
+	
+	/**
+	 * Call setupRelatedObjects on self and recursively on nested JiraConfigDTOs.
+	 */
+	protected final void setupRelatedObjectsWithReflection() throws Exception {
+		// For self
+		setupRelatedObjects();
 		// Check for nested DTOs
 		BeanInfo info = Introspector.getBeanInfo(this.getClass());
 		for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {

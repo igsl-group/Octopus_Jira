@@ -111,12 +111,14 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter is ignored
-		FieldScreen fs = (FieldScreen) params[0];
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
-		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
-			FieldScreenTabDTO item = new FieldScreenTabDTO();
-			item.setJiraObject(it, params);
-			result.put(item.getUniqueKey(), item);
+		if (params != null && params.length == 1) {
+			FieldScreen fs = (FieldScreen) params[0];
+			for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
+				FieldScreenTabDTO item = new FieldScreenTabDTO();
+				item.setJiraObject(it, params);
+				result.put(item.getUniqueKey(), item);
+			}
 		}
 		return result;
 	}

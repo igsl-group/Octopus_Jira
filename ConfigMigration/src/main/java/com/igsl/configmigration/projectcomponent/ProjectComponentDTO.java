@@ -51,7 +51,7 @@ public class ProjectComponentDTO extends JiraConfigDTO {
 		this.projectId = o.getProjectId();
 		this.uniqueKey = this.name;
 	}
-
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
