@@ -46,6 +46,10 @@ public class MergeReportData {
 		this.errors.add(error);
 	}
 	
+	public void addErrors(List<String> errors) {
+		this.errors.addAll(errors);
+	}
+	
 	public String getId() {
 		return id;
 	}

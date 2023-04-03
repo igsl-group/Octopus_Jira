@@ -1,5 +1,9 @@
 package com.igsl.configmigration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public class JiraConfigRef {
 	
 	private String display;
@@ -7,6 +11,10 @@ public class JiraConfigRef {
 	private String type;
 	private String uniqueKey;
 	private String uniqueKeyJS;
+	
+	public JiraConfigRef() {
+		// Default constructor for JSON deserialization
+	}
 	
 	public JiraConfigRef(JiraConfigDTO dto) {
 		if (dto != null) {
@@ -17,9 +25,16 @@ public class JiraConfigRef {
 			this.uniqueKeyJS = dto.getUniqueKeyJS();
 		}
 	}
+
+	public final String getImplementation() {
+		return JiraConfigRef.class.getCanonicalName();
+	}
+	
+	@JsonIgnore
 	public String getRefKey() {
 		return this.util + "-" + this.uniqueKey;
 	}
+
 	public String getDisplay() {
 		return display;
 	}

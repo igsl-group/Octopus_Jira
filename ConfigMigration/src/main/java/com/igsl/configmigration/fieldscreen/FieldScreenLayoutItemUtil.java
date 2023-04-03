@@ -33,8 +33,8 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 	
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
-		FieldScreenTab tab = (FieldScreenTab) params[0];	
-		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
+		FieldScreenTabDTO tab = (FieldScreenTabDTO) params[0];	
+		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems((FieldScreenTab) tab.getJiraObject())) {
 			if (Long.toString(it.getId()).equals(id)) {
 				FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
 				item.setJiraObject(it, tab);
@@ -46,8 +46,8 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		FieldScreenTab tab = (FieldScreenTab) params[0];
-		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
+		FieldScreenTabDTO tab = (FieldScreenTabDTO) params[0];
+		for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems((FieldScreenTab) tab.getJiraObject())) {
 			FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
 			item.setJiraObject(it, tab);
 			if (item.getUniqueKey().equals(uniqueKey)) {
@@ -89,12 +89,13 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 				LOGGER.debug("Create Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.createFieldScreenLayoutItem(createdJira);
 			}
+			FieldScreenLayoutItemDTO created = new FieldScreenLayoutItemDTO();
+			created.setJiraObject(createdJira, tab);
+			return created;
 		} else {
 			LOGGER.error("Field " + src.getField().getUniqueKey() + " cannot be found, excluded from tab " + tab.getName());
+			return null;
 		}
-		FieldScreenLayoutItemDTO created = new FieldScreenLayoutItemDTO();
-		created.setJiraObject(createdJira, tab);
-		return created;
 	}
 	
 	@Override
@@ -112,8 +113,8 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		// Filter is ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		if (params != null && params.length == 1) {
-			FieldScreenTab tab = (FieldScreenTab) params[0];		
-			for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems(tab)) {
+			FieldScreenTabDTO tab = (FieldScreenTabDTO) params[0];		
+			for (FieldScreenLayoutItem it : MANAGER.getFieldScreenLayoutItems((FieldScreenTab) tab.getJiraObject())) {
 				FieldScreenLayoutItemDTO item = new FieldScreenLayoutItemDTO();
 				item.setJiraObject(it, tab);
 				result.put(item.getUniqueKey(), item);

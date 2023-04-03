@@ -62,8 +62,9 @@ public class DownloadServlet extends HttpServlet {
 						" - " + 
 						data[0].getDescription() + 
 						".json";
+				resp.setContentType("application/json; charset=UTF-8");
 		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
-		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes()); 
+		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes("UTF8")); 
 		        		OutputStream out = resp.getOutputStream()) {
 		        	byte[] buffer = new byte[BUFFER_SIZE];
 		            int numBytesRead;

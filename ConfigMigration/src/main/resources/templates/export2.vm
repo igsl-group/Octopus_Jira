@@ -123,10 +123,14 @@
 				if (selectClass != null) {
 					// Specific util class only
 					$('input[type="checkbox"].' + selectClass).attr('checked', value);
+					console.log('selectAll: ' + 
+							$('input[type="checkbox"].' + selectClass).length + ', ' + value);
 				} else {
 					var typeClass = (exportStore)? "export" : "import";
 					// All util class
 					$('input[type="checkbox"][util][uniqueKey].' + typeClass).attr('checked', value);
+					console.log('selectAll: ' + 
+							$('input[type="checkbox"][util][uniqueKey].' + typeClass).length + ', ' + value);
 				}
 				console.log('selectAll() invoking updateSelection()');
 				updateSelection(exportStore, null, selectClass, null);
@@ -201,7 +205,8 @@
 		    <!-- Main dialog content -->
 		    <div class="aui-dialog2-content">
 				<span>Description: </span>
-				<input type="text" id="mergeDescInput" name="mergeDesc" value=""/>
+				<input type="text" id="mergeDescInput" name="mergeDesc" value=""
+						onkeydown="if (event.key == 'Enter') { $('#merge-dialogOK').click(); }"/>
 		    </div>
 		    <!-- Dialog footer -->
 		    <footer class="aui-dialog2-footer">
@@ -237,7 +242,7 @@
 		    <div class="aui-dialog2-content">
 				<form 	id="importForm" 
 						method="post" 
-						action="/jira/plugins/servlet/configmigrationupload"
+						action="${action.getUploadServlet()}"
 						encType="multipart/form-data">
 					<span>Select File: </span>
 					<input 	type="file" 
@@ -278,7 +283,8 @@
 		    <!-- Main dialog content -->
 		    <div class="aui-dialog2-content">
 				<span>Description: </span>
-				<input type="text" id="descriptionInput" name="descriptionInput" value=""/>
+				<input type="text" id="descriptionInput" name="descriptionInput" value=""
+						onkeydown="if (event.key == 'Enter') { $('#export-dialogOK').click(); }"/>
 		    </div>
 		    <!-- Dialog footer -->
 		    <footer class="aui-dialog2-footer">
@@ -457,7 +463,7 @@
 						</table>
 					</div>
 					#if ($action.getViewExport() || $action.getViewImport())
-						#set ($listSize = "10vh")
+						#set ($listSize = "15vh")
 					#else
 						#set ($listSize = "40vh")
 					#end
@@ -526,6 +532,11 @@
 													#else
 														#set ($checked = "")
 													#end
+													#if ($exportObj.getUniqueKey() == $action.getViewExportUniqueKey()) 
+														#set ($scrollIntoView = "scrollIntoView")
+													#else
+														#set ($scrollIntoView = "")
+													#end
 													<td>
 														<input 	type="checkbox" 
 																class="$!{exportClass} export"
@@ -535,7 +546,9 @@
 																onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
 													</td>
 													<td>
-														<a href="#" onclick="view(
+														<a 	href="#" 
+															$!{scrollIntoView}
+															onclick="view(
 																true,
 																'$!{util.getImplementation()}', 
 																'$!{exportObj.getUniqueKeyJS()}')">
@@ -557,6 +570,11 @@
 													#else
 														#set ($checked = "")
 													#end
+													#if ($importObj.getUniqueKey() == $action.getViewImportUniqueKey()) 
+														#set ($scrollIntoView = "scrollIntoView")
+													#else
+														#set ($scrollIntoView = "")
+													#end
 													<td>
 														<input 	type="checkbox" 
 																class="$!{importClass} import"
@@ -566,7 +584,9 @@
 																onchange="updateSelection(false, this, null, '${importAllClass}')"/>
 													</td>
 													<td>
-														<a href="#" onclick="view(
+														<a 	href="#" 
+															$!{scrollIntoView}
+															onclick="view(
 																false,
 																'$!{util.getImplementation()}', 
 																'$!{importObj.getUniqueKeyJS()}')">
@@ -606,11 +626,17 @@
 							</tr>
 						</table>
 					</div>
-					$!{action.errorMessage}
+					#foreach ($item in $action.getErrorMessage())
+						$!{item}
+					#end
 				</div>
 			</form>
 		</div>
 		<script type="text/javascript">
+			// Scroll into view
+			if ($('a[scrollIntoView]').length > 0) {
+				$('a[scrollIntoView]')[0].scrollIntoView();
+			}			
 			// Check if download is pending
 			#if ($action.getDownloadAction())
 				var downloadForm = $('form#downloadForm');

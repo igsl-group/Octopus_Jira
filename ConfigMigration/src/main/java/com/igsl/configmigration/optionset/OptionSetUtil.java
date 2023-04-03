@@ -34,10 +34,8 @@ public class OptionSetUtil extends JiraConfigUtil {
 	 */
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
-		FieldConfig fieldConfig = (FieldConfig) params[0];
-		FieldConfigDTO fieldConfigDTO = new FieldConfigDTO();
-		fieldConfigDTO.setJiraObject(fieldConfig);
-		OptionSet os = MANAGER.getOptionsForConfig(fieldConfig);
+		FieldConfigDTO fieldConfig = (FieldConfigDTO) params[0];
+		OptionSet os = MANAGER.getOptionsForConfig((FieldConfig) fieldConfig.getJiraObject());
 		OptionSetDTO item = new OptionSetDTO();
 		item.setJiraObject(os, fieldConfig);
 		return item;

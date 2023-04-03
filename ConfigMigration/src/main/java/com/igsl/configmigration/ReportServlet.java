@@ -67,8 +67,8 @@ public class ReportServlet extends HttpServlet {
 						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
 						" on " + SDF.format(data[0].getMergeDate()) + 
 						" - " + data[0].getDescription() + 
-						".txt";
-					content = data[0].getReport().getBytes();
+						".json";
+					content = data[0].getReport().getBytes("UTF8");
 				} else {
 					fileName = 
 						"Merge Data" + 
@@ -76,9 +76,10 @@ public class ReportServlet extends HttpServlet {
 						" on " + SDF.format(data[0].getMergeDate()) + 
 						" - " + data[0].getDescription() + 
 						".json";
-					content = data[0].getImportData().getBytes();
+					content = data[0].getImportData().getBytes("UTF8");
 				}
 		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
+		        resp.setContentType("application/json; charset=UTF-8");
 		        try (	InputStream in = new ByteArrayInputStream(content); 
 		        		OutputStream out = resp.getOutputStream()) {
 		        	byte[] buffer = new byte[BUFFER_SIZE];

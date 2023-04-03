@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.atlassian.jira.issue.fields.Field;
 import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -13,6 +14,7 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.customfield.CustomFieldUtil;
 import com.igsl.configmigration.field.FieldDTO;
 import com.igsl.configmigration.field.FieldUtil;
 
@@ -61,6 +63,20 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 		this.uniqueKey = tab.getUniqueKey() + "." + this.fieldName + "." + this.id;
 	}
 
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		// Add custom fields as related item in FieldScreenDTO
+		FieldScreenTabDTO tab = (FieldScreenTabDTO) this.objectParameters[0];
+		FieldScreenDTO screen = (FieldScreenDTO) tab.getObjectParameters()[0];
+		if (this.field != null) {
+			CustomFieldUtil util = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldUtil.class);
+			JiraConfigDTO dto = util.findByUniqueKey(this.field.getName());
+			if (dto != null) {
+				screen.addRelatedObject(this.field);
+			}
+		}
+	}
+	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
 import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
+import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTabImpl;
@@ -42,9 +43,10 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		FieldScreen fs = (FieldScreen) params[0];
-		for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
-			if (uniqueKey.equals(it.getName())) {
+		FieldScreenDTO fs = (FieldScreenDTO) params[0];
+		for (FieldScreenTab it : MANAGER.getFieldScreenTabs((FieldScreen) fs.getJiraObject())) {
+			String key = it.getFieldScreen().getName() + "." + it.getName();
+			if (uniqueKey.equals(key)) {
 				FieldScreenTabDTO item = new FieldScreenTabDTO();
 				item.setJiraObject(it, params);
 				return item;
@@ -66,16 +68,20 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		FieldScreenTab createdJira = null;
 		if (original != null) {
 			// Update
+			LOGGER.debug("Updating FieldScreenTab");
 			originalJira.setName(src.getName());
 			originalJira.setPosition(src.getPosition());
 			MANAGER.updateFieldScreenTab(originalJira);
+			// TODO Update items
 			createdJira = originalJira;
 		} else {
 			// Create
+			LOGGER.debug("Creating FieldScreenTab");
 			createdJira = new FieldScreenTabImpl(MANAGER);
 			createdJira.setName(src.getName());
 			createdJira.setPosition(src.getPosition());
-			createdJira.setFieldScreen((FieldScreen) src.getObjectParameters()[0]);
+			FieldScreenDTO fs = (FieldScreenDTO) src.getObjectParameters()[0];
+			createdJira.setFieldScreen((FieldScreen) fs.getJiraObject());
 			MANAGER.createFieldScreenTab(createdJira);
 		}
 		FieldScreenTabDTO created = new FieldScreenTabDTO();
@@ -84,16 +90,14 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		FieldScreenLayoutItemUtil itemUtil = (FieldScreenLayoutItemUtil)
 				JiraConfigTypeRegistry.getConfigUtil(FieldScreenLayoutItemUtil.class);
 		// Create Field Screen Layout items
+		int position = 0;
 		for (FieldScreenLayoutItemDTO item : src.getFieldScreenLayoutItems()) {
-			LOGGER.debug("merging field from: " + item + ", " + item.getField().getName());
 			item.setJiraObject(null, created);
-			FieldScreenLayoutItemDTO originalItem = (FieldScreenLayoutItemDTO) itemUtil.findByDTO(item);
-			LOGGER.debug("merging field to: " + originalItem + ", " + 
-					((originalItem != null)? originalItem.getField().getName() : ""));
-			if (originalItem != null) {
-				originalItem.setJiraObject(null, created);
+			LOGGER.debug("Creating Field: " + item.getFieldId() + ", Pos: " + position);
+			item.setPosition(position);
+			if (itemUtil.merge(null, item) != null) {
+				position++;
 			}
-			itemUtil.merge(originalItem, item);
 		}
 		return created;
 	}
@@ -113,8 +117,8 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		// Filter is ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		if (params != null && params.length == 1) {
-			FieldScreen fs = (FieldScreen) params[0];
-			for (FieldScreenTab it : MANAGER.getFieldScreenTabs(fs)) {
+			FieldScreenDTO fs = (FieldScreenDTO) params[0];
+			for (FieldScreenTab it : MANAGER.getFieldScreenTabs((FieldScreen) fs.getJiraObject())) {
 				FieldScreenTabDTO item = new FieldScreenTabDTO();
 				item.setJiraObject(it, params);
 				result.put(item.getUniqueKey(), item);

@@ -40,14 +40,6 @@ public class FieldScreenDTO extends JiraConfigDTO {
 			tabs.add(dto);
 		}
 	}
-
-	@Override
-	protected void setupRelatedObjects() throws Exception {
-		for (FieldScreenTabDTO tab : tabs) {
-			addRelatedObject(tab);
-			tab.addReferencedObject(this);
-		}
-	}
 	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {

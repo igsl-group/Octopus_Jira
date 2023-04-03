@@ -55,7 +55,7 @@ public class OptionUtil extends JiraConfigUtil {
 		}
 		OptionDTO tar = (OptionDTO) newItem;
 		LOGGER.debug("OptionDTO newItem: " + OM.writeValueAsString(tar));
-		FieldConfig fieldConfig = (FieldConfig) tar.getObjectParameters()[0];
+		FieldConfigDTO fieldConfig = (FieldConfigDTO) tar.getObjectParameters()[0];
 		Long parentId = (Long) tar.getObjectParameters()[1];
 		tar.setParentId(parentId);
 		LOGGER.debug("OptionUtil fieldConfig: " + fieldConfig);
@@ -63,9 +63,9 @@ public class OptionUtil extends JiraConfigUtil {
 		LOGGER.debug("OptionUtil getSequence(): " + tar.getSequence());
 		LOGGER.debug("OptionUtil getValue(): " + tar.getValue());
 		if (parentId != null) {
-			created = MANAGER.createOption(fieldConfig, parentId, tar.getSequence(), tar.getValue());
+			created = MANAGER.createOption((FieldConfig) fieldConfig.getJiraObject(), parentId, tar.getSequence(), tar.getValue());
 		} else {
-			created = MANAGER.createOption(fieldConfig, null, tar.getSequence(), tar.getValue());
+			created = MANAGER.createOption((FieldConfig) fieldConfig.getJiraObject(), null, tar.getSequence(), tar.getValue());
 		}
 		LOGGER.debug("OptionUtil created OptionID: " + created.getOptionId());
 		if (created != null && tar.getChildOptions() != null) {

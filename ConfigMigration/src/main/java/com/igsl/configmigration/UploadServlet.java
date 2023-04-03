@@ -43,7 +43,7 @@ public class UploadServlet extends HttpServlet {
 							baos.write(buffer, 0, cnt);
 						}
 					} while (cnt > 0);
-					d.upload = baos.toString();
+					d.upload = baos.toString("UTF8");
 					LOGGER.debug("Received: <" + d.upload + ">");
 				}
 				// Redirect back to ExportAction2

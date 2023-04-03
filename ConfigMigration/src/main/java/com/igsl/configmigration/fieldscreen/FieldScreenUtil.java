@@ -8,7 +8,9 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
 import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
+import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
+import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -76,20 +78,21 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		}
 		FieldScreenDTO created = new FieldScreenDTO();
 		created.setJiraObject(createdJira);
-		LOGGER.debug("Merging tabs");
+		LOGGER.debug("Removing existing tabs");
+		// Delete existing tabs and items, then recreate them
+		for (FieldScreenTab tab : createdJira.getTabs()) {
+			for (FieldScreenLayoutItem item : tab.getFieldScreenLayoutItems()) {
+				MANAGER.removeFieldScreenLayoutItem(item);
+			}
+			MANAGER.removeFieldScreenTab(tab.getId());
+		}
+		LOGGER.debug("Recreating tabs");
 		// Tabs
 		FieldScreenTabUtil tabUtil = (FieldScreenTabUtil)
 				JiraConfigTypeRegistry.getConfigUtil(FieldScreenTabUtil.class);
 		for (FieldScreenTabDTO tab : src.getTabs()) {
-			LOGGER.debug("merging tab from: " + tab + ", " + tab.getName());
 			tab.setJiraObject(null, created);
-			FieldScreenTabDTO originalTab = (FieldScreenTabDTO) tabUtil.findByDTO(tab);
-			LOGGER.debug("merging tab to: " + originalTab + ", " + 
-					((originalTab != null)? originalTab.getName() : ""));
-			if (originalTab != null) {
-				originalTab.setJiraObject(null, created);
-			}
-			tabUtil.merge(originalTab, tab);
+			tabUtil.merge(null, tab);
 		}
 		return created;
 	}

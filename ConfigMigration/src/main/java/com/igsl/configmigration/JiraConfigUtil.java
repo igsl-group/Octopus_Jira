@@ -322,11 +322,11 @@ public abstract class JiraConfigUtil {
 			}
 			JiraConfigDTO registered = store.checkAndRegister(dto);
 			// Merge relatedObjects
-			for (JiraConfigRef ref : dto.getRelatedObjects()) {
+			for (JiraConfigRef ref : dto.getRelatedObjectList()) {
 				registered.addRelatedObject(ref);
 			}
 			// Merge referencedObjects
-			for (JiraConfigRef ref : dto.getReferencedObjects()) {
+			for (JiraConfigRef ref : dto.getReferencedObjectList()) {
 				registered.addReferencedObject(ref);
 			}
 			LOGGER.debug("[TEST] Registered to store, type: " + dto.getClass() + ", dto: " + registered.getUniqueKey());

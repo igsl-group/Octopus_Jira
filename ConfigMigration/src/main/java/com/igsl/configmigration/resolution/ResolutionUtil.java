@@ -152,7 +152,9 @@ public class ResolutionUtil extends JiraConfigUtil {
 			list.add(item);
 		}
 		list.sort(new ResolutionComparator());
+		LOGGER.debug("Resolution list: ");
 		for (ResolutionDTO dto : list) {
+			LOGGER.debug("Resolution: " + dto.getUniqueKey());
 			result.put(dto.getUniqueKey(), dto);
 		}
 		return result;

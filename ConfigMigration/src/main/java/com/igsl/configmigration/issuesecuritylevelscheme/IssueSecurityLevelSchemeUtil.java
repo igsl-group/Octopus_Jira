@@ -82,23 +82,22 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		}
 		Long defaultLevel = null;
 		if (id != null) {
+			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
 			// Merge levels
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
 				item.setSchemeId(id);
+				item.setJiraObject(null, result);
 				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) LEVEL_UTIL.merge(null, item);
 				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
 					defaultLevel = level.getId();
 				}
 			}
-		}
-		// Set default level, no choice but to use deprecated APIs
-		if (defaultLevel != null) {
-			GenericValue gv = SCHEME_MANAGER.getScheme(id);
-			gv.set("defaultlevel", defaultLevel);
-			SCHEME_MANAGER.updateScheme(gv);
-		}
-		if (id != null) {
-			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
+			// Set default level, no choice but to use deprecated APIs
+			if (defaultLevel != null) {
+				GenericValue gv = SCHEME_MANAGER.getScheme(id);
+				gv.set("defaultlevel", defaultLevel);
+				SCHEME_MANAGER.updateScheme(gv);
+			}
 		}
 		return result;
 	}

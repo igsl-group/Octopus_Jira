@@ -38,7 +38,7 @@ import com.igsl.configmigration.JiraConfigProperty.JiraConfigPropertyType;
  * Generics is not used for the Jira object class to simplify deserialization.
  * If generics is used, we will need custom deserialization all around.
  */
-@JsonDeserialize(using = JiraConfigItemDeserializer.class)
+@JsonDeserialize(using = JiraConfigDTODeserializer.class)
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigDTO {
 
@@ -289,10 +289,16 @@ public abstract class JiraConfigDTO {
 			}
 		}
 		
-		// TODO Debug adding relatedObjects
+		// TODO Debug adding extra fields
+		{
+			JiraConfigProperty prop = new JiraConfigProperty();
+			prop.setType(JiraConfigPropertyType.TEXT);
+			prop.setValue(this.getUniqueKey());
+			result.put("Unique Key", prop);
+		}
 		{
 			List<JiraConfigRef> list = new ArrayList<>();
-			list.addAll(this.getRelatedObjects());
+			list.addAll(this.getRelatedObjectList());
 			JiraConfigProperty prop = new JiraConfigProperty();
 			prop.setType(JiraConfigPropertyType.LIST);
 			prop.setList(list);
@@ -300,7 +306,7 @@ public abstract class JiraConfigDTO {
 		}
 		{
 			List<JiraConfigRef> list = new ArrayList<>();
-			list.addAll(this.getReferencedObjects());
+			list.addAll(this.getReferencedObjectList());
 			JiraConfigProperty prop = new JiraConfigProperty();
 			prop.setType(JiraConfigPropertyType.LIST);
 			prop.setList(list);
@@ -554,9 +560,15 @@ public abstract class JiraConfigDTO {
 		return this.mappedObject;
 	}
 	
-	@JsonIgnore
 	protected Map<String, JiraConfigRef> referencedObjects = new HashMap<>();
-	public final Collection<JiraConfigRef> getReferencedObjects() {
+	public final Map<String, JiraConfigRef> getRefencedObjects() {
+		return this.referencedObjects;
+	}
+	public final void setReferenedObjects(Map<String, JiraConfigRef> referencedObjects) {
+		this.referencedObjects = referencedObjects;
+	}
+	@JsonIgnore
+	public final Collection<JiraConfigRef> getReferencedObjectList() {
 		return this.referencedObjects.values();
 	}
 	public final boolean addReferencedObject(JiraConfigDTO dto) {
@@ -590,9 +602,15 @@ public abstract class JiraConfigDTO {
 		return false;
 	}
 	
-	@JsonIgnore
 	protected Map<String, JiraConfigRef> relatedObjects = new HashMap<>();
-	public final Collection<JiraConfigRef> getRelatedObjects() {
+	public final Map<String, JiraConfigRef> getRelatedObjects() {
+		return this.relatedObjects;
+	}
+	public final void setRelatedObjects(Map<String, JiraConfigRef> relatedObjects) {
+		this.relatedObjects = relatedObjects;
+	}
+	@JsonIgnore
+	public final Collection<JiraConfigRef> getRelatedObjectList() {
 		return this.relatedObjects.values();
 	}
 	public final boolean addRelatedObject(JiraConfigDTO dto) {

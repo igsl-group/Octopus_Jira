@@ -37,8 +37,8 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		Long idAsLong = Long.parseLong(id);
-		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
-		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
+		IssueTypeScreenSchemeDTO itss = (IssueTypeScreenSchemeDTO) params[0];
+		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities((IssueTypeScreenScheme) itss.getJiraObject())) {
 			IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
 			if (e.getId().equals(idAsLong)) {
 				IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
@@ -51,8 +51,8 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
-		IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
-		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
+		IssueTypeScreenSchemeDTO itss = (IssueTypeScreenSchemeDTO) params[0];
+		for (Object o : MANAGER.getIssueTypeScreenSchemeEntities((IssueTypeScreenScheme) itss.getJiraObject())) {
 			IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
 			IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
 			item.setJiraObject(e, itss);
@@ -79,7 +79,7 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 		if (src.getIssueType() != null) {
 			issueType = (IssueTypeDTO) issueTypeUtil.findByDTO(src.getIssueType());
 		}
-		IssueTypeScreenScheme issueTypeScreenScheme = (IssueTypeScreenScheme) newItem.getObjectParameters()[0];
+		IssueTypeScreenSchemeDTO issueTypeScreenScheme = (IssueTypeScreenSchemeDTO) newItem.getObjectParameters()[0];
 		if (original != null) {
 			IssueTypeScreenSchemeEntityDTO existingDTO = (IssueTypeScreenSchemeEntityDTO) findByDTO(original);
 			IssueTypeScreenSchemeEntity existing = (IssueTypeScreenSchemeEntity) existingDTO.getJiraObject();
@@ -87,7 +87,7 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 			if (issueType != null) {
 				existing.setIssueTypeId(issueType.getId());
 			}
-			existing.setIssueTypeScreenScheme(issueTypeScreenScheme);
+			existing.setIssueTypeScreenScheme((IssueTypeScreenScheme) issueTypeScreenScheme.getJiraObject());
 			MANAGER.updateIssueTypeScreenSchemeEntity(existing);
 			return existingDTO;
 		} else {
@@ -97,7 +97,7 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 			if (issueType != null) {
 				createdJira.setIssueTypeId(issueType.getId());
 			}
-			createdJira.setIssueTypeScreenScheme(issueTypeScreenScheme);
+			createdJira.setIssueTypeScreenScheme((IssueTypeScreenScheme) issueTypeScreenScheme.getJiraObject());
 			MANAGER.createIssueTypeScreenSchemeEntity(createdJira);			
 			IssueTypeScreenSchemeEntityDTO created = new IssueTypeScreenSchemeEntityDTO();
 			created.setJiraObject(createdJira, issueTypeScreenScheme);
@@ -120,8 +120,8 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 		// Filter ignored
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		if (params != null && params.length == 1) {
-			IssueTypeScreenScheme itss = (IssueTypeScreenScheme) params[0];
-			for (Object o : MANAGER.getIssueTypeScreenSchemeEntities(itss)) {
+			IssueTypeScreenSchemeDTO itss = (IssueTypeScreenSchemeDTO) params[0];
+			for (Object o : MANAGER.getIssueTypeScreenSchemeEntities((IssueTypeScreenScheme) itss.getJiraObject())) {
 				IssueTypeScreenSchemeEntity e = (IssueTypeScreenSchemeEntity) o;
 				IssueTypeScreenSchemeEntityDTO item = new IssueTypeScreenSchemeEntityDTO();
 				item.setJiraObject(e, itss);

@@ -11,14 +11,14 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
-public class JiraConfigItemDeserializer extends StdDeserializer<JiraConfigDTO> {
+public class JiraConfigDTODeserializer extends StdDeserializer<JiraConfigDTO> {
 
 	private static final long serialVersionUID = 1L;
-	private static final Logger LOGGER = Logger.getLogger(JiraConfigItemDeserializer.class);
+	private static final Logger LOGGER = Logger.getLogger(JiraConfigDTODeserializer.class);
 	
 	public static final String IMPLMEMENTATION = "implementation";
 	
-	protected JiraConfigItemDeserializer() {
+	protected JiraConfigDTODeserializer() {
 		super(JiraConfigDTO.class);
 	}
 
