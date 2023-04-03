@@ -32,7 +32,6 @@ import com.igsl.configmigration.workflow.WorkflowUtil;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 	
-	public static final String NULL_KEY = "null";
 	private static final Logger LOGGER = Logger.getLogger(AssignableWorkflowSchemeDTO.class);
 	private static final WorkflowSchemeManager MANAGER = ComponentAccessor.getWorkflowSchemeManager();
 	
@@ -71,7 +70,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 			if (entry.getKey() != null) {
 				this.mappings.put(entry.getKey(), entry.getValue());
 			} else {
-				this.mappings.put(NULL_KEY, entry.getValue());
+				this.mappings.put(JiraConfigDTO.NULL_KEY, entry.getValue());
 			}
 		}
 		this.name = wf.getName();

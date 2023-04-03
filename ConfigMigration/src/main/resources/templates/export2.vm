@@ -86,8 +86,9 @@
 							selectedObjects[key] = value;
 						});
 					} else {
+						var typeClass = (exportStore)? 'export' : 'import';
 						// Select all checkboxes
-						$('input[type="checkbox"][util][uniqueKey]').each(function() {
+						$('input[type="checkbox"][util][uniqueKey].' + typeClass).each(function() {
 							var util = $(this).attr('util');
 							var uniqueKey = $(this).attr('uniqueKey');
 							var selected = ($(this).attr('checked') == 'checked');
@@ -126,7 +127,7 @@
 					console.log('selectAll: ' + 
 							$('input[type="checkbox"].' + selectClass).length + ', ' + value);
 				} else {
-					var typeClass = (exportStore)? "export" : "import";
+					var typeClass = (exportStore)? 'export' : 'import';
 					// All util class
 					$('input[type="checkbox"][util][uniqueKey].' + typeClass).attr('checked', value);
 					console.log('selectAll: ' + 

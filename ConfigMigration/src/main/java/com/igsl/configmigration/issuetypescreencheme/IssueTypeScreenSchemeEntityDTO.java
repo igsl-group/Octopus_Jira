@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenScheme;
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -28,12 +29,23 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 	private IssueTypeDTO issueType;
 	private FieldScreenSchemeDTO fieldScreenScheme;
 	private Long id;
+	@JsonIgnore
+	private IssueTypeScreenSchemeDTO issueTypeScreenScheme;
+	
+	/**
+	 * #0: IssueTypeScreenSchemeDTO
+	 */
+	@Override
+	protected int getObjectParameterCount() {
+		return 1;
+	}
 	
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
 		IssueTypeUtil issueTypeUtil = (IssueTypeUtil) JiraConfigTypeRegistry.getConfigUtil(IssueTypeUtil.class);
 		FieldScreenSchemeUtil fieldScreenSchemeUtil = (FieldScreenSchemeUtil) JiraConfigTypeRegistry.getConfigUtil(FieldScreenSchemeUtil.class);
 		IssueTypeScreenSchemeEntity obj = (IssueTypeScreenSchemeEntity) o;
+		this.issueTypeScreenScheme = (IssueTypeScreenSchemeDTO) this.objectParameters[0];
 		this.id = obj.getId();
 		String issueTypeId = obj.getIssueTypeId();
 		if (issueTypeId != null) {
@@ -56,13 +68,15 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		if (this.issueType != null) {
-			this.addRelatedObject(this.issueType);
-			this.issueType.addReferencedObject(this);
-		}
-		if (this.issueType != null) {
-			this.addRelatedObject(this.fieldScreenScheme);
-			this.fieldScreenScheme.addReferencedObject(this);
+		if (this.issueTypeScreenScheme != null) {
+			if (this.issueType != null) {
+				this.issueTypeScreenScheme.addRelatedObject(this.issueType);
+				this.issueType.addReferencedObject(this.issueTypeScreenScheme);
+			}
+			if (this.fieldScreenScheme != null) {
+				this.issueTypeScreenScheme.addRelatedObject(this.fieldScreenScheme);
+				this.fieldScreenScheme.addReferencedObject(this.issueTypeScreenScheme);
+			}
 		}
 	}
 
@@ -89,7 +103,7 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return IssueTypeScreenSchemeUtil.class;
+		return IssueTypeScreenSchemeEntityUtil.class;
 	}
 
 	@Override
@@ -113,14 +127,6 @@ public class IssueTypeScreenSchemeEntityDTO extends JiraConfigDTO {
 		this.fieldScreenScheme = fieldScreenScheme;
 	}
 
-	/**
-	 * #0: IssueTypeScreenScheme
-	 */
-	@Override
-	protected int getObjectParameterCount() {
-		return 1;
-	}
-	
 	public Long getId() {
 		return id;
 	}

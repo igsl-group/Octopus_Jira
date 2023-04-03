@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class OptionsDTO extends JiraConfigDTO {
@@ -31,7 +32,7 @@ public class OptionsDTO extends JiraConfigDTO {
 	
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
-		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
+		FieldConfigDTO fieldConfig = (FieldConfigDTO) objectParameters[0];
 		Options obj = (Options) o;
 		this.rootOptions = new ArrayList<>();
 		for (Option opt : obj.getRootOptions()) {

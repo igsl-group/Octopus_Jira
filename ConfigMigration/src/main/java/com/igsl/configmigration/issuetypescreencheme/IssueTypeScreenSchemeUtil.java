@@ -99,46 +99,45 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 				projects.add(dto);
 			}
 		}
+		IssueTypeScreenScheme createdJira = null;
 		if (original != null) {
 			IssueTypeScreenSchemeDTO existingDTO = (IssueTypeScreenSchemeDTO) issueTypeScreenSchemeUtil.findByDTO(src);
 			IssueTypeScreenScheme existing = (IssueTypeScreenScheme) existingDTO.getJiraObject();
 			existing.setDescription(src.getDescription());
 			existing.setName(src.getName());
 			MANAGER.updateIssueTypeScreenScheme(existing);
-			// Re-associate with projects
-			for (GenericValue gv : existing.getProjects()) {
-				String projectId = String.valueOf(gv.getAllFields().get(IssueTypeScreenSchemeDTO.GENERIC_VALUE_PROJECT_ID));
-				Project p = PROJECT_MANAGER.getProjectObj(Long.parseLong(projectId));
-				MANAGER.removeSchemeAssociation(p, existing);
-			}
-			for (ProjectDTO pDto : src.getProjects()) {
-				ProjectDTO p = (ProjectDTO) projectUtil.findByDTO(pDto);
-				MANAGER.addSchemeAssociation((Project) p.getJiraObject(), existing);
-			}
-			// Update association to items
-			for (IssueTypeScreenSchemeEntityDTO entity : src.getEntities()) {
-				entity.setJiraObject(null, existing);
-				IssueTypeScreenSchemeEntityDTO existingEntityDTO = (IssueTypeScreenSchemeEntityDTO) issueTypeScreenSchemeEntityUtil.findByDTO(entity);
-				issueTypeScreenSchemeEntityUtil.merge(existingEntityDTO, entity);
-			}
-			return existingDTO;
+			createdJira = existing;
 		} else {
-			IssueTypeScreenScheme createdJira = new IssueTypeScreenSchemeImpl(MANAGER);
+			createdJira = new IssueTypeScreenSchemeImpl(MANAGER);
 			createdJira.setDescription(src.getDescription());
 			createdJira.setName(src.getName());
 			MANAGER.createIssueTypeScreenScheme(createdJira);
+		}
+		IssueTypeScreenSchemeDTO created = null;
+		if (createdJira != null) {
+			created = new IssueTypeScreenSchemeDTO();
+			created.setJiraObject(createdJira);
+			// Re-associate with projects
+			for (GenericValue gv : createdJira.getProjects()) {
+				String projectId = String.valueOf(
+						gv.getAllFields().get(IssueTypeScreenSchemeDTO.GENERIC_VALUE_PROJECT_ID));
+				Project p = PROJECT_MANAGER.getProjectObj(Long.parseLong(projectId));
+				MANAGER.removeSchemeAssociation(p, createdJira);
+			}
 			for (ProjectDTO pDto : src.getProjects()) {
 				ProjectDTO p = (ProjectDTO) projectUtil.findByDTO(pDto);
 				MANAGER.addSchemeAssociation((Project) p.getJiraObject(), createdJira);
 			}
+			// Update association to items
+			MANAGER.removeIssueTypeSchemeEntities(createdJira);
 			for (IssueTypeScreenSchemeEntityDTO entity : src.getEntities()) {
-				entity.setJiraObject(null, createdJira);
-				issueTypeScreenSchemeEntityUtil.merge(null, entity);
+				entity.setJiraObject(null, created);
+				IssueTypeScreenSchemeEntityDTO existingEntityDTO = 
+						(IssueTypeScreenSchemeEntityDTO) issueTypeScreenSchemeEntityUtil.findByDTO(entity);
+				issueTypeScreenSchemeEntityUtil.merge(existingEntityDTO, entity);
 			}
-			IssueTypeScreenSchemeDTO created = new IssueTypeScreenSchemeDTO();
-			created.setJiraObject(createdJira);
-			return created;
 		}
+		return created;
 	}
 	
 	@Override

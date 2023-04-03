@@ -39,12 +39,6 @@ public class IssueTypeScreenSchemeDTO extends JiraConfigDTO {
 		ProjectUtil projectUtil = (ProjectUtil) JiraConfigTypeRegistry.getConfigUtil(ProjectUtil.class);
 		IssueTypeScreenScheme obj = (IssueTypeScreenScheme) o;
 		this.description = obj.getDescription();
-		this.entities = new ArrayList<>();
-		for (IssueTypeScreenSchemeEntity e : obj.getEntities()) {
-			IssueTypeScreenSchemeEntityDTO dto = new IssueTypeScreenSchemeEntityDTO();
-			dto.setJiraObject(e, obj);
-			this.entities.add(dto);
-		}
 		this.id = obj.getId();
 		this.name = obj.getName();
 		this.projects = new ArrayList<>();
@@ -57,6 +51,12 @@ public class IssueTypeScreenSchemeDTO extends JiraConfigDTO {
 			}
 		}
 		this.uniqueKey = this.name;
+		this.entities = new ArrayList<>();
+		for (IssueTypeScreenSchemeEntity e : obj.getEntities()) {
+			IssueTypeScreenSchemeEntityDTO dto = new IssueTypeScreenSchemeEntityDTO();
+			dto.setJiraObject(e, this);
+			this.entities.add(dto);
+		}
 	}
 
 	@Override
@@ -76,10 +76,6 @@ public class IssueTypeScreenSchemeDTO extends JiraConfigDTO {
 		for (ProjectDTO proj : this.projects) {
 			proj.addRelatedObject(this);
 			this.addReferencedObject(proj);
-		}
-		for (IssueTypeScreenSchemeEntityDTO entity : this.entities) {
-			this.addRelatedObject(entity);
-			entity.addReferencedObject(this);
 		}
 	}
 	

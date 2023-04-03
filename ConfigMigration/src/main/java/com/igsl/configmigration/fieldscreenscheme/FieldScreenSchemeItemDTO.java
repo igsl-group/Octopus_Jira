@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -29,10 +30,19 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 	private Long id;
 	private ScreenableIssueOperationDTO issueOperation;
 	private String issueOperationName;
+	@JsonIgnore
+	private FieldScreenSchemeDTO fieldScreenScheme;
+	
+	@Override
+	protected int getObjectParameterCount() {
+		// 0: FieldScreenSchemeDTO
+		return 1;
+	}
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
 		FieldScreenSchemeItem o = (FieldScreenSchemeItem) obj;
+		this.fieldScreenScheme = (FieldScreenSchemeDTO) this.objectParameters[0];
 		this.fieldScreen = new FieldScreenDTO();
 		this.fieldScreen.setJiraObject(o.getFieldScreen());
 		this.id = o.getId();
@@ -44,13 +54,12 @@ public class FieldScreenSchemeItemDTO extends JiraConfigDTO {
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		if (this.fieldScreen != null) {
-			this.addRelatedObject(this.fieldScreen);
-			this.fieldScreen.addReferencedObject(this);
-		}
-		if (this.issueOperation != null) {
-			this.addRelatedObject(this.issueOperation);
-			this.issueOperation.addReferencedObject(this);
+		if (this.fieldScreenScheme != null) {
+			// Add FieldScreen as relatedObject in FieldScreenScheme
+			if (this.fieldScreen != null) {
+				this.fieldScreenScheme.addRelatedObject(this.fieldScreen);
+				this.fieldScreen.addReferencedObject(this.fieldScreenScheme);
+			}
 		}
 	}
 	

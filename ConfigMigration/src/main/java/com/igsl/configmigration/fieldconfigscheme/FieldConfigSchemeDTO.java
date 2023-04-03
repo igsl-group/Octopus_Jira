@@ -97,23 +97,24 @@ public class FieldConfigSchemeDTO extends JiraConfigDTO {
 		r.put("Configs", new JiraConfigProperty(FieldConfigUtil.class, configs));
 		return r;
 	}
-	
-	protected void setupRelatedObjects() throws Exception {
-		// Add self to associated Project's related object list
-		// But remove projects from relatedObjects
-		for (ProjectDTO proj : this.assocatedProjectObjects) {
-			proj.addRelatedObject(this);
-			this.addReferencedObject(proj);
-		}
-		for (ProjectDTO proj : this.projectId) {
-			proj.addRelatedObject(this);
-			this.addReferencedObject(proj);
-		}
-		for (IssueTypeDTO issueType : this.associatedIssueTypes) {
-			addRelatedObject(issueType);
-			issueType.addReferencedObject(this);
-		}
-	}
+
+	// FieldConfigScheme is created by ProjectUtil, no need to add ref
+//	protected void setupRelatedObjects() throws Exception {
+//		// Add self to associated Project's related object list
+//		// But remove projects from relatedObjects
+//		for (ProjectDTO proj : this.assocatedProjectObjects) {
+//			proj.addRelatedObject(this);
+//			this.addReferencedObject(proj);
+//		}
+//		for (ProjectDTO proj : this.projectId) {
+//			proj.addRelatedObject(this);
+//			this.addReferencedObject(proj);
+//		}
+//		for (IssueTypeDTO issueType : this.associatedIssueTypes) {
+//			addRelatedObject(issueType);
+//			issueType.addReferencedObject(this);
+//		}
+//	}
 	
 	@Override
 	public String getInternalId() {

@@ -17,6 +17,9 @@ import com.atlassian.jira.issue.context.GlobalIssueContext;
 import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
+import com.atlassian.jira.issue.customfields.manager.OptionsManager;
+import com.atlassian.jira.issue.customfields.option.Option;
+import com.atlassian.jira.issue.customfields.option.Options;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
@@ -32,6 +35,7 @@ import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.insight.ObjectBeanDTO;
 import com.igsl.configmigration.insight.ObjectBeanUtil;
@@ -47,6 +51,8 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = 
 			ComponentAccessor.getCustomFieldManager();
+	private static final OptionsManager OPTIONS_MANAGER = 
+			ComponentAccessor.getOptionsManager();
 	private static final ManagedConfigurationItemService CONFIG_ITEM_SERVICE = 
 			ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
 	
@@ -128,67 +134,50 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			issueTypes.add(null);	// Jira wants a null value to indicate global
 		}
 		LOGGER.debug("IssueType: " + issueTypes);
+		CustomField createdJira = null;
 		if (original != null) {
-			CustomField updatedJira = (CustomField) original.getJiraObject();
+			createdJira = (CustomField) original.getJiraObject();
 			// Update
 			CUSTOM_FIELD_MANAGER.updateCustomField(
 					original.getIdAsLong(),
 					src.getName(), 
 					src.getDescription(), 
 					(fieldSearcher == null)? null : (CustomFieldSearcher) fieldSearcher.getJiraObject());
-			FieldConfigScheme scheme = updatedJira.getConfigurationSchemes().get(0);
-			FieldConfig config = scheme.getOneAndOnlyConfig();
-			// Options
-			if (src.getOptions() != null && src.getOptions().getRootOptions() != null) {
-				for (OptionDTO opt : src.getOptions().getRootOptions()) {
-					// Update option's FieldConfig
-					opt.setJiraObject(null, config, null);
-					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt);
-					LOGGER.debug("merged option raw: " + createdOption.getJiraObject());
-					opt.setJiraObject(createdOption.getJiraObject(), config, null);
-					// TODO The option objects are not updated
-				}
-			}
-			// Default value
-			DefaultValueOperationsDTO def = src.getDefaultValueOperations();
-			if (def != null) {
-				LOGGER.debug("Source default: " + OM.writeValueAsString(def));
-				Object defaultValue = getRawValue(src.getOptions().getAllOptions(), def);
-				LOGGER.debug("defaultValue: " + defaultValue);
-				if (defaultValue != null) {
-					updatedJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
-				} else {
-					updatedJira.getDefaultValueOperations().setDefaultValue(config, null);
-				}
-			}
-			return findByDTO(original);
 		} else {
 			// Create
-			CustomField createdJira = CUSTOM_FIELD_MANAGER.createCustomField(
+			createdJira = CUSTOM_FIELD_MANAGER.createCustomField(
 					src.getName(), 
 					src.getDescription(), 
 					(CustomFieldType<?, ?>) fieldType.getJiraObject(),
 					(fieldSearcher == null)? null : (CustomFieldSearcher) fieldSearcher.getJiraObject(), 
 					context, 
 					issueTypes);
+		}
+		if (createdJira != null) {
 			FieldConfigScheme scheme = createdJira.getConfigurationSchemes().get(0);
 			FieldConfig config = scheme.getOneAndOnlyConfig();
-			// Options
+			FieldConfigDTO configDTO = new FieldConfigDTO();
+			configDTO.setJiraObject(config);
+			// Delete existing options
+			Options options = createdJira.getOptions(null, config, null);
+			if (options != null) {
+				for (Option opt : options.getRootOptions()) {
+					OPTIONS_MANAGER.deleteOptionAndChildren(opt);
+				}
+			}
+			// Recreate options
 			if (src.getOptions() != null && src.getOptions().getRootOptions() != null) {
 				for (OptionDTO opt : src.getOptions().getRootOptions()) {
 					// Update option's FieldConfig
-					opt.setJiraObject(null, config, null);
+					opt.setJiraObject(null, configDTO, null);
 					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt);
 					LOGGER.debug("merged option raw: " + createdOption.getJiraObject());
-					opt.setJiraObject(createdOption.getJiraObject(), config, null);
-					// TODO The option objects are not updated
+					opt.setJiraObject(createdOption.getJiraObject(), configDTO, null);
 				}
 			}
-			// TODO Debug
-			for (OptionDTO dto : src.getOptions().getAllOptions()) {
-				LOGGER.debug("Post merge option DTO raws: " + dto.getJiraObject());
-			}			
-			// Default value
+			// Clear existing default value
+			createdJira.getDefaultValueOperations().setDefaultValue(config, null);
+			// Set default value
 			DefaultValueOperationsDTO def = src.getDefaultValueOperations();
 			if (def != null) {
 				LOGGER.debug("Source default: " + OM.writeValueAsString(def));
@@ -196,14 +185,13 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				LOGGER.debug("defaultValue: " + defaultValue);
 				if (defaultValue != null) {
 					createdJira.getDefaultValueOperations().setDefaultValue(config, defaultValue);
-				} else {
-					createdJira.getDefaultValueOperations().setDefaultValue(config, null);
 				}
 			}
 			CustomFieldDTO created = new CustomFieldDTO();
 			created.setJiraObject(createdJira);
 			return created;
 		}
+		return null;
 	}
 	
 	private static Object getRawValueHelper(List<OptionDTO> options, Object o) throws Exception {

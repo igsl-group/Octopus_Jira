@@ -40,7 +40,7 @@ public class OptionDTO extends JiraConfigDTO {
 	
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
-		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
+		FieldConfigDTO fieldConfig = (FieldConfigDTO) objectParameters[0];
 		this.parentId = (Long) objectParameters[1];
 		Option obj = (Option) o;
 		this.optionId = obj.getOptionId();

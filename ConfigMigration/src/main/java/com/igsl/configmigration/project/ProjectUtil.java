@@ -27,6 +27,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
+import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryDTO;
@@ -73,6 +75,8 @@ public class ProjectUtil extends JiraConfigUtil {
 	}
 
 	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		ApplicationUserUtil userUtil = 
+				(ApplicationUserUtil) JiraConfigTypeRegistry.getConfigUtil(ApplicationUserUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		AvatarUtil avatarUtil = (AvatarUtil) JiraConfigTypeRegistry.getConfigUtil(AvatarUtil.class);
 		ProjectCategoryUtil categoryUtil = (ProjectCategoryUtil) 
@@ -95,12 +99,18 @@ public class ProjectUtil extends JiraConfigUtil {
 			}
 			data.description(src.getDescription());
 			data.key(src.getKey());
-			data.leadUserKey(src.getLeadUserKey());	// TODO Translate user key using username
+			// Project.leadUserName() is deprecated, so use leadUserKey() instead
+			ApplicationUserDTO leader = (ApplicationUserDTO) userUtil.findByUniqueKey(src.getLeadUserName());
+			if (leader != null) {
+				data.leadUserKey(leader.getKey());
+			}
 			data.name(src.getName());
-			ProjectCategoryDTO cat = (ProjectCategoryDTO) 
-					categoryUtil.findByUniqueKey(src.getCategory().getUniqueKey());
-			if (cat != null) {
-				data.projectCategoryId(cat.getId());
+			if (src.getCategory() != null) {
+				ProjectCategoryDTO cat = (ProjectCategoryDTO) 
+						categoryUtil.findByUniqueKey(src.getCategory().getUniqueKey());
+				if (cat != null) {
+					data.projectCategoryId(cat.getId());
+				}
 			}
 			data.projectType(src.getProjectTypeKey().getKey());
 			data.url(src.getUrl());

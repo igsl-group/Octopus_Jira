@@ -469,7 +469,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 									projCountSuccess++;
 								}
 							} else {
-								throw new Exception("Unable to create object");
+								throw new Exception("Unable to create object: " + 
+													util.getName() + ", " + dto.getUniqueKey());
 							}
 						} catch (Exception ex) {
 							rd.setResult(false);

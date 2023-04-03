@@ -36,7 +36,7 @@ public class FieldScreenSchemeDTO extends JiraConfigDTO {
 		this.fieldScreenSchemeItems = new ArrayList<>();
 		for (FieldScreenSchemeItem item : o.getFieldScreenSchemeItems()) {
 			FieldScreenSchemeItemDTO dto = new FieldScreenSchemeItemDTO();
-			dto.setJiraObject(item);
+			dto.setJiraObject(item, this);
 			this.fieldScreenSchemeItems.add(dto);
 		}
 		this.id = o.getId();
@@ -45,14 +45,6 @@ public class FieldScreenSchemeDTO extends JiraConfigDTO {
 		LOGGER.debug("ScreenScheme [" + name + "] has scheme items: " + this.fieldScreenSchemeItems.size());
 	}
 
-	@Override
-	protected void setupRelatedObjects() throws Exception {
-		for (FieldScreenSchemeItemDTO item : this.fieldScreenSchemeItems) {
-			addRelatedObject(item);
-			item.addReferencedObject(this);
-		}
-	}
-	
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();

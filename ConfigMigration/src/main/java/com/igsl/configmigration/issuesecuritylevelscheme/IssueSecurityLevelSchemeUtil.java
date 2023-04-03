@@ -9,6 +9,7 @@ import org.ofbiz.core.entity.GenericValue;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
+import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.atlassian.jira.scheme.Scheme;
@@ -24,6 +25,8 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	private static final Logger LOGGER = Logger.getLogger(IssueSecurityLevelSchemeUtil.class);
 	private static final IssueSecuritySchemeManager SCHEME_MANAGER = 
 			ComponentAccessor.getComponent(IssueSecuritySchemeManager.class);
+	private static final IssueSecurityLevelManager LEVEL_MANAGER = 
+			ComponentAccessor.getIssueSecurityLevelManager();
 	
 	@Override
 	public String getName() {
@@ -80,9 +83,13 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 			scheme = SCHEME_MANAGER.createSchemeObject(src.getName(), src.getDescription());
 			id = scheme.getId();
 		}
-		Long defaultLevel = null;
 		if (id != null) {
+			Long defaultLevel = null;
 			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
+			// Recreate levels
+			for (IssueSecurityLevel lvl : LEVEL_MANAGER.getIssueSecurityLevels(id)) {
+				LEVEL_MANAGER.deleteSecurityLevel(lvl.getId());
+			}
 			// Merge levels
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
 				item.setSchemeId(id);

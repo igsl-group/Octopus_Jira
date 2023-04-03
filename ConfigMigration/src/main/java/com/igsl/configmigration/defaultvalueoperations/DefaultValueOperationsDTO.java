@@ -47,10 +47,11 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
 		DefaultValueOperations<?> obj = (DefaultValueOperations<?>) o;
-		FieldConfig fieldConfig = (FieldConfig) objectParameters[0];
+		FieldConfigDTO fieldConfig = (FieldConfigDTO) objectParameters[0];
 		// TODO Need to find how "current date" is stored
 		// For now current date/datetime will be convereted to a fixed value
-		Object defVal = obj.getDefaultValue(fieldConfig);
+		FieldConfig fc = (FieldConfig) fieldConfig.getJiraObject();
+		Object defVal = obj.getDefaultValue(fc);
 		parseValue(defVal, fieldConfig);
 		// DefaultValueOperations do not need to be mapped, it is a nested object in CustomField, always created.
 		// So simply use hashCode.
@@ -69,7 +70,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 		return r;
 	}
 	
-	private JiraConfigDTO parseValueHelper(Object o, FieldConfig fieldConfig) throws Exception {
+	private JiraConfigDTO parseValueHelper(Object o, FieldConfigDTO fieldConfig) throws Exception {
 		if (o != null) {
 			Class<?> cls = o.getClass();
 			LOGGER.debug("parseValueHelper: " + cls.getCanonicalName());
@@ -95,7 +96,7 @@ public class DefaultValueOperationsDTO extends JiraConfigDTO {
 	}
 	
 	// Recursively turn objects into JiraConfigDTO so they serialize and deserialize properly
-	private void parseValue(Object value, FieldConfig fieldConfig) throws Exception {
+	private void parseValue(Object value, FieldConfigDTO fieldConfig) throws Exception {
 		if (value != null) {
 			Class<?> valueClass = value.getClass();
 			if (valueClass.isArray()) {

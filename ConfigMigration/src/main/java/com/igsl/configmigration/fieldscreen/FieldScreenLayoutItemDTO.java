@@ -72,7 +72,7 @@ public class FieldScreenLayoutItemDTO extends JiraConfigDTO {
 			CustomFieldUtil util = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldUtil.class);
 			JiraConfigDTO dto = util.findByUniqueKey(this.field.getName());
 			if (dto != null) {
-				screen.addRelatedObject(this.field);
+				screen.addRelatedObject(dto);
 			}
 		}
 	}

@@ -42,7 +42,7 @@ public class ScreenableIssueOperationDTO extends JiraConfigDTO {
 
 	@Override
 	public String getInternalId() {
-		return Long.toString(this.getId());
+		return Integer.toString(this.hashCode());
 	}
 	
 	@Override

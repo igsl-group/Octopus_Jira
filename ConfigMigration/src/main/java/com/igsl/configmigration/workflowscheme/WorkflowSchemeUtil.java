@@ -70,8 +70,8 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 		}
 		AssignableWorkflowSchemeDTO src = (AssignableWorkflowSchemeDTO) newItem;
 		// Fix null map key
-		if (src.getMappings().containsKey(AssignableWorkflowSchemeDTO.NULL_KEY)) {
-			String s = src.getMappings().remove(AssignableWorkflowSchemeDTO.NULL_KEY);
+		if (src.getMappings().containsKey(JiraConfigDTO.NULL_KEY)) {
+			String s = src.getMappings().remove(JiraConfigDTO.NULL_KEY);
 			src.getMappings().put(null, s);
 		}
 		// Remap projects
