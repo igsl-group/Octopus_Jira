@@ -12,7 +12,7 @@ import com.igsl.configmigration.project.ProjectUtil;
 public class ExportAction2SessionData {
 	public DTOStore exportStore = new DTOStore();	// Store for data in server
 	public DTOStore importStore = new DTOStore(); // Store for imported data
-	public String objectType = null;
+	public String objectType = "";
 	public String exportFilter = "";
 	public String importFilter = "";
 	public String upload = null;
