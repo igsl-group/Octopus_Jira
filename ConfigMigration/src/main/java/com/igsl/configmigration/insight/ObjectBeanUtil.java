@@ -215,7 +215,8 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		// Visible only when ObjectFacade is available
-		return checkInsight();
+		//return checkInsight();
+		return false;
 	}
 
 	@Override
