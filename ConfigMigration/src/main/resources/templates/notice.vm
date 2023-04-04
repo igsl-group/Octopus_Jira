@@ -1,0 +1,17 @@
+<div>
+	<ul>
+		<li>
+			The following data are not included: 
+			<ol>
+				<li>User Directories</li>
+				<li>Application User</li>
+				<li>Applications</li>
+				<li>Plugins and their data</li>
+				<li>System configurations</li>
+			</ol>
+		</li>
+		<li>Please make sure the above data have been synchronized before merging.</li>
+		<li>Workflow content may be incorrect and should be checked after merging.</li>
+		<li>Please migrate issue data via Jira functions after merging.</li>
+	</ul>
+</div>

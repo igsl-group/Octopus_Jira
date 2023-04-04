@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -29,6 +30,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.ConfigurableJiraWorkflow;
+import com.atlassian.jira.workflow.JiraDraftWorkflow;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.JiraWorkflowFactory;
 import com.atlassian.jira.workflow.WorkflowManager;
@@ -42,6 +44,7 @@ import com.igsl.configmigration.status.StatusUtil;
 import com.opensymphony.workflow.Workflow;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.ActionDescriptor;
+import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 import com.opensymphony.workflow.loader.WorkflowFactory;
 import com.opensymphony.workflow.loader.XMLWorkflowFactory;
@@ -170,15 +173,35 @@ public class WorkflowUtil extends JiraConfigUtil {
 		} catch (Exception ex) {
 			LOGGER.error("Error updating Status in Workflow XML", ex);
 		}
-		
 		// TODO custom fields?
 		if (original != null) {
 			// Update
 			WorkflowDescriptor wfDesc = 
 					com.atlassian.jira.workflow.WorkflowUtil.convertXMLtoWorkflowDescriptor(src.getXml());
 			ConfigurableJiraWorkflow wf = (ConfigurableJiraWorkflow) WORKFLOW_MANAGER.getWorkflow(src.getName());
-			wf.setDescriptor(wfDesc);			
-			WORKFLOW_MANAGER.updateWorkflow(currentUser, wf);
+			if (wf.isActive()) {
+				JiraWorkflow draft = WORKFLOW_MANAGER.getDraftWorkflow(src.getName());
+				if (draft == null) {
+					// Create draft
+					draft = WORKFLOW_MANAGER.createDraftWorkflow(currentUser, src.getName());
+				}
+				WorkflowDescriptor draftDesc = draft.getDescriptor();
+				// Copy all data from wfDesc to draftDesc
+				// Unlike ConfigurableJiraWorkflow class
+				// JiraDraftWorkflow does NOT have .setDescriptor().
+				// Instead of waste time trying to figure out how to properly copy everything over
+				// Modify it with reflection
+				Field descriptorField = JiraDraftWorkflow.class.getSuperclass().getDeclaredField("descriptor");
+				descriptorField.setAccessible(true);
+				descriptorField.set(draft, wfDesc);
+				descriptorField.setAccessible(false);
+				WORKFLOW_MANAGER.updateWorkflow(currentUser, draft);
+				// Move draft to original
+				WORKFLOW_MANAGER.overwriteActiveWorkflow(currentUser, src.getName());
+			} else {
+				wf.setDescriptor(wfDesc);		
+				WORKFLOW_MANAGER.updateWorkflow(currentUser, wf);
+			}
 			return findByUniqueKey(wf.getName());
 		} else {
 			WorkflowDescriptor wfDesc = 

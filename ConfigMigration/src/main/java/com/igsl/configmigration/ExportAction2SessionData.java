@@ -12,7 +12,7 @@ import com.igsl.configmigration.project.ProjectUtil;
 public class ExportAction2SessionData {
 	public DTOStore exportStore = new DTOStore();	// Store for data in server
 	public DTOStore importStore = new DTOStore(); // Store for imported data
-	public String objectType = ProjectUtil.class.getCanonicalName();
+	public String objectType = null;
 	public String exportFilter = "";
 	public String importFilter = "";
 	public String upload = null;
@@ -24,7 +24,7 @@ public class ExportAction2SessionData {
 	public Map<String, JiraConfigProperty> viewImport;
 	public Stack<JiraConfigRef> viewImportHistory = new Stack<>();
 	public boolean selectNested = true;
-	public boolean showAllUtils = true;
+	public boolean showAllUtils = false;
 	public String downloadAction = null;
 	public Map<String, String> downloadParameters = new HashMap<>();
 }

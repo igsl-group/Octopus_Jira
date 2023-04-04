@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>Export</title>
+		<title>Export/Import</title>
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
 		
@@ -142,6 +142,10 @@
 				AJS.dialog2('#export-dialog').show();
 			}
 			
+			function clearImportData() {
+				submitForm('clearImport');
+			}
+			
 			function importData() {
 				AJS.dialog2('#import-dialog').show();
 			}
@@ -208,6 +212,7 @@
 				<span>Description: </span>
 				<input type="text" id="mergeDescInput" name="mergeDesc" value=""
 						onkeydown="if (event.key == 'Enter') { $('#merge-dialogOK').click(); }"/>
+			    #parse("/templates/notice.vm")
 		    </div>
 		    <!-- Dialog footer -->
 		    <footer class="aui-dialog2-footer">
@@ -286,6 +291,7 @@
 				<span>Description: </span>
 				<input type="text" id="descriptionInput" name="descriptionInput" value=""
 						onkeydown="if (event.key == 'Enter') { $('#export-dialogOK').click(); }"/>
+			    #parse("/templates/notice.vm")
 		    </div>
 		    <!-- Dialog footer -->
 		    <footer class="aui-dialog2-footer">
@@ -318,7 +324,7 @@
 					<!-- Toolbar -->
 					<div style="flex: 1 1 auto">
 						<div>
-							<span style="font-weight: bold">Filter by Object Type: </span>
+							<span style="font-weight: bold">Object Type: </span>
 							<select id="objectType" name="objectType"
 									value="$!{action.getObjectType()}" 
 									style="width: 150px"
@@ -388,9 +394,15 @@
 												style="width: 35%" 
 												onchange="submitForm('exportFilter')"
 												onkeydown="if (event.key == 'Enter') { submitForm('exportFilter'); }"/>
+										#if ($action.getExportStore().getSelectedCount($null, true) > 0)
+											#set ($exportState = "")
+										#else
+											#set ($exportState = "disabled")
+										#end
 										<input 	type="button" 
 												id="export" 
 												value="Export" 
+												${exportState}
 												onclick="exportData()"/>
 									</div>
 									<div>
@@ -412,6 +424,10 @@
 								</td>
 								<td width="50%">
 									<div>
+										<input  type="button"
+												id="clearImport"
+												value="Clear"
+												onclick="clearImportData()"/>
 										<input 	type="button" 
 												id="import" 
 												value="Import" 
@@ -424,9 +440,15 @@
 												style="width: 35%" 
 												onchange="submitForm('importFilter')"
 												onkeydown="if (event.key == 'Enter') { submitForm('importFilter'); }"/>
+										#if ($action.getImportStore().getSelectedCount($null, true) > 0)
+											#set ($importState = "")
+										#else
+											#set ($importState = "disabled")
+										#end
 										<input 	type="button" 
 												id="merge" 
 												value="Merge" 
+												${importState}
 												onclick="mergeData()"/>
 									</div>
 									<div>

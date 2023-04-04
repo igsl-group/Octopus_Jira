@@ -67,7 +67,7 @@
 	</web-section>
 
 	<!-- Export -->
-	<web-item key="Export" name="Export"
+	<web-item key="Export" name="Export" state="disabled"
 		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Export
 		</description>
@@ -75,7 +75,7 @@
 		<link linkId="ExportLink">/secure/admin/plugins/handler/ExportAction.jspa
 		</link>
 	</web-item>
-	<webwork1 key="ExportAction" name="Export"
+	<webwork1 key="ExportAction" name="Export" state="disabled"
 		class="java.lang.Object">
 		<description>Export</description>
 		<actions>
@@ -87,7 +87,7 @@
 	</webwork1>
 
 	<!-- Import -->
-	<web-item key="Import" name="Import"
+	<web-item key="Import" name="Import" state="disabled"
 		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
 		<description key="desc">Import
 		</description>
@@ -95,7 +95,7 @@
 		<link linkId="ImportLink">/secure/admin/plugins/handler/ImportAction.jspa
 		</link>
 	</web-item>
-	<webwork1 key="ImportAction" name="Import"
+	<webwork1 key="ImportAction" name="Import" state="disabled"
 		class="java.lang.Object">
 		<description>Import</description>
 		<actions>
@@ -106,12 +106,12 @@
 		</actions>
 	</webwork1>
 
-	<!-- New -->
+	<!-- Version 2 -->
 	<web-item key="Export2" name="Export2"
 		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
-		<description key="desc">Export v2
+		<description key="desc">Export/Import
 		</description>
-		<label key="Export2" />
+		<label key="Export/Import" />
 		<link linkId="TestLink">/secure/admin/plugins/handler/ExportAction2.jspa
 		</link>
 	</web-item>

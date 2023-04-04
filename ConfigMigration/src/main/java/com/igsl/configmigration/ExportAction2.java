@@ -63,6 +63,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public static final String ACTION_OBJECT_TYPE = "objectType";
 	public static final String ACTION_EXPORT_FILTER = "exportFilter";
 	public static final String ACTION_IMPORT_FILTER = "importFilter";
+	public static final String ACTION_CLEAR_IMPORT = "clearImport";
 	public static final String ACTION_VIEW = "view";
 	public static final String ACTION_VIEW_ADD = "viewAdd";
 	public static final String ACTION_VIEW_JUMP = "viewJump";
@@ -507,6 +508,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 			this.data.downloadParameters.clear();
 			this.data.downloadParameters.put("type", "report");
 			this.data.downloadParameters.put("id", Integer.toString(mr.getID()));
+		} else if (ACTION_CLEAR_IMPORT.equals(action)) {
+			clearImportView();
+			this.data.importStore.clear();
 		} else if (ACTION_IMPORT.equals(action)) {
 			// Import selected items in import store
 			clearImportView();

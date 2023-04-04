@@ -1,5 +1,6 @@
 package com.igsl.configmigration.workflow;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -7,13 +8,18 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.atlassian.jira.workflow.JiraWorkflow;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
+import com.igsl.configmigration.status.StatusDTO;
+import com.igsl.configmigration.status.StatusUtil;
+import com.opensymphony.workflow.loader.StepDescriptor;
 
 /**
  * Status wrapper.
@@ -29,6 +35,8 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 	private ApplicationUserDTO updateAuthor;
 	private Date updatedDate;
 	private String xml;
+	@JsonIgnore
+	private List<StatusDTO> statuses = new ArrayList<>();
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
@@ -43,11 +51,24 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 		this.updatedDate = wf.getUpdatedDate();
 		this.xml = com.atlassian.jira.workflow.WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
 		this.uniqueKey = this.name;
+		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
+		for (Object step : wf.getDescriptor().getSteps()) {
+			StepDescriptor sd = (StepDescriptor) step;
+			String statusId = (String) sd.getMetaAttributes().get("jira.status.id");
+			StatusDTO status = (StatusDTO) statusUtil.findByInternalId(statusId);
+			if (status != null) {
+				this.statuses.add(status);
+			}
+		}
 	}
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		// Do nothing
+		// Link to status
+		for (StatusDTO status : this.statuses) {
+			this.addRelatedObject(status);
+			status.addReferencedObject(this);
+		}
 	}
 
 	@Override
