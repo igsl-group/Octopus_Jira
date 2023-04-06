@@ -5,6 +5,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,15 @@ public abstract class JiraConfigUtil {
 												.setSerializationInclusion(Include.NON_NULL);
 	private static final String NEWLINE = "\r\n";
 
+	/**
+	 * Return Comparator for the DTO if there is one, null otherwise
+	 */
+	@SuppressWarnings("rawtypes")
+	@JsonIgnore
+	public Comparator getComparator() {
+		return null;
+	}
+	
 	/**
 	 * Return true if this JiraConfigUtil is to be included in user interface.
 	 * Return false if the associated JiraConfigDTO is only referenced via other JiraConfigDTOs.

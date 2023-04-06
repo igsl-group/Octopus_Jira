@@ -2,14 +2,17 @@ package com.igsl.configmigration;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -209,17 +212,31 @@ public class ExportAction2 extends JiraWebActionSupport {
 	 * Velocity template can then use the key list to list both stores with matching items aligned.
 	 * @return Map<String, Set<String>>
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Map<JiraConfigUtil, Set<String>> getCompareKeyGuide() {
 		Map<JiraConfigUtil, Set<String>> result = new LinkedHashMap<>();
-		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {		
-			Set<String> keySet = new HashSet<>();
+		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {	
+			List<JiraConfigDTO> list = new ArrayList<>();
+			Comparator comparator = util.getComparator();
+			LOGGER.debug("getCompareKeyGuide: " + util.getName() + " start");
 			Map<String, JiraConfigDTO> exportStore = this.data.exportStore.getTypeStore(util);
 			if (exportStore != null) {
-				keySet.addAll(exportStore.keySet());
+				LOGGER.debug("export keyset: " + exportStore.keySet());
+				for (JiraConfigDTO dto : exportStore.values()) {
+					list.add(dto);
+				}
 			}
 			Map<String, JiraConfigDTO> importStore = this.data.importStore.getTypeStore(util);
 			if (importStore != null) {
-				keySet.addAll(importStore.keySet());
+				LOGGER.debug("import keyset: " + importStore.keySet());
+				list.addAll(importStore.values());
+			}
+			if (comparator != null) {
+				list.sort(comparator);
+			}
+			HashSet<String> keySet = new LinkedHashSet<>();
+			for (JiraConfigDTO dto : list) {
+				keySet.add(dto.getUniqueKey());
 			}
 			LOGGER.debug("getCompareKeyGuide: " + util.getName() + ": " + keySet);
 			result.put(util, keySet);
@@ -266,7 +283,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		if (doInit) {
 			// Initialize
 			this.data.exportStore.clear();
-			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(!this.getShowAllUtils())) {
+			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
 				int count = 0;
 				try {
 					LOGGER.debug("Loading data for " + util.getName());

@@ -1,5 +1,6 @@
 package com.igsl.configmigration.status;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,11 @@ public class StatusUtil extends JiraConfigUtil {
 	@Override
 	public String getName() {
 		return "Status";
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public Comparator getComparator() {
+		return new StatusComparator();
 	}
 	
 	@Override

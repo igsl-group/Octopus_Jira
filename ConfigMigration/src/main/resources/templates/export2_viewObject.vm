@@ -52,6 +52,11 @@
 						#if ($item.getValue().getType() == "TEXT")
 							<td width="70%">$!{item.getValue().getValue()}</td>
 						#end
+						#if ($item.getValue().getType() == "IMAGE")
+							<td width="70%">
+								<img width="48px" height="48px" src="$!{item.getValue().getImageData()}"/>
+							</td>
+						#end
 						#if ($item.getValue().getType() == "LIST")
 							<td width="70%">
 								#foreach ($prop in $item.getValue().getList())

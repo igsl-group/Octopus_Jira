@@ -113,6 +113,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		CustomFieldDTO src = (CustomFieldDTO) newItem;
 		CustomFieldTypeDTO fieldType = (CustomFieldTypeDTO) CUSTOM_FIELD_TYPE_UTIL.findByDTO(
 				src.getCustomFieldType());
+		if (fieldType == null) {
+			throw new Exception("Custom Field type " + src.getCustomFieldType().getConfigName() + " cannot be found");
+		}
 		LOGGER.debug("CustomFieldType: " + fieldType);
 		CustomFieldSearcherDTO fieldSearcher = null;
 		if (src.getCustomFieldSearcher() != null) {

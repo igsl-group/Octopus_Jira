@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class JiraConfigProperty {
 	
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -15,19 +17,33 @@ public class JiraConfigProperty {
 	public enum JiraConfigPropertyType {
 		TEXT,
 		LIST,
-		MAP
+		MAP,
+		IMAGE
 	}
 	
+	private String imageType;
 	private String value;
 	private List<JiraConfigRef> list = new ArrayList<>();
 	private Map<Object, JiraConfigRef> map = new TreeMap<>();
 	private JiraConfigPropertyType type;
 	
+	@JsonIgnore
+	public String getImageData() {
+		if (this.type == JiraConfigPropertyType.IMAGE) {
+			return "data:" + this.imageType + ";base64," + this.value;
+		}
+		return null;
+	}
+	
 	public JiraConfigProperty() {
 		this.type = null;
 		this.value = null;
+	}	
+	public JiraConfigProperty(String imageType, String imageContentBase64) {
+		this.type = JiraConfigPropertyType.IMAGE;
+		this.imageType = imageType;
+		this.value = imageContentBase64;
 	}
-	
 	public JiraConfigProperty(Object value) {
 		this.type = JiraConfigPropertyType.TEXT;
 		if (value != null) {
@@ -170,5 +186,11 @@ public class JiraConfigProperty {
 	}
 	public void setType(JiraConfigPropertyType type) {
 		this.type = type;
+	}
+	public String getImageType() {
+		return imageType;
+	}
+	public void setImageType(String imageType) {
+		this.imageType = imageType;
 	}	
 }

@@ -1,6 +1,7 @@
 package com.igsl.configmigration.priority;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,11 @@ public class PriorityUtil extends JiraConfigUtil {
 	@Override
 	public String getName() {
 		return "Priority";
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Comparator getComparator() {
+		return new PriorityComparator();
 	}
 	
 	@Override

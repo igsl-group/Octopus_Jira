@@ -1,9 +1,12 @@
 package com.igsl.configmigration.avatar;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -14,7 +17,6 @@ import com.atlassian.jira.icon.IconOwningObjectId;
 import com.atlassian.jira.icon.IconType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 
@@ -29,6 +31,11 @@ public class AvatarUtil extends JiraConfigUtil {
 		return "Avatar";
 	}
 
+	@SuppressWarnings("rawtypes")
+	public Comparator getComparator() {
+		return new AvatarComparator();
+	}
+	
 	/**
 	 * #0: owner as String, optional
 	 */
@@ -86,8 +93,9 @@ public class AvatarUtil extends JiraConfigUtil {
 			Avatar createdJira = MANAGER.create(
 						src.getFileName(), src.getContentType(), src.getIconTypeObject(), owner, bais, null);
 			LOGGER.debug("Avatar created from data: " + createdJira);
+			LOGGER.debug("Avatar ID: " + createdJira.getId());
 			AvatarDTO created = new AvatarDTO();
-			created.setJiraObject(null, createdJira);
+			created.setJiraObject(createdJira);
 			return created;
 		}
 	}
@@ -106,13 +114,14 @@ public class AvatarUtil extends JiraConfigUtil {
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter is ignored
-		Map<String, JiraConfigDTO> result = new TreeMap<>();
+		Map<String, JiraConfigDTO> result = new LinkedHashMap<>();
+		List<AvatarDTO> list = new ArrayList<>();
 		// Find among system avatars
 		for (Avatar av : MANAGER.getAllSystemAvatars(IconType.ISSUE_TYPE_ICON_TYPE)) {
 			AvatarDTO item = new AvatarDTO();
 			try {
 				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				list.add(item); 
 			} catch (Exception ex) {
 				LOGGER.error("Error loading system avatar (issue type)", ex);
 			}
@@ -121,7 +130,7 @@ public class AvatarUtil extends JiraConfigUtil {
 			AvatarDTO item = new AvatarDTO();
 			try {
 				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				list.add(item); 
 			} catch (Exception ex) {
 				LOGGER.error("Error loading system avatar (project)", ex);
 			}
@@ -130,7 +139,7 @@ public class AvatarUtil extends JiraConfigUtil {
 			AvatarDTO item = new AvatarDTO();
 			try {
 				item.setJiraObject(av, params);
-				result.put(item.getUniqueKey(), item); 
+				list.add(item); 
 			} catch (Exception ex) {
 				LOGGER.error("Error loading user avatar", ex);
 			}
@@ -143,7 +152,7 @@ public class AvatarUtil extends JiraConfigUtil {
 				AvatarDTO item = new AvatarDTO();
 				try {
 					item.setJiraObject(av, params);
-					result.put(item.getUniqueKey(), item); 
+					list.add(item); 
 				} catch (Exception ex) {
 					LOGGER.error("Error loading custom avatar (issue type)", ex);
 				}
@@ -152,7 +161,7 @@ public class AvatarUtil extends JiraConfigUtil {
 				AvatarDTO item = new AvatarDTO();
 				try {
 					item.setJiraObject(av, params);
-					result.put(item.getUniqueKey(), item); 
+					list.add(item); 
 				} catch (Exception ex) {
 					LOGGER.error("Error loading custom avatar (project)", ex);
 				}
@@ -161,11 +170,15 @@ public class AvatarUtil extends JiraConfigUtil {
 				AvatarDTO item = new AvatarDTO();
 				try {
 					item.setJiraObject(av, params);
-					result.put(item.getUniqueKey(), item); 
+					list.add(item); 
 				} catch (Exception ex) {
 					LOGGER.error("Error loading custom avatar (user)", ex);
 				}
 			}
+		}
+		list.sort(new AvatarComparator());
+		for (AvatarDTO dto : list) {
+			result.put(dto.getUniqueKey(), dto);
 		}
 		return result;
 	}

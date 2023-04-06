@@ -163,7 +163,10 @@ public class ProjectDTO extends JiraConfigDTO {
 
 	@Override
 	public String getInternalId() {
-		return Long.toString(this.getId());
+		if (this.getId() != null) {
+			return Long.toString(this.getId());
+		}
+		return null;
 	}
 
 	@Override

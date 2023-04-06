@@ -1,6 +1,7 @@
 package com.igsl.configmigration.resolution;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,11 @@ public class ResolutionUtil extends JiraConfigUtil {
 	@Override
 	public String getName() {
 		return "Resolution";
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public Comparator getComparator() {
+		return new ResolutionComparator();
 	}
 	
 	@Override

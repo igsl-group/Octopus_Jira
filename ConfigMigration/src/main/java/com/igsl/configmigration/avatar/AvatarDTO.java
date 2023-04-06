@@ -60,6 +60,7 @@ public class AvatarDTO extends JiraConfigDTO {
 		r.put("File Name", new JiraConfigProperty(fileName));
 		r.put("Content Type", new JiraConfigProperty(contentType));
 		r.put("Icon Type", new JiraConfigProperty(iconType));
+		r.put("Image", new JiraConfigProperty(this.contentType, this.imageData));
 		return r;
 	}
 	
