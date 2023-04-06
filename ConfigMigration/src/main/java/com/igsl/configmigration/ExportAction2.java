@@ -405,6 +405,17 @@ public class ExportAction2 extends JiraWebActionSupport {
 		String showAll = req.getParameter(PARAM_SHOW_ALL_UTILS);
 		if (showAll != null && !showAll.isEmpty()) {
 			this.data.showAllUtils = Boolean.parseBoolean(showAll);
+			if (!this.data.showAllUtils) {
+				// Check if current object type is hidden, if so reset to all
+				if (!this.data.objectType.isEmpty()) {
+					JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(this.data.objectType);
+					if (!util.isVisible()) {
+						this.data.objectType = "";
+						clearExportView();
+						clearImportView();
+					}
+				}
+			}
 		}
 		// Update selected items
 		String nested = req.getParameter(PARAM_SELECT_NESTED);

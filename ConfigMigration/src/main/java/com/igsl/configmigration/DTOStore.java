@@ -16,6 +16,9 @@ public class DTOStore {
 
 	private static final Logger LOGGER = Logger.getLogger(DTOStore.class);
 	
+	private static final String TITLE_TOTAL = "Total";
+	private static final String TITLE_HIDDEN = "Hidden";
+	
 	// Group DTOs by Util type
 	protected Map<String, Map<String, JiraConfigDTO>> store;
 	
@@ -27,71 +30,77 @@ public class DTOStore {
 	}
 	
 	/**
-	 * Get no. of objects for a specific type.
-	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
-	 * @return long
+	 * Get object counts as a string
+	 * Includes 1 to 3 parts: 
+	 * Selected object type (if currentUtilName is not null)
+	 * All object types (excludes invisible utils based on showAll)
+	 * Hidden object types (if showAll is false)
+	 * 
+	 * Each part contains: title (selected count/total count). 
+	 * 
+	 * @param currentUtilName
+	 * @param showAll
+	 * @return
 	 */
-	public final long getTotalCount(String utilName, boolean showAll) {
-		long count = 0;
-		if (utilName != null && !utilName.isEmpty()) {
-			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
-			if (util != null) {
-				if (showAll || util.isVisible()) {
-					Map<String, JiraConfigDTO> store = getTypeStore(utilName);
-					if (store != null) {
-						count = store.size();
+	public final String getObjectCounts(String currentUtilName, boolean showAll) {
+		StringBuilder result = new StringBuilder();
+		long selectedObjectTypeCount = 0;
+		long objectTypeCount = 0;
+		long selectedTotalCount = 0;
+		long totalCount = 0;
+		long selectedHiddenCount = 0;
+		long hiddenCount = 0;
+		for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
+			String utilName = s.getKey();
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
+			if (utilName.equals(currentUtilName)) {
+				objectTypeCount += s.getValue().size();
+			}
+			if (util.isVisible()) {
+				totalCount += s.getValue().size();
+			} else {
+				hiddenCount += s.getValue().size();
+			}
+			for (JiraConfigDTO dto : s.getValue().values()) {
+				if (dto.isSelected()) {
+					if (utilName.equals(currentUtilName)) {
+						selectedObjectTypeCount++;
+					}
+					if (util.isVisible()) {
+						selectedTotalCount++;
+					} else {
+						selectedHiddenCount++;
 					}
 				}
 			}
-		} else {
-			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
-				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
-				if (util != null) {
-					if (showAll || util.isVisible()) {
-						count += s.getValue().size();
-					}
-				}
+			if (utilName.equals(currentUtilName)) {
+				result	.append(util.getName())
+						.append("(")
+						.append(selectedObjectTypeCount)
+						.append("/")
+						.append(objectTypeCount)
+						.append(") ");
 			}
+		}	
+		if (showAll) {
+			selectedTotalCount += selectedHiddenCount;
+			totalCount += hiddenCount;
 		}
-		return count;
-	}
-
-	/**
-	 * Get no. of selected objects for a specific type.
-	 * @param utilName JiraConfigUtil class canonical name. If empty or null, count all visible types.
-	 * @return long
-	 */
-	public final long getSelectedCount(String utilName, boolean showAll) {
-		long count = 0;
-		if (utilName != null && !utilName.isEmpty()) {
-			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
-			if (util != null) {
-				if (showAll || util.isVisible()) {
-					Map<String, JiraConfigDTO> store = getTypeStore(utilName);
-					if (store != null) {
-						for (JiraConfigDTO dto : store.values()) {
-							if (dto.isSelected()) {
-								count++;
-							}
-						}
-					}
-				}
-			}
-		} else {
-			for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
-				JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
-				if (util != null) {
-					if (showAll || util.isVisible()) {
-						for (JiraConfigDTO dto : s.getValue().values()) {
-							if (dto.isSelected()) {
-								count++;
-							}
-						}
-					}
-				}
-			}
+		result	.append(TITLE_TOTAL)
+				.append("(")
+				.append(selectedTotalCount)
+				.append("/")
+				.append(totalCount)
+				.append(") ");
+		if (!showAll) {
+			result	.append(TITLE_HIDDEN)
+					.append("(")
+					.append(selectedHiddenCount)
+					.append("/")
+					.append(hiddenCount)
+					.append(") ");
 		}
-		return count;
+		return result.toString();
 	}
 	
 	/**

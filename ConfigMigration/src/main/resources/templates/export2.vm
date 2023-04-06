@@ -406,19 +406,9 @@
 												onclick="exportData()"/>
 									</div>
 									<div>
-										#if ($action.getObjectType() != "") 
-											<span style="font-weight: bold">
-												Selected $!{action.getObjectTypeName()}: 
-												$!{action.getExportStore().getSelectedCount($action.getObjectType(), $action.getShowAllUtils())} 
-												/ 
-												$!{action.getExportStore().getTotalCount($action.getObjectType(), $action.getShowAllUtils())}
-											</span>
-										#end
+										<span style="font-weight: bold">Selected: </span>
 										<span style="font-weight: bold">
-											Selected Objects: 
-											$!{action.getExportStore().getSelectedCount($null, $action.getShowAllUtils())} 
-											/ 
-											$!{action.getExportStore().getTotalCount($null, $action.getShowAllUtils())}
+											$!{action.getExportStore().getObjectCounts($action.getObjectType(), $action.getShowAllUtils())}
 										</span>
 									</div>								
 								</td>
@@ -452,19 +442,9 @@
 												onclick="mergeData()"/>
 									</div>
 									<div>
-										#if ($action.getObjectType() != "") 
-											<span style="font-weight: bold">
-												Selected $!{action.getObjectTypeName()}: 
-												$!{action.getImportStore().getSelectedCount($action.getObjectType(), $action.getShowAllUtils())} 
-												/ 
-												$!{action.getImportStore().getTotalCount($action.getObjectType(), $action.getShowAllUtils())}
-											</span>
-										#end
+										<span style="font-weight: bold">Selected:</span>
 										<span style="font-weight: bold">
-											Selected Objects: 
-											$!{action.getImportStore().getSelectedCount($null, $action.getShowAllUtils())} 
-											/ 
-											$!{action.getImportStore().getTotalCount($null, $action.getShowAllUtils())}
+											$!{action.getImportStore().getObjectCounts($action.getObjectType(), $action.getShowAllUtils())}
 										</span>
 									</div>
 								</td>

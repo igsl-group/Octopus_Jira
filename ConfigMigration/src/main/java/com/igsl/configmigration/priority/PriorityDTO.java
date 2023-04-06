@@ -43,7 +43,7 @@ public class PriorityDTO extends JiraConfigDTO {
 		r.put("ID", new JiraConfigProperty(this.id));
 		r.put("Description", new JiraConfigProperty(this.description));
 		r.put("Name", new JiraConfigProperty(this.name));
-		r.put("Status Color", new JiraConfigProperty(this.statusColor));
+		r.put("Status Color", JiraConfigProperty.createColor(this.statusColor));
 		r.put("Sequence", new JiraConfigProperty(this.sequence));
 		r.put("Icon URL", new JiraConfigProperty(this.iconUrl));
 		return r;

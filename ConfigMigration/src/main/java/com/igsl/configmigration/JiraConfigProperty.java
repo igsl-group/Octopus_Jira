@@ -18,7 +18,8 @@ public class JiraConfigProperty {
 		TEXT,
 		LIST,
 		MAP,
-		IMAGE
+		IMAGE,
+		COLOR
 	}
 	
 	private String imageType;
@@ -38,7 +39,13 @@ public class JiraConfigProperty {
 	public JiraConfigProperty() {
 		this.type = null;
 		this.value = null;
-	}	
+	}
+	public static JiraConfigProperty createColor(String colorValue) {
+		JiraConfigProperty r = new JiraConfigProperty();
+		r.type = JiraConfigPropertyType.COLOR;
+		r.value = colorValue;
+		return r;
+	}
 	public JiraConfigProperty(String imageType, String imageContentBase64) {
 		this.type = JiraConfigPropertyType.IMAGE;
 		this.imageType = imageType;
