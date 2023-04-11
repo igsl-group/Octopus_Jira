@@ -140,6 +140,7 @@
 			function exportData() {
 				// Show dialog to get description
 				AJS.dialog2('#export-dialog').show();
+				$('#descriptionInput').focus();
 			}
 			
 			function clearImportData() {
@@ -152,6 +153,7 @@
 			
 			function mergeData() {
 				AJS.dialog2('#merge-dialog').show();
+				$('#mergeDescInput').focus();
 			}
 			
 			// Dialog event handlers
@@ -210,7 +212,7 @@
 		    <!-- Main dialog content -->
 		    <div class="aui-dialog2-content">
 				<span>Description: </span>
-				<input type="text" id="mergeDescInput" name="mergeDesc" value=""
+				<input type="text" id="mergeDescInput" name="mergeDesc" value="" 
 						onkeydown="if (event.key == 'Enter') { $('#merge-dialogOK').click(); }"/>
 			    #parse("/templates/notice.vm")
 		    </div>
