@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class AvatarUtil extends JiraConfigUtil {
@@ -63,7 +64,8 @@ public class AvatarUtil extends JiraConfigUtil {
 	}
 	
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		AvatarDTO old = null;
 		if (oldItem != null) {
 			old = (AvatarDTO) oldItem;
@@ -74,7 +76,7 @@ public class AvatarUtil extends JiraConfigUtil {
 		if (old != null) {
 			// Keep using old one
 			// TODO Delete and recreate?
-			return old;
+			result.setNewDTO(old);
 		} else {
 			// Create
 			LOGGER.debug("Avatar file: " + src.getFileName());
@@ -87,7 +89,7 @@ public class AvatarUtil extends JiraConfigUtil {
 			if (src.getOwner() != null) {
 				owner = new IconOwningObjectId(src.getOwner());
 			} else {
-				owner = new IconOwningObjectId("admin");	// TODO
+				owner = new IconOwningObjectId("admin");	// TODO Find admin user
 			}
 			LOGGER.debug("Avatar owner: " + owner);
 			Avatar createdJira = MANAGER.create(
@@ -96,8 +98,9 @@ public class AvatarUtil extends JiraConfigUtil {
 			LOGGER.debug("Avatar ID: " + createdJira.getId());
 			AvatarDTO created = new AvatarDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -111,6 +114,11 @@ public class AvatarUtil extends JiraConfigUtil {
 		return false;
 	}
 
+	public boolean isReadOnly() {
+		// Avatar can be created by itself
+		return false;
+	}
+	
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		// Filter is ignored

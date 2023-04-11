@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
@@ -67,7 +68,8 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		final OptionSetUtil OPTION_SET_UTIL = 
 				(OptionSetUtil) JiraConfigTypeRegistry.getConfigUtil(OptionSetUtil.class);
 		final FieldConfigUtil FIELD_CONFIG_UTIL = 
@@ -93,15 +95,20 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 			FIELD_CONFIG_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
 			List<String> optionIds = new ArrayList<>();
 			for (IssueTypeDTO issueType : src.getAssociatedIssueTypes()) {
-				IssueTypeDTO dto = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(issueType);
-				if (dto != null) {
-					optionIds.add(dto.getId());
+				if (!ISSUE_TYPE_UTIL.isDefaultObject(issueType)) {
+					IssueTypeDTO dto = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(issueType);
+					if (dto != null) {
+						optionIds.add(dto.getId());
+					} else {
+						result.addWarning(
+								"Issue type \"" + issueType.getConfigName() + 
+								"\" cannot be found, association to it will be skipped");
+					}
 				}
 			}
 			FieldConfigScheme.Builder b = new FieldConfigScheme.Builder((FieldConfigScheme) src.getJiraObject());
 			FieldConfigScheme updatedJira = MANAGER.update(b.toFieldConfigScheme(), optionIds);
 			MANAGER.addProjectAssociations(updatedJira, projects);
-			return null;
 		} else {
 			FieldConfigDTO fc = src.getFieldConfig();
 			FIELD_CONFIG_UTIL.merge(null, src.getFieldConfig());
@@ -117,8 +124,9 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 			MANAGER.addProjectAssociations(createdJira, projects);
 			FieldConfigSchemeDTO created = new FieldConfigSchemeDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -129,6 +137,11 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

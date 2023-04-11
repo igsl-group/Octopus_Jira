@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 
@@ -50,7 +51,8 @@ public class OptionSetUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		final FieldConfigUtil FIELD_CONFIG_UTIL = 
 				(FieldConfigUtil) JiraConfigTypeRegistry.getConfigUtil(FieldConfigUtil.class);
 		OptionSetDTO original = null;
@@ -65,15 +67,16 @@ public class OptionSetUtil extends JiraConfigUtil {
 			// Update
 			FieldConfig fieldConfig = (FieldConfig) original.getFieldConfig();
 			MANAGER.updateOptionSet(fieldConfig, optionIds);
-			return original;
+			result.setNewDTO(original);
 		} else {
 			// Create
 			FieldConfig fieldConfig = (FieldConfig) src.getFieldConfig();
 			OptionSet createdJira = MANAGER.createOptionSet(fieldConfig, optionIds);
 			OptionSetDTO created = new OptionSetDTO();
 			created.setJiraObject(createdJira, fieldConfig);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -85,6 +88,11 @@ public class OptionSetUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced only
 		return false;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

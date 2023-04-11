@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class PluginUtil extends JiraConfigUtil {
@@ -79,7 +80,8 @@ public class PluginUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		PluginDTO src = (PluginDTO) newItem;
 		byte[] data = src.getPluginArtifact().getArtifactDataBytes();
 		Path tempFile = Files.createTempFile(src.getName(), ".jar");
@@ -88,10 +90,11 @@ public class PluginUtil extends JiraConfigUtil {
 			JarPluginArtifact artifact = new JarPluginArtifact(tempFile.toFile());
 			Set<String> r = PLUGIN_MANAGER.installPlugins(artifact);
 			LOGGER.debug("installPlugins: " + OM.writeValueAsString(r));
-			return findByUniqueKey(src.getName());
+			result.setNewDTO(findByUniqueKey(src.getName()));
 		} finally {
 			Files.delete(tempFile);
 		}
+		return result;
 	}
 	
 	@Override
@@ -102,6 +105,11 @@ public class PluginUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

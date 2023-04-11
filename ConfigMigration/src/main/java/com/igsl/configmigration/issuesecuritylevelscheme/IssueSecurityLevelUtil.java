@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelUtil extends JiraConfigUtil {
@@ -53,7 +54,8 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		IssueSecurityLevelDTO original = null;
 		if (oldItem != null) {
 			original = (IssueSecurityLevelDTO) oldItem;
@@ -66,15 +68,16 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 			IssueSecurityLevelImpl item = new IssueSecurityLevelImpl(
 					original.getId(), src.getName(), src.getDescription(), src.getSchemeId());
 			LEVEL_MANAGER.updateIssueSecurityLevel(item);
-			return findByInternalId(Long.toString(original.getId()));
+			result.setNewDTO(findByInternalId(Long.toString(original.getId())));
 		} else {
 			// Create
 			IssueSecurityLevel createdJira = LEVEL_MANAGER.createIssueSecurityLevel(
 					src.getSchemeId(), src.getName(), src.getDescription());
 			IssueSecurityLevelDTO created = new IssueSecurityLevelDTO();
 			created.setJiraObject(createdJira, src.getObjectParameters());
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 
 	@Override
@@ -86,6 +89,11 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced by IssueSecurityLevelSchemeDTO only
 		return false;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

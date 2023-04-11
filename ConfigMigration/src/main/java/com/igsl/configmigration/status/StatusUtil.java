@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.priority.PriorityDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -114,7 +115,8 @@ public class StatusUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		StatusDTO original = null;
 		if (oldItem != null) {
 			original = (StatusDTO) oldItem;
@@ -131,14 +133,15 @@ public class StatusUtil extends JiraConfigUtil {
 		if (original != null) {
 			// Update
 			MANAGER.editStatus(originalJira, name, description, DUMMY_ICON_URL, cat);
-			return findByInternalId(originalJira.getId());
+			result.setNewDTO(findByInternalId(originalJira.getId()));
 		} else {
 			// Create
 			Status createdJira = MANAGER.createStatus(name, description, DUMMY_ICON_URL, cat);
 			StatusDTO created = new StatusDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -149,6 +152,11 @@ public class StatusUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

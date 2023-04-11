@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.riadalabs.jira.plugins.insight.channel.external.api.facade.ObjectSchemaFacade;
 import com.riadalabs.jira.plugins.insight.services.model.ObjectSchemaBean;
 
@@ -53,7 +54,7 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		ObjectSchemaBeanDTO original = null;
 		if (oldItem != null) {
 			original = (ObjectSchemaBeanDTO) oldItem;
@@ -72,6 +73,11 @@ public class ObjectSchemaBeanUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

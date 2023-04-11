@@ -5,12 +5,18 @@ import java.util.Map;
 
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 public class OptionUtil extends JiraConfigUtil {
 
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override
@@ -39,7 +45,7 @@ public class OptionUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		return null;
 	}
 

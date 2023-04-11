@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.resolution.ResolutionDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -112,7 +113,8 @@ public class PriorityUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		PriorityDTO original = null;
 		if (oldItem != null) {
 			original = (PriorityDTO) oldItem;
@@ -125,15 +127,16 @@ public class PriorityUtil extends JiraConfigUtil {
 			// Update
 			PRIORITY_MANAGER.editPriority(
 					p, src.getName(), src.getDescription(), src.getIconUrl(), src.getStatusColor());
-			return findByInternalId(p.getId());
+			result.setNewDTO(findByInternalId(p.getId()));
 		} else {
 			// Create
 			Priority p = PRIORITY_MANAGER.createPriority(
 					src.getName(), src.getDescription(), src.getIconUrl(), src.getStatusColor());
 			PriorityDTO dto = new PriorityDTO();
 			dto.setJiraObject(p);
-			return dto;
+			result.setNewDTO(dto);
 		}
+		return result;
 	}
 
 	@Override
@@ -144,6 +147,11 @@ public class PriorityUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

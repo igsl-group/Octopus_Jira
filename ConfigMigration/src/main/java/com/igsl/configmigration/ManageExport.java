@@ -13,6 +13,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.igsl.configmigration.export.v1.ExportData;
+import com.igsl.configmigration.export.v1.ExportDataComparator;
 
 import net.java.ao.Query;
 
@@ -34,6 +35,7 @@ public class ManageExport extends JiraWebActionSupport {
 	
 	public List<ExportData> getExportData() {
 		ExportData[] data = this.ao.find(ExportData.class);
+		Arrays.sort(data, new ExportDataComparator());
 		return Arrays.asList(data);
 	}
 

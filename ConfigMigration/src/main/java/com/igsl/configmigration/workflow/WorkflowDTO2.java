@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -27,6 +29,9 @@ import com.opensymphony.workflow.loader.StepDescriptor;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class WorkflowDTO2 extends JiraConfigDTO {
 
+	private static final Logger LOGGER = Logger.getLogger(WorkflowDTO2.class);
+	public static final String DEFAULT_WORKFLOW = "jira";
+	
 	private String name;
 	private String description;
 	private String mode;
@@ -81,6 +86,7 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 		r.put("Update Author", new JiraConfigProperty(ApplicationUserUtil.class, this.updateAuthor));
 		r.put("Update Author Name", new JiraConfigProperty(this.updateAuthorName));
 		r.put("Updated Date", new JiraConfigProperty(this.updatedDate));
+		r.put("Status", new JiraConfigProperty(StatusUtil.class, this.statuses));
 		r.put("XML", new JiraConfigProperty(this.xml));
 		return r;
 	}
@@ -169,6 +175,14 @@ public class WorkflowDTO2 extends JiraConfigDTO {
 
 	public void setXml(String xml) {
 		this.xml = xml;
+	}
+
+	public List<StatusDTO> getStatuses() {
+		return statuses;
+	}
+
+	public void setStatuses(List<StatusDTO> statuses) {
+		this.statuses = statuses;
 	}
 
 }

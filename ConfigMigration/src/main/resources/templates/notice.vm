@@ -10,6 +10,7 @@
 				<li>System configurations</li>
 			</ol>
 		</li>
+		<li>Avatar objects will create duplicates, as Jira API modifies their filename and content on import.</li>
 		<li>Please make sure the above data have been synchronized before merging.</li>
 		<li>Workflow content may be incorrect and should be checked after merging.</li>
 		<li>Please migrate issue data via Jira functions after merging.</li>

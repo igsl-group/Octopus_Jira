@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.fieldscreen.FieldScreenDTO;
 import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 
@@ -65,7 +66,7 @@ public class ScreenableIssueOperationUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("Issue Operation is read only");
 	}
 	
@@ -77,6 +78,11 @@ public class ScreenableIssueOperationUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

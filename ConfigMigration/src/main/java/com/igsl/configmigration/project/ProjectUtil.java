@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
@@ -74,7 +75,8 @@ public class ProjectUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		ApplicationUserUtil userUtil = 
 				(ApplicationUserUtil) JiraConfigTypeRegistry.getConfigUtil(ApplicationUserUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
@@ -115,7 +117,7 @@ public class ProjectUtil extends JiraConfigUtil {
 			data.projectType(src.getProjectTypeKey().getKey());
 			data.url(src.getUrl());
 			MANAGER.updateProject(data);
-			return findByInternalId(Long.toString(p.getId()));
+			result.setNewDTO(findByInternalId(Long.toString(p.getId())));
 		} else {
 			ProjectTypeKey typeKey = null;
 			for (ProjectType pt : TYPE_MANAGER.getAllProjectTypes()) {
@@ -140,24 +142,24 @@ public class ProjectUtil extends JiraConfigUtil {
 					.withUrl(src.getUrl())
 					.withProjectTemplateKey(null)
 					.build();
-			CreateProjectValidationResult result = SERVICE.validateCreateProject(currentUser, data);
-			if (!result.isValid()) {
+			CreateProjectValidationResult r = SERVICE.validateCreateProject(currentUser, data);
+			if (!r.isValid()) {
 				StringBuilder sb = new StringBuilder();
-				if (result.getExistingProjectId().isPresent()) {
-					sb.append("Project ID already exists: " + result.getExistingProjectId().get() + "; ");
+				if (r.getExistingProjectId().isPresent()) {
+					sb.append("Project ID already exists: " + r.getExistingProjectId().get() + "; ");
 				}
-				for (Map.Entry<String, String> e : result.getErrorCollection().getErrors().entrySet()) {
+				for (Map.Entry<String, String> e : r.getErrorCollection().getErrors().entrySet()) {
 					sb.append("Error: " + e.getKey() + " = " + e.getValue() + "; ");
 				}
-				for (String s : result.getErrorCollection().getErrorMessages()) {
+				for (String s : r.getErrorCollection().getErrorMessages()) {
 					sb.append(s + "; ");
 				}
-				for (String s : result.getWarningCollection().getWarnings()) {
+				for (String s : r.getWarningCollection().getWarnings()) {
 					sb.append(s + "; ");
 				}
 				throw new Exception("Project creation data validation failed: " + sb.toString());
 			}
-			Project p = SERVICE.createProject(result);
+			Project p = SERVICE.createProject(r);
 			if (src.getCategory() != null) {
 				ProjectCategoryUtil catUtil = (ProjectCategoryUtil) 
 						JiraConfigTypeRegistry.getConfigUtil(ProjectCategoryUtil.class);
@@ -166,8 +168,9 @@ public class ProjectUtil extends JiraConfigUtil {
 			}
 			ProjectDTO dto = new ProjectDTO();
 			dto.setJiraObject(p);
-			return dto;
+			result.setNewDTO(dto);
 		}
+		return result;
 	}
 
 	@Override
@@ -178,6 +181,11 @@ public class ProjectUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

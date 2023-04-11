@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
 
@@ -50,7 +51,8 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		IssueTypeDTO original = null;
 		if (oldItem != null) {
 			original = (IssueTypeDTO) oldItem;
@@ -64,18 +66,19 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		IssueTypeDTO src = (IssueTypeDTO) newItem;
 		// Avatar
 		AvatarUtil avatarUtil = new AvatarUtil();
-		AvatarDTO av = (AvatarDTO) avatarUtil.merge(null, src.getAvatarConfigItem());
+		AvatarDTO av = (AvatarDTO) avatarUtil.merge(null, src.getAvatarConfigItem()).getNewDTO();
 		if (original != null) {
 			// Update
 			ISSUE_MANAGER.updateIssueType(originalJira, src.getName(), src.getDescription(), av.getId());
-			return original;
+			result.setNewDTO(original);
 		} else {
 			// Create
 			IssueType createdJira = ISSUE_MANAGER.createIssueType(src.getName(), src.getDescription(), av.getId());
 			IssueTypeDTO created = new IssueTypeDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -88,6 +91,11 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		return true;
 	}
 	
+	@Override
+	public boolean isReadOnly() {
+		return false;
+	}
+
 	@Override
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();

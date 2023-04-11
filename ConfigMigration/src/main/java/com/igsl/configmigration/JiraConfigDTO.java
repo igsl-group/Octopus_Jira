@@ -43,6 +43,7 @@ import com.igsl.configmigration.JiraConfigProperty.JiraConfigPropertyType;
 public abstract class JiraConfigDTO {
 
 	public static final String NULL_KEY = "[NULL_KEY]";
+	public static final String DEFAULT_KEY = "(Default)";
 	
 	private static final Logger LOGGER = Logger.getLogger(JiraConfigDTO.class);
 	protected static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
@@ -310,7 +311,7 @@ public abstract class JiraConfigDTO {
 			JiraConfigProperty prop = new JiraConfigProperty();
 			prop.setType(JiraConfigPropertyType.LIST);
 			prop.setList(list);
-			result.put("Referenced Objects", prop);
+			result.put("Referenced By", prop);
 		}
 	
 		return result;
@@ -788,7 +789,7 @@ public abstract class JiraConfigDTO {
 	
 	/**
 	 * Display name for UI, defaults to unique key.
-	 * Converts NULL_KEY into (Default).
+	 * Converts NULL_KEY into DEFAULT_KEY.
 	 * Override as needed.
 	 * @return String
 	 */
@@ -796,7 +797,7 @@ public abstract class JiraConfigDTO {
 	public String getConfigName() {
 		String s = getUniqueKey();
 		if (NULL_KEY.equals(s)) {
-			return "(Default)";
+			return DEFAULT_KEY;
 		} else {
 			return getUniqueKey();
 		}

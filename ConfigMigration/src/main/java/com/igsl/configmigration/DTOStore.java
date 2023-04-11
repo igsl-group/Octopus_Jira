@@ -30,6 +30,61 @@ public class DTOStore {
 	}
 	
 	/**
+	 * Check if there is something selected
+	 * @return boolean
+	 */
+	public final boolean hasSelection() {
+		boolean result = false;
+		for (Map<String, JiraConfigDTO> store : this.store.values()) {
+			for (JiraConfigDTO dto : store.values()) {
+				if (dto.isSelected()) {
+					result = true;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
+	 * Get total object count of a specific util.
+	 * This does not consider hidden or visibility.
+	 * @param utilName If null, count all
+	 * @return
+	 */
+	public final String getCounts(String utilName) {
+		StringBuilder result = new StringBuilder();
+		long selected = 0;
+		long total = 0;
+		if (utilName != null) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(utilName);
+			Map<String, JiraConfigDTO> store = getTypeStore(utilName);
+			for (JiraConfigDTO dto : store.values()) {
+				if (!util.isDefaultObject(dto)) {
+					total++;
+					if (dto.isSelected()) {
+						selected++;
+					}
+				}
+			}
+		} else {
+			for (Map<String, JiraConfigDTO> store : this.store.values()) {
+				for (JiraConfigDTO dto : store.values()) {
+					JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(dto.getUtilClass());
+					if (!util.isDefaultObject(dto)) {
+						total++;
+						if (dto.isSelected()) {
+							selected++;
+						}
+					}
+				}
+			}
+		}
+		result.append(selected).append("/").append(total);
+		return result.toString();
+	}
+	
+	/**
 	 * Get object counts as a string
 	 * Includes 1 to 3 parts: 
 	 * Selected object type (if currentUtilName is not null)
@@ -53,15 +108,27 @@ public class DTOStore {
 		for (Map.Entry<String, Map<String, JiraConfigDTO>> s : this.store.entrySet()) {
 			String utilName = s.getKey();
 			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(s.getKey());
-			if (utilName.equals(currentUtilName)) {
-				objectTypeCount += s.getValue().size();
-			}
-			if (util.isVisible()) {
-				totalCount += s.getValue().size();
-			} else {
-				hiddenCount += s.getValue().size();
+			if (util.isReadOnly()) {
+				// Not selectable
+				continue;
 			}
 			for (JiraConfigDTO dto : s.getValue().values()) {
+				try {
+					// Not selectable
+					if (util.isDefaultObject(dto)) {
+						continue;
+					}
+				} catch (Exception ex) {
+					LOGGER.error("JiraConfigDTO and JiraConfigUtil mismatched", ex);
+				}
+				if (utilName.equals(currentUtilName)) {
+					objectTypeCount++;
+				}
+				if (util.isVisible()) {
+					totalCount++;
+				} else {
+					hiddenCount++;
+				}
 				if (dto.isSelected()) {
 					if (utilName.equals(currentUtilName)) {
 						selectedObjectTypeCount++;

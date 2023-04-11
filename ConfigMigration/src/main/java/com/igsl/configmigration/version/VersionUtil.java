@@ -10,12 +10,17 @@ import com.atlassian.jira.config.StatusCategoryManager;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.issue.status.category.StatusCategory;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.project.version.VersionManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
+import com.igsl.configmigration.project.ProjectDTO;
+import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class VersionUtil extends JiraConfigUtil {
@@ -42,7 +47,13 @@ public class VersionUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (Version it : MANAGER.getAllVersions()) {
-			if (uniqueKey.equals(it.getName())) {
+			String key;
+			if (it.getProject() == null) {
+				key = it.getName();
+			} else {
+				key = it.getProject().getName() + " - " + it.getName();
+			}
+			if (uniqueKey.equals(key)) {
 				VersionDTO item = new VersionDTO();
 				item.setJiraObject(it);
 				return item;
@@ -52,7 +63,8 @@ public class VersionUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		VersionDTO original = null;
 		if (oldItem != null) {
 			original = (VersionDTO) oldItem;
@@ -67,21 +79,25 @@ public class VersionUtil extends JiraConfigUtil {
 			originalJira = MANAGER.editVersionReleaseDate(originalJira, src.getReleaseDate());
 			originalJira = MANAGER.editVersionStartDate(originalJira, src.getStartDate());
 			MANAGER.update(originalJira);
-			return findByInternalId(Long.toString(originalJira.getId()));
+			result.setNewDTO(findByInternalId(Long.toString(originalJira.getId())));
 		} else {
+			// Project
+			ProjectUtil projUtil = (ProjectUtil) JiraConfigTypeRegistry.getConfigUtil(ProjectUtil.class);
+			ProjectDTO p = (ProjectDTO) projUtil.findByUniqueKey(src.getUniqueKey());
 			// Create
 			Version createdJira = MANAGER.createVersion(
 					src.getName(),
 					src.getStartDate(),
 					src.getReleaseDate(),
 					src.getDescription(),
-					src.getProjectId(),	// TODO Map project ID
+					((p != null)? p.getId() : null), 
 					null,	// TODO Find previous version
 					src.isReleased());
 			VersionDTO created = new VersionDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -92,6 +108,11 @@ public class VersionUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.fieldscreen.FieldScreenDTO;
 import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 
@@ -66,7 +67,8 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		FieldScreenSchemeDTO original = null;
 		if (oldItem != null) {
 			original = (FieldScreenSchemeDTO) oldItem;
@@ -102,7 +104,7 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 			}
 			FieldScreenSchemeDTO updated = new FieldScreenSchemeDTO();
 			updated.setJiraObject(originalJira);
-			return updated;
+			result.setNewDTO(updated);
 		} else {
 			// Create
 			FieldScreenScheme scheme = new FieldScreenSchemeImpl(MANAGER);
@@ -129,8 +131,9 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 			}
 			FieldScreenSchemeDTO created = new FieldScreenSchemeDTO();
 			created.setJiraObject(scheme);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -141,6 +144,11 @@ public class FieldScreenSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

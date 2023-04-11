@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
@@ -95,7 +96,8 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		final CustomFieldTypeUtil CUSTOM_FIELD_TYPE_UTIL = 
 				(CustomFieldTypeUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldTypeUtil.class);
 		final CustomFieldSearcherUtil CUSTOM_FIELD_SEARCHER_UTIL = 
@@ -123,14 +125,24 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			fieldSearcher = (CustomFieldSearcherDTO) CUSTOM_FIELD_SEARCHER_UTIL.findByDTO(
 					src.getCustomFieldSearcher());
 			LOGGER.debug("CustomFieldSearcher: " + fieldSearcher);
+			if (fieldSearcher == null) {
+				result.addWarning(
+						"Custom field searcher \"" + 
+						src.getCustomFieldSearcher().getConfigName() + 
+						"\" cannot be found, custom field will not be indexed.");
+			}
 		}
 		List<JiraContextNode> context = Arrays.asList(GlobalIssueContext.getInstance());
 		LOGGER.debug("JiraContextNode: " + context);
 		List<IssueType> issueTypes = new ArrayList<>();
 		for (IssueTypeDTO item : src.getAssociatedIssueTypes()) {
-			IssueTypeDTO it = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(item);
-			if (it != null) {
-				issueTypes.add((IssueType) it.getJiraObject());
+			if (!ISSUE_TYPE_UTIL.isDefaultObject(item)) {
+				IssueTypeDTO it = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(item);
+				if (it != null) {
+					issueTypes.add((IssueType) it.getJiraObject());
+				} else {
+					result.addWarning("Issue Type \"" + item.getConfigName() + "\" cannot be found, it will be skipped.");
+				}
 			}
 		}
 		if (issueTypes.isEmpty()) {
@@ -167,17 +179,17 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				for (Option opt : options.getRootOptions()) {
 					OPTIONS_MANAGER.deleteOptionAndChildren(opt);
 				}
-			}
+			} 
 			// Recreate options
 			if (src.getOptions() != null && src.getOptions().getRootOptions() != null) {
 				for (OptionDTO opt : src.getOptions().getRootOptions()) {
 					// Update option's FieldConfig
 					opt.setJiraObject(null, configDTO, null);
-					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt);
+					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt).getNewDTO();
 					LOGGER.debug("merged option raw: " + createdOption.getJiraObject());
 					opt.setJiraObject(createdOption.getJiraObject(), configDTO, null);
 				}
-			}
+			} 
 			// Clear existing default value
 			createdJira.getDefaultValueOperations().setDefaultValue(config, null);
 			// Set default value
@@ -192,9 +204,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			}
 			CustomFieldDTO created = new CustomFieldDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
-		return null;
+		return result;
 	}
 	
 	private static Object getRawValueHelper(List<OptionDTO> options, Object o) throws Exception {
@@ -287,6 +299,11 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

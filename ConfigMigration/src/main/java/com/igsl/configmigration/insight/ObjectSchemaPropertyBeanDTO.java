@@ -34,7 +34,7 @@ public class ObjectSchemaPropertyBeanDTO extends JiraConfigDTO {
 
 	@Override
 	public String getInternalId() {
-		return Integer.toString(this.getId());
+		return Integer.toString(this.hashCode());
 	}
 
 	@Override

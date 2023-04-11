@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.SessionData.ImportData;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
@@ -79,7 +80,8 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		IssueTypeScreenSchemeDTO original = null;
 		if (oldItem != null) {
 			original = (IssueTypeScreenSchemeDTO) oldItem;
@@ -106,7 +108,7 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 			existing.setDescription(src.getDescription());
 			existing.setName(src.getName());
 			MANAGER.updateIssueTypeScreenScheme(existing);
-			createdJira = existing;
+			createdJira = existing;			
 		} else {
 			createdJira = new IssueTypeScreenSchemeImpl(MANAGER);
 			createdJira.setDescription(src.getDescription());
@@ -117,6 +119,7 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 		if (createdJira != null) {
 			created = new IssueTypeScreenSchemeDTO();
 			created.setJiraObject(createdJira);
+			result.setNewDTO(created);
 			// Re-associate with projects
 			for (GenericValue gv : createdJira.getProjects()) {
 				String projectId = String.valueOf(
@@ -126,7 +129,13 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 			}
 			for (ProjectDTO pDto : src.getProjects()) {
 				ProjectDTO p = (ProjectDTO) projectUtil.findByDTO(pDto);
-				MANAGER.addSchemeAssociation((Project) p.getJiraObject(), createdJira);
+				if (p != null) {
+					MANAGER.addSchemeAssociation((Project) p.getJiraObject(), createdJira);
+				} else {
+					result.addWarning(
+							"Project \"" + pDto.getConfigName() + 
+							"\" cannot be found, association to it will be skipped.");
+				}
 			}
 			// Update association to items
 			MANAGER.removeIssueTypeSchemeEntities(createdJira);
@@ -137,7 +146,7 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 				issueTypeScreenSchemeEntityUtil.merge(existingEntityDTO, entity);
 			}
 		}
-		return created;
+		return result;
 	}
 	
 	@Override
@@ -148,6 +157,11 @@ public class IssueTypeScreenSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

@@ -104,11 +104,13 @@ public class ProjectDTO extends JiraConfigDTO {
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		if (this.avatar != null) {
-			LOGGER.debug("Project related avatar: " + this.avatar);
-			addRelatedObject(this.avatar);
-			this.avatar.addReferencedObject(this);
-		}
+		// Since we cannot find avatar (filename and content can be changed on upload
+		// There is no point to add them to related objects
+//		if (this.avatar != null) {
+//			LOGGER.debug("Project related avatar: " + this.avatar);
+//			addRelatedObject(this.avatar);
+//			this.avatar.addReferencedObject(this);
+//		}
 		if (this.components != null) {
 			for (ProjectComponentDTO comp : this.components) {
 				LOGGER.debug("Project related components: " + comp);

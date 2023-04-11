@@ -1,7 +1,5 @@
 package com.igsl.configmigration.applicationuser;
 
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -11,13 +9,12 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.bc.user.search.UserSearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.jira.user.LazyLoadingApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ApplicationUserUtil extends JiraConfigUtil {
@@ -64,9 +61,14 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		// TODO Users not supported for now
 		return false;
 	}
+	
+	public boolean isReadOnly() {
+		// TODO Users not supported for now
+		return true;
+	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("Not implemented");
 	}
 

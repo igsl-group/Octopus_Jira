@@ -394,7 +394,7 @@
 												style="width: 35%" 
 												onchange="submitForm('exportFilter')"
 												onkeydown="if (event.key == 'Enter') { submitForm('exportFilter'); }"/>
-										#if ($action.getExportStore().getSelectedCount($null, true) > 0)
+										#if ($action.getExportStore().hasSelection())
 											#set ($exportState = "")
 										#else
 											#set ($exportState = "disabled")
@@ -430,7 +430,7 @@
 												style="width: 35%" 
 												onchange="submitForm('importFilter')"
 												onkeydown="if (event.key == 'Enter') { submitForm('importFilter'); }"/>
-										#if ($action.getImportStore().getSelectedCount($null, true) > 0)
+										#if ($action.getImportStore().hasSelection())
 											#set ($importState = "")
 										#else
 											#set ($importState = "disabled")
@@ -491,19 +491,23 @@
 									<!-- Util name -->
 									<tr>
 										<th width="3%">
-											<input 	type="checkbox"
-													class="$!{exportAllClass} selectAll"
-													onchange="selectAll(true, '$!{exportClass}', this.checked)"
-											/>
+											#if (!$util.isReadOnly())
+												<input 	type="checkbox"
+														class="$!{exportAllClass} selectAll"
+														onchange="selectAll(true, '$!{exportClass}', this.checked)"
+												/>
+											#end
 										</th>
 										<th width="47%">
 											${util.getName()}
 										</th>
 										<th width="3%">
-											<input 	type="checkbox"
-													class="$!{importAllClass} selectAll"
-													onchange="selectAll(false, '$!{importClass}', this.checked)"
-											/>
+											#if (!$util.isReadOnly())
+												<input 	type="checkbox"
+														class="$!{importAllClass} selectAll"
+														onchange="selectAll(false, '$!{importClass}', this.checked)"
+												/>
+											#end
 										</th>
 										<th width="47%">
 											${util.getName()}
@@ -541,12 +545,14 @@
 														#set ($scrollIntoView = "")
 													#end
 													<td>
-														<input 	type="checkbox" 
-																class="$!{exportClass} export"
-																$!{checked}
-																util="$!{util.getImplementation()}"
-																uniqueKey="$!{exportObj.getUniqueKey()}"
-																onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
+														#if (!$util.isReadOnly() && $exportObj.getInternalId() != $null && !$util.isDefaultObject($exportObj))
+															<input 	type="checkbox" 
+																	class="$!{exportClass} export"
+																	$!{checked}
+																	util="$!{util.getImplementation()}"
+																	uniqueKey="$!{exportObj.getUniqueKey()}"
+																	onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
+														#end
 													</td>
 													<td>
 														<a 	href="#" 
@@ -579,12 +585,14 @@
 														#set ($scrollIntoView = "")
 													#end
 													<td>
-														<input 	type="checkbox" 
-																class="$!{importClass} import"
-																$!{checked}
-																util="$!{util.getImplementation()}"
-																uniqueKey="$!{importObj.getUniqueKey()}"
-																onchange="updateSelection(false, this, null, '${importAllClass}')"/>
+														#if (!$util.isReadOnly() && $importObj.getInternalId() != $null && !$util.isDefaultObject($importObj))
+															<input 	type="checkbox" 
+																	class="$!{importClass} import"
+																	$!{checked}
+																	util="$!{util.getImplementation()}"
+																	uniqueKey="$!{importObj.getUniqueKey()}"
+																	onchange="updateSelection(false, this, null, '${importAllClass}')"/>
+														#end
 													</td>
 													<td>
 														<a 	href="#" 

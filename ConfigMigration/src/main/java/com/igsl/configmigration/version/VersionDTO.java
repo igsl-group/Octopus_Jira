@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.project.version.Version;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -38,7 +41,11 @@ public class VersionDTO extends JiraConfigDTO {
 		this.startDate = o.getStartDate();
 		this.released = o.isReleased();
 		this.archived = o.isArchived();
-		this.uniqueKey = this.name;
+		if (o.getProject() != null) {
+			this.uniqueKey = o.getProject().getName() + " - " + this.name;
+		} else {
+			this.uniqueKey = this.name;
+		}
 	}
 	
 	@Override

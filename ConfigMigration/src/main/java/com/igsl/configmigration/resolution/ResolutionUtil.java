@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ResolutionUtil extends JiraConfigUtil {
@@ -111,8 +112,9 @@ public class ResolutionUtil extends JiraConfigUtil {
 		return null;
 	}
 	
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
-		ResolutionDTO result = null;
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
+		ResolutionDTO created = null;
 		ResolutionDTO original = null;
 		if (oldItem != null) {
 			original = (ResolutionDTO) oldItem;
@@ -124,13 +126,14 @@ public class ResolutionUtil extends JiraConfigUtil {
 			// Update
 			Resolution res = (Resolution) original.getJiraObject();
 			RESOLUTION_MANAGER.editResolution(res, src.getName(), src.getDescription());
-			result = (ResolutionDTO) findByInternalId(res.getId());
+			created = (ResolutionDTO) findByInternalId(res.getId());
+			result.setNewDTO(created);
 		} else {
 			// Create
 			Resolution createdJira = RESOLUTION_MANAGER.createResolution(src.getName(), src.getDescription());
-			ResolutionDTO created = new ResolutionDTO();
+			created = new ResolutionDTO();
 			created.setJiraObject(createdJira);
-			result = created;
+			result.setNewDTO(created);
 		}
 		return result;
 	}
@@ -143,6 +146,11 @@ public class ResolutionUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

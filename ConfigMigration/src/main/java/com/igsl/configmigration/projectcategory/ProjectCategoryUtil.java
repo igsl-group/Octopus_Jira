@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectCategoryUtil extends JiraConfigUtil {
@@ -49,7 +50,8 @@ public class ProjectCategoryUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		ProjectCategoryDTO original = null;
 		if (oldItem != null) {
 			original = (ProjectCategoryDTO) oldItem;
@@ -62,14 +64,15 @@ public class ProjectCategoryUtil extends JiraConfigUtil {
 			// Update
 			ProjectCategoryImpl item = new ProjectCategoryImpl(originalJira.getId(), src.getName(), src.getDescription());
 			MANAGER.updateProjectCategory(item);
-			return findByInternalId(Long.toString(originalJira.getId()));
+			result.setNewDTO(findByInternalId(Long.toString(originalJira.getId())));
 		} else {
 			// Create
 			ProjectCategory createdJira = MANAGER.createProjectCategory(src.getName(), src.getDescription());
 			ProjectCategoryDTO created = new ProjectCategoryDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -80,6 +83,11 @@ public class ProjectCategoryUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

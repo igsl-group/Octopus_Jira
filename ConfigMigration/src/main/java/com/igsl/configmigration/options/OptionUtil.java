@@ -12,6 +12,7 @@ import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
 import com.igsl.configmigration.general.GeneralDTO;
@@ -24,6 +25,11 @@ public class OptionUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override
@@ -47,7 +53,8 @@ public class OptionUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		Option created = null;
 		OptionDTO src = (OptionDTO) oldItem;
 		if (src != null) {
@@ -72,11 +79,12 @@ public class OptionUtil extends JiraConfigUtil {
 			for (OptionDTO child : tar.getChildOptions()) {
 				child.setJiraObject(null, fieldConfig, created.getOptionId());
 				child.setParentId(created.getOptionId());
-				OptionDTO createdChild = (OptionDTO) merge(null, child);
+				OptionDTO createdChild = (OptionDTO) merge(null, child).getNewDTO();
 			}
 		}
 		tar.setJiraObject(created, fieldConfig, parentId);
-		return tar;
+		result.setNewDTO(tar);
+		return result;
 	}
 
 	@Override

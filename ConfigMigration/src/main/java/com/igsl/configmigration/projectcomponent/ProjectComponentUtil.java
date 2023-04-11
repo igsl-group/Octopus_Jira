@@ -10,19 +10,24 @@ import com.atlassian.jira.bc.project.component.MutableProjectComponent;
 import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.bc.project.component.ProjectComponentManager;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectCategory;
 import com.atlassian.jira.project.ProjectCategoryImpl;
 import com.atlassian.jira.project.ProjectManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
+import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectComponentUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(ProjectComponentUtil.class);
 	private static final ProjectComponentManager MANAGER = ComponentAccessor.getProjectComponentManager();
+	private static final ProjectManager PROJECT_MANAGER = ComponentAccessor.getProjectManager();
 	
 	@Override
 	public String getName() {
@@ -54,7 +59,8 @@ public class ProjectComponentUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		ProjectComponentDTO original = null;
 		if (oldItem != null) {
 			original = (ProjectComponentDTO) oldItem;
@@ -72,20 +78,25 @@ public class ProjectComponentUtil extends JiraConfigUtil {
 			com.setLead(src.getLead());
 			com.setName(src.getName());
 			MANAGER.update(com);
-			return findByInternalId(Long.toString(originalJira.getId()));
+			result.setNewDTO(findByInternalId(Long.toString(originalJira.getId())));
 		} else {
-			// TODO Map ids
+			// Map project ids
+			Project p = PROJECT_MANAGER.getProjectObjByKey(src.getProjectKey());
+			if (p == null) {
+				throw new Exception("Project cannot be found with key: \"" + src.getProjectKey() + "\"");
+			}
 			// Create
 			ProjectComponent createdJira = MANAGER.create(
 					src.getName(), 
 					src.getDescription(),
 					src.getLead(),
 					src.getAssigneeType(),
-					src.getProjectId());
+					p.getId());
 			ProjectComponentDTO created = new ProjectComponentDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -96,6 +107,11 @@ public class ProjectComponentUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

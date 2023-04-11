@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.field.FieldDTO;
 import com.igsl.configmigration.field.FieldUtil;
 
@@ -58,7 +59,8 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		FieldScreenLayoutItemDTO original = null;
 		if (oldItem != null) {
 			original = (FieldScreenLayoutItemDTO) oldItem;
@@ -91,11 +93,14 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 			}
 			FieldScreenLayoutItemDTO created = new FieldScreenLayoutItemDTO();
 			created.setJiraObject(createdJira, tab);
-			return created;
+			result.setNewDTO(created);
 		} else {
 			LOGGER.error("Field " + src.getField().getUniqueKey() + " cannot be found, excluded from tab " + tab.getName());
-			return null;
+			result.addWarning(
+					"Field \"" + src.getConfigName() + 
+					"\" cannot be found, excluded from tab \"" + tab.getConfigName() + "\"");
 		}
+		return result;
 	}
 	
 	@Override
@@ -106,6 +111,11 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

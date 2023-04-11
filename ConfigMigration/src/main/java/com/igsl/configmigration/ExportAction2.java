@@ -1,6 +1,5 @@
 package com.igsl.configmigration;
 
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -12,7 +11,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -38,6 +36,9 @@ import com.igsl.configmigration.report.v1.MergeReportData;
 
 public class ExportAction2 extends JiraWebActionSupport {
 
+	private static final String TITLE_CURRENT = "current";
+	private static final String TITLE_IMPORTED = "imported";
+	
 	@ComponentImport
 	private final ActiveObjects ao;
 
@@ -253,7 +254,12 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public Map<String, String> getObjectTypes(boolean showAll) {
 		Map<String, String> result = new TreeMap<>();
 		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(!showAll)) {
-			result.put(util.getName(), util.getClass().getCanonicalName());
+			String impl = util.getImplementation();
+			String name = (util.isVisible())? util.getName() : util.getName() + "*";
+			result.put(	name + 
+						" - " + TITLE_CURRENT + " " + this.data.exportStore.getCounts(impl) + 
+						" " + TITLE_IMPORTED + " " + this.data.importStore.getCounts(impl),
+						util.getClass().getCanonicalName());
 		}
 		return result;
 	}
@@ -328,7 +334,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		}
 	}
 	
-	private JiraConfigDTO merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
+	private MergeResult merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
 		JiraConfigDTO oldObj = this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
 		return util.merge(oldObj, newObj);
 	}
@@ -489,17 +495,36 @@ public class ExportAction2 extends JiraWebActionSupport {
 						MergeReportData rd = new MergeReportData(dto);
 						reportData.add(rd);
 						try {
-							JiraConfigDTO newDTO = merge(util, dto);
-							if (newDTO != null) {
-								rd.setResult(true);
-								rd.setNewDTO(newDTO);
+							if (!util.isDefaultObject(dto)) {
+								MergeResult r = merge(util, dto);
+								for (String s : r.getWarnings()) {
+									rd.addWarning(s);
+								}
+								JiraConfigDTO newDTO = r.getNewDTO();
+								if (newDTO != null) {
+									rd.setResult(true);
+									rd.setNewDTO(newDTO);
+									objCountSuccess++;
+									if (util instanceof ProjectUtil) {
+										projCountSuccess++;
+									}
+								} else {
+									rd.setResult(false);
+									rd.setNewDTO(null);
+									rd.addError("Unable to create object \"" + dto.getConfigName() + "\" of " + util.getName());
+									objCountFailed++;
+									if (util instanceof ProjectUtil) {
+										projCountFailed++;
+									}
+								}
+							} else {
+								// Default object is not updated, count as success
 								objCountSuccess++;
 								if (util instanceof ProjectUtil) {
 									projCountSuccess++;
 								}
-							} else {
-								throw new Exception("Unable to create object: " + 
-													util.getName() + ", " + dto.getUniqueKey());
+								rd.setResult(true);
+								rd.setNewDTO(null);
 							}
 						} catch (Exception ex) {
 							rd.setResult(false);

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class CustomFieldSearcherUtil extends JiraConfigUtil {
@@ -50,7 +51,7 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("CustomFieldSearcher is read only");
 	}
 	
@@ -63,6 +64,11 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 	public boolean isVisible() {
 		// Referenced from CustomField only
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

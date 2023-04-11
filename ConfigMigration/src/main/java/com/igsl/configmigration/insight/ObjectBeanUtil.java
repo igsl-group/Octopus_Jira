@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 /*
  * REST API to export Insight objects and schema
@@ -196,7 +197,8 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		return list.get(uniqueKey);
 	}
 
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		ObjectBeanDTO original = null;
 		if (oldItem != null) {
 			original = (ObjectBeanDTO) oldItem;
@@ -217,6 +219,11 @@ public class ObjectBeanUtil extends JiraConfigUtil {
 		// Visible only when ObjectFacade is available
 		//return checkInsight();
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

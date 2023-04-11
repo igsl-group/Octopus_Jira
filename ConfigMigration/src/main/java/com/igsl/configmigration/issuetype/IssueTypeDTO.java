@@ -10,6 +10,7 @@ import com.atlassian.jira.avatar.AvatarManager;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.icon.IconType;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -53,6 +54,15 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		r.put("Name", new JiraConfigProperty(this.name));
 		r.put("ID", new JiraConfigProperty(this.id));
 		return r;
+	}
+	
+	@Override
+	public void setupRelatedObjects() throws Exception {
+		// Since we cannot find avatar, there's no point to relate
+//		if (this.avatarConfigItem != null) {
+//			addRelatedObject(this.avatarConfigItem);
+//			this.avatarConfigItem.addReferencedObject(this);
+//		}
 	}
 
 	@Override

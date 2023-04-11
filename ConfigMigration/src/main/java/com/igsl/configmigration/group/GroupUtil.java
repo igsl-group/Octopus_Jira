@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.SessionData.ImportData;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
@@ -52,7 +53,8 @@ public class GroupUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		GroupDTO original;
 		if (oldItem != null) {
 			original = (GroupDTO) oldItem;
@@ -62,14 +64,15 @@ public class GroupUtil extends JiraConfigUtil {
 		GroupDTO src = (GroupDTO) newItem;
 		if (original != null) {
 			// Do nothing... group is just a name, and members are not stored in groups.
-			return original;
+			result.setNewDTO(original);
 		} else {
 			// Create group
 			Group createdJira = MANAGER.createGroup(src.getName());
 			GroupDTO created = new GroupDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -80,6 +83,11 @@ public class GroupUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

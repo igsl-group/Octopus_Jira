@@ -47,7 +47,10 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 	
 	@Override
 	public String getConfigName() {
-		return this.displayName + " (" + this.name + ")";
+		if (this.getInternalId() != null) {
+			return this.displayName + " (" + this.name + ")";
+		} 
+		return DEFAULT_KEY;
 	}
 	
 	@Override

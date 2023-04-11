@@ -11,6 +11,7 @@ import com.atlassian.jira.issue.fields.config.FieldConfigImpl;
 import com.atlassian.jira.issue.fields.config.manager.FieldConfigManager;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 public class FieldConfigUtil extends JiraConfigUtil {
 
@@ -23,6 +24,11 @@ public class FieldConfigUtil extends JiraConfigUtil {
 		return false;
 	}
 
+	@Override
+	public boolean isReadOnly() {
+		return true;
+	}
+	
 	@Override
 	public String getName() {
 		return "Field Config";
@@ -51,7 +57,8 @@ public class FieldConfigUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		FieldConfigDTO original = null;
 		if (oldItem != null) {
 			original = (FieldConfigDTO) oldItem;
@@ -64,7 +71,7 @@ public class FieldConfigUtil extends JiraConfigUtil {
 			original.setName(src.getName());
 			// TODO Field may not be custom field and thus has no field config...?
 			MANAGER.updateFieldConfig((FieldConfig) original.getJiraObject());
-			return original;
+			result.setNewDTO(original);
 		} else {
 			LOGGER.debug("Create FieldConfigDTO: " + src.getDescription() + ", " + src.getFieldId() + ", " + src.getName());
 			FieldConfig newFC = new FieldConfigImpl(
@@ -76,8 +83,9 @@ public class FieldConfigUtil extends JiraConfigUtil {
 			FieldConfig createdJira = MANAGER.createFieldConfig(newFC, null);
 			FieldConfigDTO created = new FieldConfigDTO();
 			created.setJiraObject(createdJira);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 
 	@Override

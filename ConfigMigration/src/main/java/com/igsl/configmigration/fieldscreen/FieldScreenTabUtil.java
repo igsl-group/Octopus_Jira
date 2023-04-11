@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldScreenTabUtil extends JiraConfigUtil {
@@ -56,7 +57,8 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		FieldScreenTabDTO original = null;
 		if (oldItem != null) {
 			original = (FieldScreenTabDTO) oldItem;
@@ -86,6 +88,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 		}
 		FieldScreenTabDTO created = new FieldScreenTabDTO();
 		created.setJiraObject(createdJira, src.getObjectParameters());
+		result.setNewDTO(created);
 		LOGGER.debug("Merging fields");
 		FieldScreenLayoutItemUtil itemUtil = (FieldScreenLayoutItemUtil)
 				JiraConfigTypeRegistry.getConfigUtil(FieldScreenLayoutItemUtil.class);
@@ -99,7 +102,7 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 				position++;
 			}
 		}
-		return created;
+		return result;
 	}
 	
 	@Override
@@ -110,6 +113,11 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+	
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
@@ -58,7 +59,8 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@SuppressWarnings("deprecation")
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		final IssueSecurityLevelUtil LEVEL_UTIL = 
 				(IssueSecurityLevelUtil) JiraConfigTypeRegistry.getConfigUtil(IssueSecurityLevelUtil.class);
 		IssueSecurityLevelSchemeDTO original = null;
@@ -68,7 +70,7 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 			original = (IssueSecurityLevelSchemeDTO) findByDTO(newItem);
 		}
 		IssueSecurityLevelSchemeDTO src = (IssueSecurityLevelSchemeDTO) newItem;
-		IssueSecurityLevelSchemeDTO result = null;
+		IssueSecurityLevelSchemeDTO created = null;
 		Scheme scheme = null;
 		Long id;
 		if (original != null) {
@@ -85,7 +87,8 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 		}
 		if (id != null) {
 			Long defaultLevel = null;
-			result = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
+			created = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
+			result.setNewDTO(created);
 			// Recreate levels
 			for (IssueSecurityLevel lvl : LEVEL_MANAGER.getIssueSecurityLevels(id)) {
 				LEVEL_MANAGER.deleteSecurityLevel(lvl.getId());
@@ -93,8 +96,9 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 			// Merge levels
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
 				item.setSchemeId(id);
-				item.setJiraObject(null, result);
-				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) LEVEL_UTIL.merge(null, item);
+				item.setJiraObject(null, created);
+				MergeResult mr = LEVEL_UTIL.merge(null, item);
+				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) mr.getNewDTO();
 				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
 					defaultLevel = level.getId();
 				}
@@ -117,6 +121,11 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

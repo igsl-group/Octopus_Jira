@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldScreenUtil extends JiraConfigUtil {
@@ -53,7 +54,8 @@ public class FieldScreenUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		FieldScreenDTO original = null;
 		if (oldItem != null) {
 			original = (FieldScreenDTO) oldItem;
@@ -78,6 +80,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 		}
 		FieldScreenDTO created = new FieldScreenDTO();
 		created.setJiraObject(createdJira);
+		result.setNewDTO(created);
 		LOGGER.debug("Removing existing tabs");
 		// Delete existing tabs and items, then recreate them
 		for (FieldScreenTab tab : createdJira.getTabs()) {
@@ -94,7 +97,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 			tab.setJiraObject(null, created);
 			tabUtil.merge(null, tab);
 		}
-		return created;
+		return result;
 	}
 	
 	@Override
@@ -105,6 +108,11 @@ public class FieldScreenUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

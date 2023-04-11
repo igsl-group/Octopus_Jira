@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.atlassian.jira.bc.project.component.ProjectComponent;
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectCategory;
+import com.atlassian.jira.project.ProjectManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -20,6 +23,8 @@ import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectComponentDTO extends JiraConfigDTO {
 
+	private static final ProjectManager PROJECT_MANAGER = ComponentAccessor.getProjectManager();
+	
 	private Long assigneeType;
 	private ApplicationUserDTO componentLead;
 	private String description;
@@ -27,6 +32,7 @@ public class ProjectComponentDTO extends JiraConfigDTO {
 	private String lead;
 	private String name;
 	private Long projectId;
+	private String projectKey;
 	private boolean archived;
 	
 	/**
@@ -50,6 +56,10 @@ public class ProjectComponentDTO extends JiraConfigDTO {
 		this.name = o.getName();
 		this.projectId = o.getProjectId();
 		this.uniqueKey = this.name;
+		Project p =  PROJECT_MANAGER.getProjectObj(this.projectId);
+		if (p != null) {
+			this.projectKey = p.getKey();
+		}
 	}
 	
 	@Override
@@ -63,6 +73,7 @@ public class ProjectComponentDTO extends JiraConfigDTO {
 		r.put("Lead", new JiraConfigProperty(this.lead));
 		r.put("Name", new JiraConfigProperty(this.name));
 		r.put("Project ID", new JiraConfigProperty(this.projectId));
+		r.put("Project Key", new JiraConfigProperty(this.projectKey));
 		return r;
 	}
 
@@ -154,6 +165,14 @@ public class ProjectComponentDTO extends JiraConfigDTO {
 
 	public void setArchived(boolean archived) {
 		this.archived = archived;
+	}
+
+	public String getProjectKey() {
+		return projectKey;
+	}
+
+	public void setProjectKey(String projectKey) {
+		this.projectKey = projectKey;
 	}
 
 }

@@ -1,8 +1,6 @@
 package com.igsl.configmigration.workflow;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -22,38 +20,41 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.ConfigurableJiraWorkflow;
 import com.atlassian.jira.workflow.JiraDraftWorkflow;
 import com.atlassian.jira.workflow.JiraWorkflow;
-import com.atlassian.jira.workflow.JiraWorkflowFactory;
 import com.atlassian.jira.workflow.WorkflowManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.status.StatusDTO;
 import com.igsl.configmigration.status.StatusUtil;
-import com.opensymphony.workflow.Workflow;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
-import com.opensymphony.workflow.loader.ActionDescriptor;
-import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
-import com.opensymphony.workflow.loader.WorkflowFactory;
-import com.opensymphony.workflow.loader.XMLWorkflowFactory;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class WorkflowUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(WorkflowUtil.class);
 	private static final WorkflowManager WORKFLOW_MANAGER = ComponentAccessor.getWorkflowManager();
+	
+	@Override
+	public boolean isDefaultObject(JiraConfigDTO dto) {
+		if (dto != null && 
+			(
+				JiraConfigDTO.NULL_KEY.equals(dto.getUniqueKey()) || 
+				WorkflowDTO2.DEFAULT_WORKFLOW.equals(dto.getUniqueKey())
+			)) {
+			return true;
+		}
+		return false;
+	}
 	
 	public static JiraConfigDTO getWorkflowDetails(Object item) throws Exception {
 		JiraConfigDTO result = null;
@@ -103,7 +104,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		LOGGER.debug("merge starts");
 		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
@@ -156,10 +158,10 @@ public class WorkflowUtil extends JiraConfigUtil {
 			// Convert back to string
 			DOMSource domSource = new DOMSource(doc);
 			StringWriter writer = new StringWriter();
-		    StreamResult result = new StreamResult(writer);
+		    StreamResult r = new StreamResult(writer);
 		    TransformerFactory tf = TransformerFactory.newInstance();
 		    Transformer transformer = tf.newTransformer();
-		    transformer.transform(domSource, result);
+		    transformer.transform(domSource, r);
 		    // Attach DTD
 		    String newXML = writer.toString();
 		    String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
@@ -202,7 +204,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 				wf.setDescriptor(wfDesc);		
 				WORKFLOW_MANAGER.updateWorkflow(currentUser, wf);
 			}
-			return findByUniqueKey(wf.getName());
+			result.setNewDTO(findByUniqueKey(wf.getName()));
 		} else {
 			WorkflowDescriptor wfDesc = 
 					com.atlassian.jira.workflow.WorkflowUtil.convertXMLtoWorkflowDescriptor(src.getXml());
@@ -214,8 +216,9 @@ public class WorkflowUtil extends JiraConfigUtil {
 			WORKFLOW_MANAGER.createWorkflow(currentUser, wf);
 			WorkflowDTO2 created = new WorkflowDTO2();
 			created.setJiraObject(wf);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -226,6 +229,11 @@ public class WorkflowUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

@@ -12,8 +12,8 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.report.v1.MergeReport;
+import com.igsl.configmigration.report.v1.MergeReportComparator;
 
 import net.java.ao.Query;
 
@@ -35,6 +35,7 @@ public class ManageReport extends JiraWebActionSupport {
 	
 	public List<MergeReport> getReportData() {
 		MergeReport[] data = this.ao.find(MergeReport.class);
+		Arrays.sort(data, new MergeReportComparator());
 		return Arrays.asList(data);
 	}
 

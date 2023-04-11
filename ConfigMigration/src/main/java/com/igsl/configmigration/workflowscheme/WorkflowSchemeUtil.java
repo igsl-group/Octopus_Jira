@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.project.ProjectDTO;
 import com.igsl.configmigration.project.ProjectUtil;
 
@@ -59,7 +60,8 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		ProjectUtil projectUtil = (ProjectUtil) JiraConfigTypeRegistry.getConfigUtil(ProjectUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		AssignableWorkflowSchemeDTO original = null;
@@ -102,7 +104,7 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 				MANAGER.addSchemeToProject(p, sch);
 			}
 			MANAGER.clearWorkflowCache();
-			return findByUniqueKey(src.getUniqueKey());
+			result.setNewDTO(findByUniqueKey(src.getUniqueKey()));
 		} else {
 			AssignableWorkflowScheme scheme = SERVICE.assignableBuilder()
 				.setDefaultWorkflow(src.getConfiguredDefaultWorkflow())
@@ -121,8 +123,9 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 			MANAGER.clearWorkflowCache();
 			AssignableWorkflowSchemeDTO created = new AssignableWorkflowSchemeDTO();
 			created.setJiraObject(scheme);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -133,6 +136,11 @@ public class WorkflowSchemeUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return true;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	@Override

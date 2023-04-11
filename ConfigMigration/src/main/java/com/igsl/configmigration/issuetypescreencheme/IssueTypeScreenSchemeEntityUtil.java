@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
 import com.igsl.configmigration.fieldscreenscheme.FieldScreenSchemeDTO;
 import com.igsl.configmigration.fieldscreenscheme.FieldScreenSchemeUtil;
@@ -64,7 +65,8 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+		MergeResult result = new MergeResult();
 		IssueTypeScreenSchemeEntityDTO original = null;
 		if (oldItem != null) {
 			original = (IssueTypeScreenSchemeEntityDTO) oldItem;
@@ -89,7 +91,7 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 			}
 			existing.setIssueTypeScreenScheme((IssueTypeScreenScheme) issueTypeScreenScheme.getJiraObject());
 			MANAGER.updateIssueTypeScreenSchemeEntity(existing);
-			return existingDTO;
+			result.setNewDTO(existingDTO);
 		} else {
 			IssueTypeScreenSchemeEntity createdJira = new IssueTypeScreenSchemeEntityImpl(
 					MANAGER, ComponentAccessor.getFieldScreenSchemeManager(), ComponentAccessor.getConstantsManager());
@@ -101,8 +103,9 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 			MANAGER.createIssueTypeScreenSchemeEntity(createdJira);			
 			IssueTypeScreenSchemeEntityDTO created = new IssueTypeScreenSchemeEntityDTO();
 			created.setJiraObject(createdJira, issueTypeScreenScheme);
-			return created;
+			result.setNewDTO(created);
 		}
+		return result;
 	}
 	
 	@Override
@@ -113,6 +116,11 @@ public class IssueTypeScreenSchemeEntityUtil extends JiraConfigUtil {
 	@Override
 	public boolean isVisible() {
 		return false;
+	}
+
+	@Override
+	public boolean isReadOnly() {
+		return true;
 	}
 
 	@Override

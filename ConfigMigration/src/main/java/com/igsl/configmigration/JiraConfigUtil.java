@@ -33,6 +33,25 @@ public abstract class JiraConfigUtil {
 	private static final String NEWLINE = "\r\n";
 
 	/**
+	 * Checks if provided object is a default object and should not be modified.
+	 * Default implementation only checks if uniqueKey is NULL_KEY or internalId is null
+	 * Override when needed.
+	 * 
+	 * @param dto JiraConfigDTO to check.
+	 * @return boolean
+	 */
+	public boolean isDefaultObject(JiraConfigDTO dto) {
+		if (dto != null && 
+			(
+				JiraConfigDTO.NULL_KEY.equals(dto.getUniqueKey()) || 
+				dto.getInternalId() == null
+			)) {
+			return true;
+		}
+		return false;
+	}
+	
+	/**
 	 * Return Comparator for the DTO if there is one, null otherwise
 	 */
 	@SuppressWarnings("rawtypes")
@@ -47,6 +66,14 @@ public abstract class JiraConfigUtil {
 	 */
 	@JsonIgnore
 	public abstract boolean isVisible();
+	
+	/**
+	 * Return true if this object cannot be created by itself.
+	 * On UI this object will not be given a checkbox, and will not be counted.
+	 * @return
+	 */
+	@JsonIgnore
+	public abstract boolean isReadOnly();
 	
 	/**
 	 * Override and return true if the objects need to be reordered after create/update.
@@ -181,7 +208,7 @@ public abstract class JiraConfigUtil {
 	 * @return Item after merge.
 	 * @throws Exception
 	 */
-	public abstract JiraConfigDTO merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception;
+	public abstract MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception;
 	
 	public static final String printException(Throwable t) {
 		StringBuilder sb = new StringBuilder();
@@ -218,8 +245,8 @@ public abstract class JiraConfigUtil {
 		if (items != null) {
 			for (ImportData data : items.values()) {
 				try {
-					JiraConfigDTO result = merge(data.getServer(), data.getData());
-					data.setServer(result);
+					MergeResult result = merge(data.getServer(), data.getData());
+					data.setServer(result.getNewDTO());
 					data.setImportResult("Updated");
 				} catch (Exception ex) {
 					data.setImportResult(printException(ex));
