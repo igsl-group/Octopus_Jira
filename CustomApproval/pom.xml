@@ -19,7 +19,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.igsl</groupId>
 	<artifactId>CustomApproval</artifactId>
-	<version>1.5.14</version>
+	<version>1.5.4</version>
 
 	<organization>
 		<name>Integrated Global Solutions Limited</name>
