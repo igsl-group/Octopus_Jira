@@ -1,5 +1,6 @@
 package com.igsl.customapproval;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,7 +14,7 @@ import com.atlassian.jira.config.managedconfiguration.ManagedConfigurationItemSe
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.jira.web.action.admin.customfields.AbstractEditConfigurationItemAction;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Named
@@ -119,7 +120,20 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 				this.addErrorMessage(ex.getMessage());
 			}
 			try {
-				this.adminGroups = OM.readValue(req.getParameter(PARAM_ADMIN_GROUPS), new TypeReference<List<String>>() {});
+				// For some reason, if SDK server is running the JAR built will NOT have Jackson 2.9.7.
+				// If SDK server is shutdown before rebuild, then the JAR built does contain Jackson 2.9.7.
+				// No amount of poking around in POM nor plugin manifest seem to fix this for CustomApproval.
+				// While ConfigMigration seems just fine.
+				// Installing JSM may be a part of the problem.
+				// As such, avoid using TypeReference which is only in newer Jackson versions.
+				
+				//this.adminGroups = OM.readValue(req.getParameter(PARAM_ADMIN_GROUPS), new TypeReference<List<String>>() {});
+				this.adminGroups = new ArrayList<>();
+				MappingIterator<String> it = OM.readerFor(String.class).readValues(req.getParameter(PARAM_ADMIN_GROUPS));
+				while (it.hasNext()) {
+					this.adminGroups.add(it.next());
+				}
+				
 				CustomApprovalUtil.setDelegationAdminGroups(this.adminGroups);
 			} catch (Exception ex) {
 				LOGGER.error(ex);

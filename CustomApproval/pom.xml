@@ -19,7 +19,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.igsl</groupId>
 	<artifactId>CustomApproval</artifactId>
-	<version>1.5.3</version>
+	<version>1.5.14</version>
 
 	<organization>
 		<name>Integrated Global Solutions Limited</name>
@@ -35,9 +35,16 @@
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.9.7</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 			<!-- <version>2.13.4</version> -->
 			<version>2.9.7</version> <!-- Need this version due to Insight -->
+			<scope>compile</scope>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
@@ -45,6 +52,7 @@
 			<artifactId>jackson-databind</artifactId>
 			<!-- <version>2.13.4</version> -->
 			<version>2.9.7</version> <!-- Need this version due to Insight -->
+			<scope>compile</scope>
 		</dependency>
 
 		<!-- Plugin web fragment API, for the com.atlassian.plugin.web.Condition class -->
@@ -189,7 +197,7 @@
 
 						<!-- Add package import here -->
 						<Import-Package>
-                            org.springframework.osgi.*;resolution:="optional",
+							org.springframework.osgi.*;resolution:="optional",
                             org.eclipse.gemini.blueprint.*;resolution:="optional",
                             *;resolution:="optional"
                         </Import-Package>
@@ -213,12 +221,14 @@
 				</executions>
 				<configuration>
 					<!--<includeExclude>+com.atlassian.jira.plugins.issue.create.*</includeExclude>-->
+					<!--
 					<scannedDependencies>
 						<dependency>
 							<groupId>com.atlassian.plugin</groupId>
 							<artifactId>atlassian-spring-scanner-external-jar</artifactId>
 						</dependency>
 					</scannedDependencies>
+					-->
 					<verbose>false</verbose>
 				</configuration>
 			</plugin>

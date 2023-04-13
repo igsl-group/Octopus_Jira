@@ -20,6 +20,7 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.user.ApplicationUser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
@@ -46,9 +47,11 @@ public class CustomApprovalREST {
 		ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		Issue issue = ISSUE_MANAGER.getIssueObject(issueKey);
 		if (issue != null) {
-			CustomApprovalRESTData result = new com.igsl.customapproval.rest.CustomApprovalRESTData();
+			CustomApprovalRESTData result = new CustomApprovalRESTData();
 			Collection<ApprovalPanelData> data = CustomApprovalUtil.getPanelData(issue);
 			result.setData(data);
+			ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
+			result.setSettings(settings);
 			// Check if we need approve/reject buttons
 			boolean showApprove = CustomApprovalUtil.hasButton(issue, user, true);
 			boolean showReject = CustomApprovalUtil.hasButton(issue, user, false);
@@ -58,6 +61,11 @@ public class CustomApprovalREST {
 			if (showReject) {
 				result.setRejectLink(REJECT_LINK);
 			}
+			try {
+				LOGGER.debug("getApprovalData(): " + OM.writeValueAsString(result));
+			} catch (JsonProcessingException e) {
+				LOGGER.error("getApprovalData(): " + e.getMessage(), e);
+			}			
 			return Response.ok().entity(result).build();
 		}
 		return Response.ok().build();

@@ -1,0 +1,25 @@
+<html>
+	<body>
+		<form id="mainForm" method="POST" action="${formTarget}">
+			<section id="confirm-dialog" role="dialog" aria-hidden="true"> 
+				<header> 
+					<h2>${title}</h2> 
+				</header> 
+				<div style="padding: 10px">
+					<h4>${message}</h4>
+				</div> 
+				<footer> 
+					<div style="padding: 10px 20px; float: right;"> 
+						<button class="aui-button aui-button-primary" 
+								onclick="setTimeout(function() {window.location.href = '${exitLink}';}, 250);">
+							${ok}
+						</button>
+						<button class="aui-button aui-button-link cancel">
+							${cancel}
+						</button>
+					</div> 
+				</footer> 
+			</section>
+		</form>
+	</body>
+</html>

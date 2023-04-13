@@ -1,8 +1,6 @@
 package com.igsl.customapproval.data;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.igsl.customapproval.CustomApprovalUtil;
@@ -39,6 +37,12 @@ public class ApprovalDataBuilder {
 			settings.setRejectedStatus(src.getRejectedStatus());
 			settings.setRejectTransition(src.getRejectTransition());
 			settings.setStartingStatus(src.getStartingStatus());
+			settings.setConfirmDecision(src.isConfirmDecision());
+			settings.setConfirmTitle(src.getConfirmTitle());
+			settings.setApproveMessage(src.getApproveMessage());
+			settings.setRejectMessage(src.getRejectMessage());
+			settings.setConfirmOK(src.getConfirmOK());
+			settings.setConfirmCancel(src.getConfirmCancel());
 			this.data.getSettings().put(entry.getKey(), settings);
 			this.data.getHistory().put(entry.getKey(), new HashMap<String, ApprovalHistory>());
 		}
@@ -79,6 +83,24 @@ public class ApprovalDataBuilder {
 			settings.setRejectedStatus(rejectStatus);
 			settings.setRejectTransition(rejectTransition);
 			data.getSettings().put(approvalName, settings);
+		}
+		return this;
+	}
+	
+	public ApprovalDataBuilder setConfirmation(
+			String approvalName,
+			boolean confirmDecision, 
+			String confirmTitle, String approveMessage, String rejectMessage, String confirmOK, String confirmCancel) 
+			throws Exception {
+		if (!data.getSettings().containsKey(approvalName)) {
+			throw new Exception("Approval \"" + approvalName + "\" does not exist");
+		} else {
+			data.getSettings().get(approvalName).setConfirmDecision(confirmDecision);
+			data.getSettings().get(approvalName).setConfirmTitle(confirmTitle);
+			data.getSettings().get(approvalName).setApproveMessage(approveMessage);
+			data.getSettings().get(approvalName).setRejectMessage(rejectMessage);
+			data.getSettings().get(approvalName).setConfirmOK(confirmOK);
+			data.getSettings().get(approvalName).setConfirmCancel(confirmCancel);
 		}
 		return this;
 	}

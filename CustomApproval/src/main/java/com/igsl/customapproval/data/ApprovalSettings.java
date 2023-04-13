@@ -3,8 +3,38 @@ package com.igsl.customapproval.data;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement
+@XmlAccessorType(XmlAccessType.FIELD)
 public class ApprovalSettings {	
 	
+	/**
+	 * If true, a dialog will popup to confirm approve/reject decision.
+	 */
+	private boolean confirmDecision;
+	/**
+	 * Title of confirmation dialog
+	 */
+	private String confirmTitle;
+	/**
+	 * Approve message of confirmation dialog
+	 */
+	private String approveMessage;
+	/**
+	 * Reject message of confirmation dialog
+	 */
+	private String rejectMessage;
+	/**
+	 * Text of OK button in confirm dialog
+	 */
+	private String confirmOK;
+	/**
+	 * Text of cancen button in confirm dialog
+	 */
+	private String confirmCancel;
 	/**
 	 * Approval name
 	 */
@@ -198,5 +228,41 @@ public class ApprovalSettings {
 	}
 	public void setRejectTransition(String rejectTransition) {
 		this.rejectTransition = rejectTransition;
+	}
+	public boolean isConfirmDecision() {
+		return confirmDecision;
+	}
+	public void setConfirmDecision(boolean confirmDecision) {
+		this.confirmDecision = confirmDecision;
+	}
+	public String getConfirmTitle() {
+		return confirmTitle;
+	}
+	public void setConfirmTitle(String confirmTitle) {
+		this.confirmTitle = confirmTitle;
+	}
+	public String getConfirmOK() {
+		return confirmOK;
+	}
+	public void setConfirmOK(String confirmOK) {
+		this.confirmOK = confirmOK;
+	}
+	public String getConfirmCancel() {
+		return confirmCancel;
+	}
+	public void setConfirmCancel(String confirmCancel) {
+		this.confirmCancel = confirmCancel;
+	}
+	public String getApproveMessage() {
+		return approveMessage;
+	}
+	public void setApproveMessage(String approveMessage) {
+		this.approveMessage = approveMessage;
+	}
+	public String getRejectMessage() {
+		return rejectMessage;
+	}
+	public void setRejectMessage(String rejectMessage) {
+		this.rejectMessage = rejectMessage;
 	}
 }

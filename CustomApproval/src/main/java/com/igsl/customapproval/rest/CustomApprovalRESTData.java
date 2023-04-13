@@ -6,11 +6,13 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.igsl.customapproval.data.ApprovalSettings;
 import com.igsl.customapproval.panel.ApprovalPanelData;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CustomApprovalRESTData {
+	private ApprovalSettings settings;
 	private Collection<ApprovalPanelData> data;
 	private String approveLink;
 	private String rejectLink;
@@ -31,5 +33,11 @@ public class CustomApprovalRESTData {
 	}
 	public void setRejectLink(String rejectLink) {
 		this.rejectLink = rejectLink;
+	}
+	public ApprovalSettings getSettings() {
+		return settings;
+	}
+	public void setSettings(ApprovalSettings settings) {
+		this.settings = settings;
 	}
 }

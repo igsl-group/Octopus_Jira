@@ -10,7 +10,8 @@
 		<vendor name="${project.organization.name}"
 			url="${project.organization.url}" />
 		<bundle-instructions>
-			<Import-Package>com.fasterxml.jackson,*;resolution:=optional</Import-Package>
+			<Import-Package>com.fasterxml.jackson,*;resolution:=optional
+			</Import-Package>
 		</bundle-instructions>
 	</plugin-info>
 
@@ -33,8 +34,8 @@
 		</transformation>
 		<resource type="download" name="CustomApproval.css"
 			location="/css/CustomApproval.css" />
-		<resource type="download" name="CustomApproval.js"
-			location="/js/CustomApproval.js" />
+		<resource type="download" name="CustomApproval_Portal.js"
+			location="/js/CustomApproval_Portal.js" />
 	</web-resource>
 
 	<!-- Web resources like CSS and JS -->
@@ -54,6 +55,7 @@
 		<!-- Request inclusion of jquery-ui library for select2, a dropdown with 
 			autocomplete -->
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
+		<dependency>com.atlassian.auiplugin:dialog2</dependency>
 		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
 		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
 		<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>
@@ -80,6 +82,20 @@
 			class="com.igsl.customapproval.condition.ApproveButtonCondition">
 		</condition>
 	</web-item>
+	<web-item name="Approve" i18n-name-key="approve"
+		key="approve-confirm-button" section="approval-button-section" weight="1">
+		<description key="approve.desc">Approve</description>
+		<label key="approve.label"></label>
+		<link linkId="approve-link">
+			<![CDATA[
+			/secure/CustomApprovalConfirmAction.jspa?id=${issue.id}&approve=true
+			]]>
+		</link>
+		<styleClass>trigger-dialog</styleClass>
+		<condition
+			class="com.igsl.customapproval.condition.ApproveButtonWithConfirmCondition">
+		</condition>
+	</web-item>
 	<web-item name="Reject" i18n-name-key="reject"
 		key="reject-button" section="approval-button-section" weight="2">
 		<description key="reject.desc">Reject</description>
@@ -93,6 +109,22 @@
 			class="com.igsl.customapproval.condition.RejectButtonCondition">
 		</condition>
 	</web-item>
+	<web-item name="Reject" i18n-name-key="reject"
+		key="reject-confirm-button" section="approval-button-section" weight="2">
+		<description key="reject.desc">Reject</description>
+		<label key="reject.label"></label>
+		<link linkId="reject-link">
+			<![CDATA[
+				/secure/CustomApprovalConfirmAction.jspa?id=${issue.id}&approve=false
+			]]>
+		</link>
+		<styleClass>trigger-dialog</styleClass>
+		<condition
+			class="com.igsl.customapproval.condition.RejectButtonWithConfirmCondition">
+		</condition>
+	</web-item>
+		
+
 
 	<!-- Panel in issue view to display approval data -->
 	<web-panel name="Approval" key="approval.section"
@@ -148,7 +180,18 @@
 			</action>
 		</actions>
 	</webwork1>
-
+	<webwork1 key="ConfirmAction"
+		name="Custom Approval Conform Action" class="java.lang.Object"
+		roles-required="use">
+		<description>Confirm Action</description>
+		<actions>
+			<action name="com.igsl.customapproval.action.ConfirmAction"
+				alias="CustomApprovalConfirmAction">
+				<view name="error">templates/action/confirm.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
 	<!-- User profile delegation -->
 	<web-section name="User Delegation Section"
 		key="delegation-section" location="system.user.options" weight="1">

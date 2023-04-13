@@ -41,6 +41,12 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	public static final String PARAM_APPROVE_COUNT = "approveCount";
 	public static final String PARAM_REJECT_COUNT = "rejectCount";
 	public static final String PARAM_ALLOW_CHANGE_DECISION = "allowChangeDecision";
+	public static final String PARAM_CONFIRM_DECISION = "confirmDecision";
+	public static final String PARAM_CONFIRM_TITLE = "confirmTitle";
+	public static final String PARAM_APPROVE_MESSAGE = "approveMessage";
+	public static final String PARAM_REJECT_MESSAGE = "rejectMessage";
+	public static final String PARAM_CONFIRM_OK = "confirmOK";
+	public static final String PARAM_CONFIRM_CANCEL = "confirmCancel";
 	public static final String[] PARAMETERS_LIST = {
 			PARAM_APPROVAL_NAME,
 			PARAM_USERS_FIELD,
@@ -52,7 +58,13 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 			PARAM_REJECT_TRANSITION,
 			PARAM_APPROVE_COUNT,
 			PARAM_REJECT_COUNT,
-			PARAM_ALLOW_CHANGE_DECISION
+			PARAM_ALLOW_CHANGE_DECISION,
+			PARAM_CONFIRM_DECISION,
+			PARAM_CONFIRM_TITLE,
+			PARAM_APPROVE_MESSAGE,
+			PARAM_REJECT_MESSAGE,
+			PARAM_CONFIRM_OK,
+			PARAM_CONFIRM_CANCEL
 	};	
 	public static final String VALUE_ALLOW = "Allow";
 	public static final String VALUE_DENY = "Deny";

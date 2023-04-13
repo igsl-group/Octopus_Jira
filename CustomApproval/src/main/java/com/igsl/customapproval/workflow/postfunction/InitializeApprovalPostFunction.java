@@ -46,9 +46,20 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 					String approveTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_TRANSITION)[i];
 					String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
 					String rejectTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_TRANSITION)[i];
+					String confirmDecisionString = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_DECISION)[i];
+					boolean confirmDecision = Boolean.parseBoolean(confirmDecisionString);
+					String confirmTitle = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_TITLE)[i];
+					String approveMessage = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_MESSAGE)[i];
+					String rejectMessage = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_MESSAGE)[i];
+					String confirmOK = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_OK)[i];
+					String confirmCancel = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_CANCEL)[i];
 					builder.addApproval(
 							approvalName, startingStatus, approveTransition, 
 							approvedStatus, rejectedStatus, rejectTransition);
+					// Confirmation dialog
+					builder.setConfirmation(
+							approvalName, confirmDecision, 
+							confirmTitle, approveMessage, rejectMessage, confirmOK, confirmCancel);
 					// Approve count
 					String approveCount = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_COUNT)[i];
 					builder.setApproveCount(approvalName, Float.parseFloat(approveCount));
@@ -78,6 +89,7 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 		
 		// Update custom field
 		ApprovalData ad = builder.build();
+		LOGGER.debug("Saving ApprovalData: " + ad.toString());
 		issue.setCustomFieldValue(cf, ad.toString());
 		if (issue.isCreated()) {
 			IssueManager iMan = ComponentAccessor.getIssueManager();

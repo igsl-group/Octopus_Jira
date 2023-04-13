@@ -19,3 +19,17 @@ div.CustomApprovalCustomerPortalCount {
 .CustomApprovalStrikeOut {
 	text-decoration: line-through;
 }
+
+table.CustomApproval {
+	width: 100% !important;
+	table-layout: fixed;
+	border-collapse: collapse !important;
+}
+
+table.CustomApproval input, table.CustomApproval select {
+	width: 95% !important;
+}
+
+table.CustomApproval th {
+	text-align: center;
+}

@@ -55,6 +55,20 @@ public abstract class ApprovalCondition extends AbstractWebCondition {
 	}
 	
 	/**
+	 * Check if confirmation is enabled for current approval step
+	 * @param helper JiraHelper
+	 * @return boolean
+	 */
+	protected final boolean isConfirmationEnabled(JiraHelper helper) {
+		Issue issue = getIssue(helper);
+		ApprovalSettings settings = CustomApprovalUtil.getApprovalSettings(issue);
+		if (settings != null) {
+			return settings.isConfirmDecision();
+		}
+		return false;
+	}
+	
+	/**
 	 * Get Issue from JiraHelper.
 	 * @param helper JiraHelper
 	 * @return Issue

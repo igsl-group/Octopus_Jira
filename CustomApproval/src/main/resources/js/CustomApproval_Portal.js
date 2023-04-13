@@ -1,5 +1,30 @@
 // Adding approval panel to customer portal
+
+console.log('CustomApproval_Portal.js loaded');
+
 var customApproval_observer = null;
+var customApproval_RetryDelay = 1000;
+var customApproval_iFrame = null;
+var customApproval_IssueKey = null;
+var customApproval_Sidebar = null;
+
+function showConfirmDialog(showDialog, approve, link, issueKey) {
+	// Show confirm dialog
+	if (showDialog == 'true') {
+		if (approve) {
+			AJS.$('#approve-message').show();
+			AJS.$('#reject-message').hide();
+		} else {
+			AJS.$('#approve-message').hide();
+			AJS.$('#reject-message').show();
+		}
+		AJS.$('#confirm-dialog-link').val(link);
+		AJS.$('#confirm-dialog-issueKey').val(issueKey);
+		AJS.dialog2("#confirm-dialog").show();
+	} else {
+		customApproval_Submit(link, issueKey);
+	}
+}
 
 function customApproval_Submit(link, issueKey) {
 	AJS.$.ajax({
@@ -9,14 +34,13 @@ function customApproval_Submit(link, issueKey) {
 		data: issueKey,
 		dataType: 'json'
 	}).done(function(data) {
-		console.log('customApprovalSubmit: ');
-		console.log(data);
 		// Reload page
 		location.reload();
 	});
 }
 
 function customApproval_addPanelData() {
+	// Add custom approval panel
 	if (customApproval_Sidebar.length == 1) {
 		if (customApproval_Sidebar.find('div#approvalPanel').length == 0) {
 			AJS.$.ajax({
@@ -31,7 +55,9 @@ function customApproval_addPanelData() {
 				if (data.approveLink) {
 					// Add approve button
 					buttonPanel.append(
-						'<button onclick="customApproval_Submit(\'' + 
+						'<button onclick="showConfirmDialog(\'' + 
+						data.settings.confirmDecision + 
+						'\', true, \'' + 
 						data.approveLink + 
 						'\', \'' + 
 						customApproval_IssueKey + 
@@ -40,7 +66,9 @@ function customApproval_addPanelData() {
 				if (data.rejectLink) {
 					// Add reject button
 					buttonPanel.append(
-						'<button onclick="customApproval_Submit(\'' + 
+						'<button onclick="showConfirmDialog(\'' + 
+						data.settings.confirmDecision + 
+						'\', false, \'' + 
 						data.rejectLink + 
 						'\', \'' + 
 						customApproval_IssueKey + 
@@ -111,15 +139,44 @@ function customApproval_addPanelData() {
 				AJS.$('div#approvalPanel').append(buttonPanel);
 				AJS.$('div#approvalPanel').append('<br/>');
 				AJS.$('div#approvalPanel').append(historyPanel);
+				
+				// Confirm dialog
+				var confirmDialog = AJS.$(
+					'<section id="confirm-dialog" class="aui-dialog2 aui-dialog2-small aui-layer" role="dialog" aria-hidden="true">' + 
+					'	<header class="aui-dialog2-header">' + 
+					'		<h2 class="aui-dialog2-header-main">' + data.settings.confirmTitle + '</h2>' + 
+					'	</header>' + 
+					'	<div class="aui-dialog2-content">' + 
+					'		<input type="hidden" id="confirm-dialog-link" value=""/>' + 
+					'		<input type="hidden" id="confirm-dialog-issueKey" value=""/>' + 
+					'		<p id="approve-message">' + data.settings.approveMessage + '</p>' + 
+					'		<p id="reject-message">' + data.settings.rejectMessage + '</p>' + 
+					'	</div>' + 
+					'	<footer class="aui-dialog2-footer">' + 
+					'		<div class="aui-dialog2-footer-actions">' + 
+					'			<button id="confirm-dialog-ok" class="aui-button aui-button-primary">' + data.settings.confirmOK + '</button>' + 
+					'			<button id="confirm-dialog-cancel" class="aui-button aui-button-link">' + data.settings.confirmCancel + '</button>' + 
+					'		</div>' + 
+					'	</footer>' + 
+					'</section>'
+				);
+				AJS.$('div#approvalPanel').append(confirmDialog);
+				AJS.$("#confirm-dialog-ok").click(function(e) {
+				    e.preventDefault();
+				    var link = AJS.$('#confirm-dialog-link').val();
+				    var issueKey = AJS.$('#confirm-dialog-issueKey').val();
+				    AJS.dialog2("#confirm-dialog").hide();
+				    customApproval_Submit(link, issueKey);
+				});
+				AJS.$("#confirm-dialog-cancel").click(function (e) {
+				    e.preventDefault();
+				    AJS.dialog2("#confirm-dialog").hide();
+				});
+
 			});
 		}
 	}
 }
-
-var customApproval_RetryDelay = 1000;
-var customApproval_iFrame = null;
-var customApproval_IssueKey = null;
-var customApproval_Sidebar = null;
 
 function customApproval_init() {
 	if (document.location.pathname && 
@@ -147,4 +204,19 @@ function customApproval_init() {
 	}
 	setTimeout(customApproval_init, customApproval_RetryDelay);
 }
-AJS.toInit(customApproval_init);
+
+function checkAJS() {
+	if (AJS && AJS.toInit) {
+		console.log('AJS ready');
+		AJS.toInit(customApproval_init);
+	} else {
+		console.log('Checking AJS');
+		setTimeout(checkAJS, 100);		
+	}
+}
+
+// Note: With PluginSDK update, AJS.toInit fails to work immediately. 
+// So wait until it becomes available
+console.log('Checking AJS');
+setTimeout(checkAJS, 100);
+

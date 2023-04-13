@@ -50,7 +50,7 @@ import com.atlassian.scheduler.config.JobRunnerKey;
 import com.atlassian.scheduler.config.RunMode;
 import com.atlassian.scheduler.config.Schedule;
 import com.atlassian.scheduler.status.JobDetails;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.customapproval.data.ApprovalData;
@@ -785,6 +785,11 @@ public class CustomApprovalUtil {
 			throws LockException, InvalidWorkflowException, WorkflowException {
 		//ApprovalData approvalData = getApprovalData(issue);
 		ApprovalSettings approvalSettings = getApprovalSettings(issue);
+		try {
+			LOGGER.debug("Settings: " + OM.writeValueAsString(approvalSettings));
+		} catch (Exception ex) {
+			LOGGER.error("Settings", ex);
+		}
 		if (approvalSettings != null) {
 			Map<String, ApplicationUser> approverList = getApproverList(issue, approvalSettings);
 			Map<String, ApprovalHistory> historyList = approvalData.getHistory().get(approvalSettings.getApprovalName());
@@ -793,10 +798,12 @@ public class CustomApprovalUtil {
 			WorkflowManager wfMan = ComponentAccessor.getWorkflowManager();
 			JiraWorkflow wf = wfMan.getWorkflow(issue);
 			if (wf != null) {
+				LOGGER.debug("Approval Transition: " + approvalSettings.getApproveTransition());
 				approveAction = getActionToStatus(
 						user,
 						issue, approvalSettings.getApproveTransition(), wf, approvalSettings.getApprovedStatus());
 				LOGGER.debug("approve action found: " + approveAction);
+				LOGGER.debug("Reject Transition: " + approvalSettings.getRejectTransition());
 				rejectAction = getActionToStatus(
 						user,
 						issue, approvalSettings.getRejectTransition(), wf, approvalSettings.getRejectedStatus());
@@ -1001,9 +1008,23 @@ public class CustomApprovalUtil {
 		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
 		PluginSettings settings = factory.createGlobalSettings();
 		List<String> list = new ArrayList<>();
-		try {
-			list = OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
-					new TypeReference<List<String>>() {});
+		try {			
+			// For some reason, if SDK server is running the JAR built will NOT have Jackson 2.9.7.
+			// If SDK server is shutdown before rebuild, then the JAR built does contain Jackson 2.9.7.
+			// No amount of poking around in POM nor plugin manifest seem to fix this for CustomApproval.
+			// While ConfigMigration seems just fine.
+			// Installing JSM may be a part of the problem.
+			// As such, avoid using TypeReference which is only in newer Jackson versions.
+			
+//			list = OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
+//					new TypeReference<List<String>>() {});
+			list = new ArrayList<>();
+			MappingIterator<String> it = 
+					OM.readerFor(String.class).readValues(String.valueOf(settings.get(KEY_ADMIN_GROUPS)));
+			while (it.hasNext()) {
+				list.add(it.next());            
+			}
+		
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation admin groups", ex);
 		}

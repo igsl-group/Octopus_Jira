@@ -1,6 +1,7 @@
 package com.igsl.customapproval.data;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -9,7 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.customapproval.CustomApprovalUtil;
 
@@ -58,11 +59,26 @@ public class DelegationSetting {
 	
 	public static List<DelegationSetting> parse(String s) {
 		try {
+			// For some reason, if SDK server is running the JAR built will NOT have Jackson 2.9.7.
+			// If SDK server is shutdown before rebuild, then the JAR built does contain Jackson 2.9.7.
+			// No amount of poking around in POM nor plugin manifest seem to fix this for CustomApproval.
+			// While ConfigMigration seems just fine.
+			// Installing JSM may be a part of the problem.
+			// As such, avoid using TypeReference which is only in newer Jackson versions.
+			
 			// Fetch ApplicationUser objects
-			List<DelegationSetting> list = OM.readValue(s, new TypeReference<List<DelegationSetting>>() {});
-			for (DelegationSetting item : list) {
-				translate(item);
+//			List<DelegationSetting> list = OM.readValue(s, new TypeReference<List<DelegationSetting>>() {});
+//			for (DelegationSetting item : list) {
+//				translate(item);
+//			}
+			List<DelegationSetting> list = new ArrayList<>();
+			MappingIterator<DelegationSetting> it = OM.readerFor(DelegationSetting.class).readValues(s); 
+			while (it.hasNext()) {
+				DelegationSetting ds = it.next();
+				translate(ds);
+				list.add(ds);
 			}
+			
 			return list;
 		} catch (Exception ex) {
 			LOGGER.error("Failed to deserialize DelegationSetting", ex);
