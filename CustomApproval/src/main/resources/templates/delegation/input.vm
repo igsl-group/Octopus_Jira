@@ -360,23 +360,22 @@
 			
 			function filterUser(data, exceptFromUser) {
 				var m = new Map();
-				if (data && data.users && data.users.length) {
-					var src = data.users;
-					for (var i = 0; i < src.length; i++) {
+				if (data && data.length) {
+					for (var i = 0; i < data.length; i++) {
 						console.log('exceptFromUser: ' + exceptFromUser);
 						if (exceptFromUser) {
 							var exceptKey = $('#fromUserKey').val();
 							console.log('exceptKey: ' + exceptKey);
-							if (src[i].key != exceptKey) {
-								m.set(src[i].key, {
-									id: src[i].key,
-									text: src[i].displayName
+							if (data[i].key != exceptKey) {
+								m.set(data[i].key, {
+									id: data[i].key,
+									text: data[i].displayName
 								});
 							}
 						} else {
-							m.set(src[i].key, {
-								id: src[i].key,
-								text: src[i].displayName
+							m.set(data[i].key, {
+								id: data[i].key,
+								text: data[i].displayName
 							});
 						}
 					}
@@ -393,15 +392,17 @@
 				width: '100%',
 				ajax: {
 					type: 'GET',
-					url: AJS.contextPath() + '/rest/api/2/user/picker',
+					url: AJS.contextPath() + '/rest/api/2/user/search',
 					dataType: 'json',
 					params: {
 						contentType:'application/json'
 					},
 					data: function(term) {
 						return { 
-							query: (term? term : ""),
-							maxResults: 1000
+							username: (term? term : ""),
+							maxResults: 1000,
+							includeActive: true,
+							includeInactive: true
 						};
 					},
 					results: function(data, params) {
@@ -418,15 +419,17 @@
 				width: '100%',
 				ajax: {
 					type: 'GET',
-					url: AJS.contextPath() + '/rest/api/2/user/picker',
+					url: AJS.contextPath() + '/rest/api/2/user/search',
 					dataType: 'json',
 					params: {
 						contentType:'application/json'
 					},
 					data: function(term) {
 						return { 
-							query: (term? term : ""),
-							maxResults: 1000
+							username: (term? term : ""),
+							maxResults: 1000,
+							includeActive: true,
+							includeInactive: false
 						};
 					},
 					results: function(data, params) {
