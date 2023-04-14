@@ -1,5 +1,10 @@
 <html>
 	<body>
+		#if ($reloadPage)
+			<script type="text/javascript">
+				window.location.href = '${reloadPage}';
+			</script>
+		#end
 		<form id="mainForm" method="POST" action="${formTarget}">
 			<section id="confirm-dialog" role="dialog" aria-hidden="true"> 
 				<header> 
@@ -10,8 +15,7 @@
 				</div> 
 				<footer> 
 					<div style="padding: 10px 20px; float: right;"> 
-						<button class="aui-button aui-button-primary" 
-								onclick="setTimeout(function() {window.location.href = '${exitLink}';}, 250);">
+						<button class="aui-button aui-button-primary">
 							${ok}
 						</button>
 						<button class="aui-button aui-button-link cancel">

@@ -25,6 +25,14 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 
 	private static final Logger LOGGER = Logger.getLogger(InitializeApprovalPostFunction.class);
 	
+	private static String getData(Map<String, String[]> data, String name, int index, String defaultValue) {
+		String[] list = data.get(name);
+		if (list != null && list.length > index) {
+			return list[index];
+		}
+		return defaultValue;
+	}
+	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
@@ -40,19 +48,19 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 				Map<String, String[]> data = InitializeApprovalPostFunctionFactory.parseArguments(args);
 				for (int i = 0; i < data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME).length; i++) {
 					// Add approval
-					String approvalName = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME)[i];
-					String startingStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING)[i];
-					String approvedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED)[i];
-					String approveTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_TRANSITION)[i];
-					String rejectedStatus = data.get(InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED)[i];
-					String rejectTransition = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_TRANSITION)[i];
-					String confirmDecisionString = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_DECISION)[i];
+					String approvalName = getData(data, InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME, i, null);
+					String startingStatus = getData(data, InitializeApprovalPostFunctionFactory.PARAM_STATUS_STARING, i, null);
+					String approvedStatus = getData(data, InitializeApprovalPostFunctionFactory.PARAM_STATUS_APPROVED, i, null);
+					String approveTransition =  getData(data, InitializeApprovalPostFunctionFactory.PARAM_APPROVE_TRANSITION, i, null);
+					String rejectedStatus =  getData(data, InitializeApprovalPostFunctionFactory.PARAM_STATUS_REJECTED, i, null);
+					String rejectTransition =  getData(data, InitializeApprovalPostFunctionFactory.PARAM_REJECT_TRANSITION, i, null);
+					String confirmDecisionString = getData(data, InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_DECISION, i, "");
 					boolean confirmDecision = Boolean.parseBoolean(confirmDecisionString);
-					String confirmTitle = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_TITLE)[i];
-					String approveMessage = data.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVE_MESSAGE)[i];
-					String rejectMessage = data.get(InitializeApprovalPostFunctionFactory.PARAM_REJECT_MESSAGE)[i];
-					String confirmOK = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_OK)[i];
-					String confirmCancel = data.get(InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_CANCEL)[i];
+					String confirmTitle = getData(data, InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_TITLE, i, "Confirm Approval Decision");
+					String approveMessage = getData(data, InitializeApprovalPostFunctionFactory.PARAM_APPROVE_MESSAGE, i, "Approve issue?");
+					String rejectMessage = getData(data, InitializeApprovalPostFunctionFactory.PARAM_REJECT_MESSAGE, i, "Reject issue?");
+					String confirmOK = getData(data, InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_OK, i, "OK");
+					String confirmCancel = getData(data, InitializeApprovalPostFunctionFactory.PARAM_CONFIRM_CANCEL, i, "Cancel");
 					builder.addApproval(
 							approvalName, startingStatus, approveTransition, 
 							approvedStatus, rejectedStatus, rejectTransition);
