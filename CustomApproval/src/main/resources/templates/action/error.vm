@@ -13,4 +13,9 @@
 		<div class="aui-message aui-message-error qf-message-error">$!{error}</div>
 	#end
 	<a href="${action.getIssueURL()}">Return to Issue</a>
+	
+	<!-- Dummy buttons to stop the default "close" link if used in a dialog -->
+	<button class="aui-button aui-button-primary" style="display: none"/>
+	<button class="aui-button aui-button-link cancel" style="display: none"/>
+
 </div>

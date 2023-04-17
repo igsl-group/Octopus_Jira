@@ -1,5 +1,7 @@
 package com.igsl.customapproval.action;
 
+import org.apache.log4j.Logger;
+
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.IssueManager;
 import com.atlassian.jira.issue.MutableIssue;
@@ -7,10 +9,12 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalSettings;
 
-public class ConfirmAction extends JiraWebActionSupport {
+public class ConfirmAction extends BaseAction {
 
 	private static final long serialVersionUID = 1L;
 
+	private static final Logger LOGGER = Logger.getLogger(ConfirmAction.class);
+	
 	private static final IssueManager ISSUE_MANAGER = ComponentAccessor.getIssueManager();
 	
 	private static final String SELF_LINK = "/secure/CustomApprovalConfirmAction.jspa?";
@@ -54,22 +58,24 @@ public class ConfirmAction extends JiraWebActionSupport {
 				}
 				this.ok = settings.getConfirmOK();
 				this.cancel = settings.getConfirmCancel();
+			} else {
+				this.addErrorMessage("Approval settings not found");
+				return JiraWebActionSupport.ERROR;
 			}
 			if (submit) {
 				// Perform submit and reload the issue
-				try {
-					CustomApprovalUtil.approve(issue, getLoggedInUser(), approve);
+				if (transitIssue(getLoggedInUser(), approve)) {
 					// Send a signal to the form to reload instead
 					this.reloadPage = baseURL + EXIT_LINK + issue.getKey();
 					return JiraWebActionSupport.INPUT;
-				} catch (Exception ex) {
-					this.addErrorMessage(ex.getMessage());
+				} else {
 					return JiraWebActionSupport.ERROR;
 				}
 			} else {
 				return JiraWebActionSupport.INPUT;
 			}
 		}
+		this.addErrorMessage("Issue cannot be found");
 		return JiraWebActionSupport.ERROR;
 	}
 
