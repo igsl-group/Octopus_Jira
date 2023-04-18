@@ -205,8 +205,7 @@ public class EffortTable implements CustomFieldType<EffortTableData, EffortTable
 						result = new EffortTableData();
 					}
 					try {
-						Float f = Float.parseFloat(String.valueOf(expenses));
-						result.setExpenses(f);
+						result.setExpenses(String.valueOf(expenses));
 					} catch (NumberFormatException nfex) {
 						throw new FieldValidationException(I18nResource.getText(I18nResource.EFFORTTABLE_EXPENSES_LABEL) + " is invalid: " + expenses);
 					}
@@ -216,8 +215,7 @@ public class EffortTable implements CustomFieldType<EffortTableData, EffortTable
 						result = new EffortTableData();
 					}
 					try {
-						Float f = Float.parseFloat(String.valueOf(totalHeadCountDay));
-						result.setTotalHeadCountDay(f);
+						result.setTotalHeadCountDay(String.valueOf(totalHeadCountDay));
 					} catch (NumberFormatException nfex) {
 						throw new FieldValidationException(I18nResource.getText(I18nResource.EFFORTTABLE_TOTALHEADCOUNTDAY_LABEL) + " is invalid: " + expenses);
 					}
@@ -236,8 +234,7 @@ public class EffortTable implements CustomFieldType<EffortTableData, EffortTable
 						for (String headCountDay : headCountDayList) {
 							if (headCountDay != null && !headCountDay.isEmpty()) {
 								try {
-									Float f = Float.parseFloat(headCountDay);
-									result.getRows().get(idx).setHeadCountDay(f);
+									result.getRows().get(idx).setHeadCountDay(headCountDay);
 								} catch (NumberFormatException nfex) {
 									throw new FieldValidationException(I18nResource.getText(I18nResource.EFFORTTABLE_HEADCOUNTDAY_LABEL) + " is invalid: " + headCountDay);
 								}

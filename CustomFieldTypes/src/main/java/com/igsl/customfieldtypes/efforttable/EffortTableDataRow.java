@@ -1,5 +1,6 @@
 package com.igsl.customfieldtypes.efforttable;
 
+import java.text.DecimalFormat;
 import java.util.Comparator;
 
 import com.atlassian.jira.issue.customfields.impl.FieldValidationException;
@@ -8,10 +9,10 @@ import com.google.gson.Gson;
 public class EffortTableDataRow implements Comparable<EffortTableDataRow> {
 
 	private static Comparator<String> nullSafeStringComparator = Comparator.nullsFirst(String::compareTo); 
-	private static Comparator<Float> nullSafeFloatComparator = Comparator.nullsFirst(Float::compareTo);
+	private static Comparator<Double> nullSafeDoubleComparator = Comparator.nullsFirst(Double::compareTo);
 
 	private String task;
-	private Float headCountDay = 0f;
+	private String headCountDay;
 	
 	public String getTask() {
 		return task;
@@ -21,11 +22,11 @@ public class EffortTableDataRow implements Comparable<EffortTableDataRow> {
 		this.task = task;
 	}
 
-	public Float getHeadCountDay() {
+	public String getHeadCountDay() {
 		return headCountDay;
 	}
 
-	public void setHeadCountDay(Float headCountDay) {
+	public void setHeadCountDay(String headCountDay) {
 		this.headCountDay = headCountDay;
 	}
 
@@ -34,7 +35,7 @@ public class EffortTableDataRow implements Comparable<EffortTableDataRow> {
 		if (o == null) {
 			return 1;
 		}
-		return nullSafeStringComparator.compare(this.task, o.task) | nullSafeFloatComparator.compare(this.headCountDay, o.headCountDay);
+		return nullSafeStringComparator.compare(this.task, o.task) | nullSafeStringComparator.compare(this.headCountDay, o.headCountDay);
 	}
 
 	public static EffortTableDataRow fromString(String s) throws FieldValidationException {

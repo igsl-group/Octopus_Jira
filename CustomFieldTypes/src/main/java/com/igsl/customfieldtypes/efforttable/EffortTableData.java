@@ -9,8 +9,8 @@ import com.google.gson.Gson;
 public class EffortTableData implements Comparable<EffortTableData> {
 
 	private List<EffortTableDataRow> rows = new ArrayList<EffortTableDataRow>();
-	private Float expenses;
-	private Float totalHeadCountDay;
+	private String expenses;
+	private String totalHeadCountDay;
 	
 	public List<EffortTableDataRow> getRows() {
 		return rows;
@@ -20,19 +20,19 @@ public class EffortTableData implements Comparable<EffortTableData> {
 		this.rows = rows;
 	}
 
-	public Float getExpenses() {
+	public String getExpenses() {
 		return expenses;
 	}
 
-	public void setExpenses(Float expenses) {
+	public void setExpenses(String expenses) {
 		this.expenses = expenses;
 	}
 
-	public Float getTotalHeadCountDay() {
+	public String getTotalHeadCountDay() {
 		return totalHeadCountDay;
 	}
 
-	public void setTotalHeadCountDay(Float totalHeadCountDay) {
+	public void setTotalHeadCountDay(String totalHeadCountDay) {
 		this.totalHeadCountDay = totalHeadCountDay;
 	}
 
@@ -70,7 +70,7 @@ public class EffortTableData implements Comparable<EffortTableData> {
 	
 	@Override
 	public String toString() {
-		if (rows.size() != 0 || (expenses != null && expenses != 0)) {
+		if (rows.size() != 0 || (expenses != null && expenses != "")) {
 			return new Gson().toJson(this);
 		}
 		return null;

@@ -45,7 +45,7 @@
 							#foreach ($row in $rows)
 								<tr>
 									<td>$!row.task</td>
-									<td>$!row.headCountDay</td>
+									<td>$!{row.headCountDay}</td>
 								</tr>
 							#end
 						#end
