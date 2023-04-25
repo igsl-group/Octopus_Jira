@@ -313,7 +313,16 @@ public abstract class JiraConfigDTO {
 			prop.setList(list);
 			result.put("Referenced By", prop);
 		}
-	
+		{
+			JiraConfigProperty prop = new JiraConfigProperty();
+			prop.setType(JiraConfigPropertyType.TEXT);
+			if (this.mappedObject != null) {
+				prop.setValue(this.mappedObject.getUniqueKey());
+			} else {
+				prop.setValue("null");
+			}
+			result.put("Mapped Object", prop);
+		}
 		return result;
 	}
 	
@@ -546,18 +555,14 @@ public abstract class JiraConfigDTO {
 	}
 	
 	/**
-	 * To store mapping between import and export JiraConfigDTOs. 
-	 * 
-	 * Only used for import. 
-	 * JiraConfigDTO deserialized from file will be mapped to new or existing JiraConfigDTO from current instance.
-	 * We need an object for new items so the new items can be referenced.
+	 * To store mapping between import and export JiraConfigDTOs when there are conflicts. 
 	 */
 	@JsonIgnore
-	protected JiraConfigDTO mappedObject;
+	protected JiraConfigRef mappedObject;
 	public final void setMappedObject(JiraConfigDTO dto) {
-		this.mappedObject = dto;
+		this.mappedObject = new JiraConfigRef(dto);
 	}
-	public final JiraConfigDTO getMappedObject() {
+	public final JiraConfigRef getMappedObject() {
 		return this.mappedObject;
 	}
 	

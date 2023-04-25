@@ -27,4 +27,5 @@ public class ExportAction2SessionData {
 	public boolean showAllUtils = false;
 	public String downloadAction = null;
 	public Map<String, String> downloadParameters = new HashMap<>();
+	public boolean showConflict = false;
 }

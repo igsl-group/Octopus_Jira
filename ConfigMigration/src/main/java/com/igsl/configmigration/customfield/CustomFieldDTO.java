@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigRef;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
@@ -84,7 +85,19 @@ public class CustomFieldDTO extends JiraConfigDTO {
 		this.options.setJiraObject(obj.getOptions(null, fieldConfig, null), fieldConfigDTO);
 		this.defaultValueOperations = new DefaultValueOperationsDTO();
 		this.defaultValueOperations.setJiraObject(obj.getDefaultValueOperations(), fieldConfigDTO);
-		this.uniqueKey = obj.getName();
+		
+		CustomFieldUtil util = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldUtil.class);
+		this.uniqueKey = util.makeUniqueKey(obj.getId(), obj.getName(), obj.getDescription(), this.customFieldType);
+	}
+	
+	@Override
+	public String getConfigName() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(this.name);
+		if (this.description != null && this.description.length() != 0) {
+			sb.append(" - ").append(this.description);
+		}
+		return sb.toString();
 	}
 	
 	@Override

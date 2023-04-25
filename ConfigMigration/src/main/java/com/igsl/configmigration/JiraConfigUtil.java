@@ -33,6 +33,19 @@ public abstract class JiraConfigUtil {
 	private static final String NEWLINE = "\r\n";
 
 	/**
+	 * Returns if this JiraConfigUtil require manual mapping.
+	 * Default is false, override if needed.
+	 * 
+	 * When true, interface will display object mapping controls.
+	 * In merge(), use DTO's mappedObject first. If null, then falls back to findByDTO().
+	 * 
+	 * @return boolean
+	 */
+	public boolean isManualMatch() {
+		return false;
+	}
+	
+	/**
 	 * Checks if provided object is a default object and should not be modified.
 	 * Default implementation only checks if uniqueKey is NULL_KEY or internalId is null
 	 * Override when needed.
@@ -372,4 +385,17 @@ public abstract class JiraConfigUtil {
 		return dto;
 	}
 	
+	/**
+	 * For resolving JiraConfigDTO with matching problem (i.e. isManualMatch returns true)
+	 * Override as needed.
+	 * Default implementation returns empty list.
+	 * 
+	 * @param store DTOStore to find matches from.
+	 * @param uniqueKey Unique key to match against.
+	 * @return List of JiraConfigDTO with matching unique key.
+	 */
+	public List<JiraConfigDTO> findUniqueKeyMatches(DTOStore store, String uniqueKey) throws Exception {
+		List<JiraConfigDTO> result = new ArrayList<>();
+		return result;
+	}
 }

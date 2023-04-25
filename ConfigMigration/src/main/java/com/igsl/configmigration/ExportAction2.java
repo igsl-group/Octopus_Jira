@@ -48,6 +48,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 		public boolean exportStore;
 		public String utilName;
 		public String uniqueKey;
+		public String targetKey;
 		public boolean selected;
 	}
 
@@ -90,6 +91,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public static final String PARAM_EXPORT_DESC = "exportDesc";
 	public static final String PARAM_IMPORT_FILE = "importFile";
 	public static final String PARAM_MERGE_DESC = "mergeDesc";
+	public static final String PARAM_TARGET_MAPPINGS = "targetMappings";
 	
 	// Form field values
 	public static final String PARAM_VIEW_TYPE_EXPORT = "viewExport";
@@ -117,6 +119,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 	public ExportAction2(@ComponentImport ActiveObjects ao) {
 		LOGGER.debug("Inject ActiveObjects: " + ao);
 		this.ao = ao;
+	}
+	
+	public boolean isShowConflict() {
+		return this.data.showConflict;
 	}
 	
 	public String getDownloadAction() {
@@ -215,21 +221,18 @@ public class ExportAction2 extends JiraWebActionSupport {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Map<JiraConfigUtil, Set<String>> getCompareKeyGuide() {
+		// TODO How to support CustomFieldDTO
 		Map<JiraConfigUtil, Set<String>> result = new LinkedHashMap<>();
 		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {	
 			List<JiraConfigDTO> list = new ArrayList<>();
+			// Compare using .getUniqueKey()
 			Comparator comparator = util.getComparator();
-			LOGGER.debug("getCompareKeyGuide: " + util.getName() + " start");
 			Map<String, JiraConfigDTO> exportStore = this.data.exportStore.getTypeStore(util);
 			if (exportStore != null) {
-				LOGGER.debug("export keyset: " + exportStore.keySet());
-				for (JiraConfigDTO dto : exportStore.values()) {
-					list.add(dto);
-				}
+				list.addAll(exportStore.values());
 			}
 			Map<String, JiraConfigDTO> importStore = this.data.importStore.getTypeStore(util);
 			if (importStore != null) {
-				LOGGER.debug("import keyset: " + importStore.keySet());
 				list.addAll(importStore.values());
 			}
 			if (comparator != null) {
@@ -239,7 +242,6 @@ public class ExportAction2 extends JiraWebActionSupport {
 			for (JiraConfigDTO dto : list) {
 				keySet.add(dto.getUniqueKey());
 			}
-			LOGGER.debug("getCompareKeyGuide: " + util.getName() + ": " + keySet);
 			result.put(util, keySet);
 		}
 		return result;
@@ -403,6 +405,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 		HttpServletRequest req = this.getHttpRequest();
 		loadData(req, false);
 		
+		this.data.showConflict = false;
+		
 		// Clear download
 		this.data.downloadAction = null;
 		// Check if it is file upload
@@ -454,7 +458,24 @@ public class ExportAction2 extends JiraWebActionSupport {
 				}				
 			}
 		}
-
+		
+		// Update target mappings
+		String mappedObjects = req.getParameter(PARAM_TARGET_MAPPINGS);
+		if (mappedObjects != null) {
+			MappingIterator<SelectionData> it = OR_SELECTION.readValues(mappedObjects);
+			while (it.hasNext()) {
+				SelectionData data = it.next();
+				Map<String, JiraConfigDTO> exportStore = this.data.exportStore.getTypeStore(data.utilName);
+				Map<String, JiraConfigDTO> importStore = this.data.importStore.getTypeStore(data.utilName);
+				if (importStore != null && importStore.containsKey(data.uniqueKey) &&
+					exportStore != null && exportStore.containsKey(data.targetKey)) {
+					JiraConfigDTO dto = importStore.get(data.uniqueKey);
+					JiraConfigDTO target = exportStore.get(data.targetKey);
+					dto.setMappedObject(target);
+				}
+			}
+		}
+		
 		LOGGER.debug("Action: " + action);
 		// Perform action
 		if (ACTION_MERGE.equals(action)) {
@@ -590,6 +611,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 				} catch (Exception ex) {
 					LOGGER.error("Failed to parse import data", ex);
 				}
+				this.data.showConflict = true;
 			} else {
 				// Display error
 				LOGGER.debug("File upload failed");
@@ -603,6 +625,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 			clearImportView();
 			// Reload export items
 			loadData(req, true);
+			this.data.showConflict = true;
 		} else if (ACTION_EXPORT.equals(action)) {
 			// Export selected items in export store
 			Map<String, List<JiraConfigDTO>> output = new LinkedHashMap<>();

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -27,6 +28,7 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.user.ApplicationUser;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -86,7 +88,10 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
-			if (cf.getName().equals(uniqueKey) && !isLocked(cf)) {
+			CustomFieldTypeDTO type = new CustomFieldTypeDTO();
+			type.setJiraObject(cf.getCustomFieldType());
+			String uKey = makeUniqueKey(cf.getId(), cf.getName(), cf.getDescription(), type);
+			if (uKey.equals(uniqueKey) && !isLocked(cf)) {
 				CustomFieldDTO item = new CustomFieldDTO();
 				item.setJiraObject(cf, params);
 				return item;
@@ -110,7 +115,12 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		if (oldItem != null) {
 			original = (CustomFieldDTO) oldItem;
 		} else {
-			original = (CustomFieldDTO) findByDTO(newItem);
+			// Use mappedObject if provided, otherwise create as new object
+			if (newItem.getMappedObject() != null) {
+				original = (CustomFieldDTO) findByUniqueKey(newItem.getMappedObject().getUniqueKey());
+			} else {
+				original = null;
+			}
 		}
 		CustomFieldDTO src = (CustomFieldDTO) newItem;
 		CustomFieldTypeDTO fieldType = (CustomFieldTypeDTO) CUSTOM_FIELD_TYPE_UTIL.findByDTO(
@@ -317,6 +327,46 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					continue;
 				}
 				result.put(dto.getUniqueKey(), dto);
+			}
+		}
+		return result;
+	}
+	
+	private static final String DELIMITER = ".";
+	
+	// Specific API for CustomFieldDTO
+	public String makeUniqueKey(String id, String name, String description, CustomFieldTypeDTO customFieldType) {
+		StringBuilder result = new StringBuilder();
+		result
+			.append(id).append(DELIMITER)
+			.append(name).append(DELIMITER)
+			.append(customFieldType.getName());
+		return result.toString();
+	}
+	
+	@Override
+	public boolean isManualMatch() {
+		return true;
+	}
+	
+	@Override
+	public List<JiraConfigDTO> findUniqueKeyMatches(DTOStore store, String uniqueKey) throws Exception {
+		List<JiraConfigDTO> result = new ArrayList<>();
+		// Parse unique key into parts
+		if (uniqueKey != null) {
+			String[] parts = uniqueKey.split(Pattern.quote(DELIMITER));
+			if (parts != null && parts.length == 3) {
+				String name = parts[1];
+				String type = parts[2];
+				// Find items with matching name and custom field type
+				Map<String, JiraConfigDTO> dtoMap = store.getTypeStore(this);
+				for (JiraConfigDTO dto : dtoMap.values()) {
+					CustomFieldDTO cf = (CustomFieldDTO) dto;
+					if (cf.getName().equals(name) && 
+						cf.getCustomFieldType().getName().equals(type)) {
+						result.add(cf);
+					}
+				}
 			}
 		}
 		return result;

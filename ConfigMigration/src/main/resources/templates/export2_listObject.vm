@@ -1,0 +1,103 @@
+<!-- Matching pairs of data -->
+#foreach ($key in $keyGuide.getValue())
+	#set ($exportStore = $action.getExportStore().getTypeStore($util))
+	#set ($exportObj = $false)
+	#set ($importStore = $action.getImportStore().getTypeStore($util))
+	#set ($importObj = $false)
+	#if ($exportStore.containsKey($key))
+		#set ($exportObj = $exportStore.get($key))
+		#if (!$util.matchFilter($exportObj, $action.getExportFilter()))
+			#set ($exportObj = $false)
+		#end
+	#end
+	#if ($importStore.containsKey($key))
+		#set ($importObj = $importStore.get($key))
+		#if (!$util.matchFilter($importObj, $action.getImportFilter()))
+			#set ($importObj = $false)
+		#end
+	#end
+	#if ($exportObj || $importObj)
+		<tr>
+			#if ($exportObj)
+				#if ($exportObj.isSelected())
+					#set ($checked = "checked")
+				#else
+					#set ($checked = "")
+				#end
+				#if ($exportObj.getUniqueKey() == $action.getViewExportUniqueKey()) 
+					#set ($scrollIntoView = "scrollIntoView")
+				#else
+					#set ($scrollIntoView = "")
+				#end
+				<td>
+					#if (!$util.isReadOnly() && $exportObj.getInternalId() != $null && !$util.isDefaultObject($exportObj))
+						<input 	type="checkbox" 
+								class="$!{exportClass} export"
+								$!{checked}
+								util="$!{util.getImplementation()}"
+								uniqueKey="$!{exportObj.getUniqueKey()}"
+								onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
+					#end
+				</td>
+				<td>
+					<a 	href="#" 
+						$!{scrollIntoView}
+						onclick="view(
+							true,
+							'$!{util.getImplementation()}', 
+							'$!{exportObj.getUniqueKeyJS()}')">
+						#if ($exportObj.getConfigName())
+							$!{exportObj.getConfigName()}
+						#else
+							(Default)
+						#end
+					</a>
+				</td>
+			#else
+				#if ($importObj) 
+					<td/><td/>
+				#end
+			#end
+			#if ($importObj)
+				#if ($importObj.isSelected())
+					#set ($checked = "checked")
+				#else
+					#set ($checked = "")
+				#end
+				#if ($importObj.getUniqueKey() == $action.getViewImportUniqueKey()) 
+					#set ($scrollIntoView = "scrollIntoView")
+				#else
+					#set ($scrollIntoView = "")
+				#end
+				<td>
+					#if (!$util.isReadOnly() && $importObj.getInternalId() != $null && !$util.isDefaultObject($importObj))
+						<input 	type="checkbox" 
+								class="$!{importClass} import"
+								$!{checked}
+								util="$!{util.getImplementation()}"
+								uniqueKey="$!{importObj.getUniqueKey()}"
+								onchange="updateSelection(false, this, null, '${importAllClass}')"/>
+					#end
+				</td>
+				<td>
+					<a 	href="#" 
+						$!{scrollIntoView}
+						onclick="view(
+							false,
+							'$!{util.getImplementation()}', 
+							'$!{importObj.getUniqueKeyJS()}')">
+						#if ($importObj.getConfigName())
+							$!{importObj.getConfigName()}
+						#else
+							(Default)
+						#end
+					</a>
+				</td>
+			#else
+				#if ($exportObj)
+					<td/><td/>
+				#end
+			#end
+		</tr>
+	#end
+#end

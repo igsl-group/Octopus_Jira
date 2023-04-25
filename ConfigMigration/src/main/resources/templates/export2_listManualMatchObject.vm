@@ -1,0 +1,188 @@
+<!-- 
+	Use exportStore to sort items? 
+	What about new import items?
+	
+	Keep track of conflicts.	
+	Select all should work only if no conflict
+
+	Unique key means key guide will never line up items for manual match utils.
+	
+	On import side each item list out matches under itself
+	Additional checkbox to select mapped target so won't interfere with select all and auto-select
+	This way conflicts can be keep track of too
+	Parent page holds variable containing util list with conflicts, which can be used to show alerts
+-->
+
+<!-- Matching pairs of data -->
+#foreach ($key in $keyGuide.getValue())
+	#set ($exportStore = $action.getExportStore().getTypeStore($util))
+	#set ($exportObj = $false)
+	#set ($importStore = $action.getImportStore().getTypeStore($util))
+	#set ($importObj = $false)
+	#if ($exportStore.containsKey($key))
+		#set ($exportObj = $exportStore.get($key))
+		#if (!$util.matchFilter($exportObj, $action.getExportFilter()))
+			#set ($exportObj = $false)
+		#end
+	#end
+	#if ($importStore.containsKey($key))
+		#set ($importObj = $importStore.get($key))
+		#if (!$util.matchFilter($importObj, $action.getImportFilter()))
+			#set ($importObj = $false)
+		#end
+	#end
+	#if ($exportObj || $importObj)
+		<tr>
+			#if ($exportObj)
+				#if ($exportObj.isSelected())
+					#set ($checked = "checked")
+				#else
+					#set ($checked = "")
+				#end
+				#if ($exportObj.getUniqueKey() == $action.getViewExportUniqueKey()) 
+					#set ($scrollIntoView = "scrollIntoView")
+				#else
+					#set ($scrollIntoView = "")
+				#end
+				<td>
+					#if (!$util.isReadOnly() && $exportObj.getInternalId() != $null && !$util.isDefaultObject($exportObj))
+						<input 	type="checkbox" 
+								class="$!{exportClass} export"
+								$!{checked}
+								util="$!{util.getImplementation()}"
+								uniqueKey="$!{exportObj.getUniqueKey()}"
+								onchange="updateSelection(true, this, null, '${exportAllClass}')"/>
+					#end
+				</td>
+				<td>
+					<a 	href="#" 
+						$!{scrollIntoView}
+						onclick="view(
+							true,
+							'$!{util.getImplementation()}', 
+							'$!{exportObj.getUniqueKeyJS()}')">
+						#if ($exportObj.getConfigName())
+							$!{exportObj.getConfigName()}
+						#else
+							(Default)
+						#end
+					</a>
+				</td>
+			#else
+				#if ($importObj) 
+					<td/><td/>
+				#end
+			#end
+			#if ($importObj)
+				#if ($importObj.isSelected())
+					#set ($checked = "checked")
+				#else
+					#set ($checked = "")
+				#end
+				#if ($importObj.getUniqueKey() == $action.getViewImportUniqueKey()) 
+					#set ($scrollIntoView = "scrollIntoView")
+				#else
+					#set ($scrollIntoView = "")
+				#end
+				<td>
+					#if (!$util.isReadOnly() && $importObj.getInternalId() != $null && !$util.isDefaultObject($importObj))
+						<input 	type="checkbox" 
+								class="$!{importClass} import"
+								$!{checked}
+								util="$!{util.getImplementation()}"
+								uniqueKey="$!{importObj.getUniqueKey()}"
+								onchange="updateSelection(false, this, null, '${importAllClass}')"/>
+					#end
+				</td>
+				<td>
+					<a 	href="#" 
+						$!{scrollIntoView}
+						onclick="view(
+							false,
+							'$!{util.getImplementation()}', 
+							'$!{importObj.getUniqueKeyJS()}')">
+						#if ($importObj.getConfigName())
+							$!{importObj.getConfigName()}
+						#else
+							(Default)
+						#end
+					</a>
+					<!-- 
+						Show matching export objects here 
+						With checkboxes to select mappedObject and indicate conflict
+					-->
+					#set ($targetList = $util.findUniqueKeyMatches($action.getExportStore(), $importObj.getUniqueKey()))
+					#if ($targetList.size() > 1)
+						#if (!$conflictWarnings.contains($util.getName()))
+							$conflictWarnings.add($util.getName())
+						#end
+						<table>
+							<tr>
+								<td width="5%">
+									#if ($importObj.getMappedObject())
+										#set ($checked = "")
+									#else
+										#set ($checked = "checked")
+									#end
+									<input 	type="radio"
+											name="$!{importObj.getUniqueKey()}" 
+											$!{checked}
+											util="$!{util.getImplementation()}"
+											uniqueKey="$!{importObj.getUniqueKey()}"
+											targetKey=""
+											configName="$!{importObj.getConfigName()}"
+											onchange="updateTarget(this)"/>
+								</td>
+								<td width="95%">
+									Create as New Object
+								</td>
+							</tr>
+							#foreach ($dto in $targetList)
+								<tr>
+									<td width="5%">
+										#if ($importObj.getMappedObject().getUniqueKey() == $dto.getUniqueKey())
+											#set ($checked = "checked")
+										#else
+											#set ($checked = "")
+										#end
+										<input 	type="radio"
+												name="$!{importObj.getUniqueKey()}" 
+												$!{checked}
+												class="targetMapping"
+												util="$!{util.getImplementation()}"
+												uniqueKey="$!{importObj.getUniqueKey()}"
+												targetKey="$!{dto.getUniqueKey()}"
+												configName="$!{importObj.getConfigName()}"
+												onchange="updateTarget(this)"/>
+									</td>
+									<td width="95%">
+										<a 	href="#" 
+											$!{scrollIntoView}
+											onclick="view(
+												true,
+												'$!{util.getImplementation()}', 
+												'$!{dto.getUniqueKeyJS()}')">
+											#if ($dto.getConfigName())
+												$!{dto.getConfigName()}
+											#else
+												(Default)
+											#end
+										</a>
+									</td>
+								</tr>
+							#end
+						</table>
+					#else
+						#if ($targetList.size() == 1)
+							$importObj.setMappedObject($targetList.get(0))
+						#end					
+					#end
+				</td>
+			#else
+				#if ($exportObj)
+					<td/><td/>
+				#end
+			#end
+		</tr>
+	#end
+#end
