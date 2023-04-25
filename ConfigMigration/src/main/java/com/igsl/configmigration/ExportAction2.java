@@ -219,30 +219,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 	 * Velocity template can then use the key list to list both stores with matching items aligned.
 	 * @return Map<String, Set<String>>
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Map<JiraConfigUtil, Set<String>> getCompareKeyGuide() {
-		// TODO How to support CustomFieldDTO
-		Map<JiraConfigUtil, Set<String>> result = new LinkedHashMap<>();
+	public Map<JiraConfigUtil, List<KeyGuide>> getCompareKeyGuide() throws Exception {
+		Map<JiraConfigUtil, List<KeyGuide>> result = new LinkedHashMap<>();
 		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {	
-			List<JiraConfigDTO> list = new ArrayList<>();
-			// Compare using .getUniqueKey()
-			Comparator comparator = util.getComparator();
-			Map<String, JiraConfigDTO> exportStore = this.data.exportStore.getTypeStore(util);
-			if (exportStore != null) {
-				list.addAll(exportStore.values());
-			}
-			Map<String, JiraConfigDTO> importStore = this.data.importStore.getTypeStore(util);
-			if (importStore != null) {
-				list.addAll(importStore.values());
-			}
-			if (comparator != null) {
-				list.sort(comparator);
-			}
-			HashSet<String> keySet = new LinkedHashSet<>();
-			for (JiraConfigDTO dto : list) {
-				keySet.add(dto.getUniqueKey());
-			}
-			result.put(util, keySet);
+			result.put(util, util.getCompareGuide(this.data.exportStore, this.data.importStore));
 		}
 		return result;
 	}

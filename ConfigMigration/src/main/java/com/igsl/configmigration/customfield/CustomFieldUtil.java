@@ -2,7 +2,10 @@ package com.igsl.configmigration.customfield;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,6 +35,7 @@ import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.KeyGuide;
 import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherDTO;
 import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
@@ -368,6 +372,33 @@ public class CustomFieldUtil extends JiraConfigUtil {
 					}
 				}
 			}
+		}
+		return result;
+	}
+
+	@Override
+	public List<KeyGuide> getCompareGuide(DTOStore exportStore, DTOStore importStore) throws Exception {
+		List<KeyGuide> result = new ArrayList<>();
+		List<JiraConfigDTO> exportList = new ArrayList<>();
+		exportList.addAll(exportStore.getTypeStore(this).values());
+		List<JiraConfigDTO> importList = new ArrayList<>();
+		importList.addAll(importStore.getTypeStore(this).values());
+		// Go through exportList, removing importList items if a single match is found
+		for (JiraConfigDTO exportObj : exportList) {
+			KeyGuide kg = new KeyGuide();
+			kg.exportUniqueKey = exportObj.getUniqueKey();
+			List<JiraConfigDTO> list = findUniqueKeyMatches(importStore, exportObj.getUniqueKey());
+			if (list.size() == 1) {
+				kg.importUniqueKey = list.get(0).getUniqueKey();
+				importList.remove(list.get(0));
+			}
+			result.add(kg);
+		}
+		// Then add remaining importList items to list
+		for (JiraConfigDTO importObj : importList) {
+			KeyGuide kg = new KeyGuide();
+			kg.importUniqueKey = importObj.getUniqueKey();
+			result.add(kg);
 		}
 		return result;
 	}

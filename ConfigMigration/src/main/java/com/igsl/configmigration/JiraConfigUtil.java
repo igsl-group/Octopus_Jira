@@ -6,9 +6,12 @@ import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 
@@ -396,6 +399,46 @@ public abstract class JiraConfigUtil {
 	 */
 	public List<JiraConfigDTO> findUniqueKeyMatches(DTOStore store, String uniqueKey) throws Exception {
 		List<JiraConfigDTO> result = new ArrayList<>();
+		return result;
+	}
+	
+	/**
+	 * Get compare key guide for pairing up export and import objects.
+	 * Default implementation is based on uniqueKey and sorted using JiraConfigUtil.getComparator().
+	 * Override as needed.
+	 * @param exportStore DTOStore
+	 * @param importStore DTOStore
+	 * @return List of KeyGuide
+	 */
+	public List<KeyGuide> getCompareGuide(DTOStore exportStore, DTOStore importStore) throws Exception {
+		List<KeyGuide> result = new ArrayList<>();
+		List<JiraConfigDTO> list = new ArrayList<>();
+		Comparator comparator = this.getComparator();
+		Map<String, JiraConfigDTO> exportMap = exportStore.getTypeStore(this);
+		if (exportStore != null) {
+			list.addAll(exportMap.values());
+		}
+		Map<String, JiraConfigDTO> importMap = importStore.getTypeStore(this);
+		if (importStore != null) {
+			list.addAll(importMap.values());
+		}
+		if (comparator != null) {
+			list.sort(comparator);
+		}
+		HashSet<String> keySet = new LinkedHashSet<>();
+		for (JiraConfigDTO dto : list) {
+			keySet.add(dto.getUniqueKey());
+		}
+		for (String s : keySet) {
+			KeyGuide kg = new KeyGuide();
+			if (exportMap.containsKey(s)) {
+				kg.exportUniqueKey = s;
+			}
+			if (importMap.containsKey(s)) {
+				kg.importUniqueKey = s;
+			}
+			result.add(kg);
+		}
 		return result;
 	}
 }
