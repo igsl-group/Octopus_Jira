@@ -43,6 +43,8 @@ import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeDTO;
 import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
 import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsDTO;
+import com.igsl.configmigration.field.FieldDTO;
+import com.igsl.configmigration.field.FieldUtil;
 import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
 import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.insight.ObjectBeanDTO;
@@ -429,4 +431,66 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		return result;
 	}
 
+	/**
+	 * Resolve field ID.
+	 * systemField or customField must be non-null.
+	 * 
+	 * CustomField is used if non-null.
+	 * It will be looked up in importStore. 
+	 * If there is mappedObject, it will be used. 
+	 * If not, it will be looked up in exportStore for a single match.
+	 * 
+	 * @param exportStore Export store
+	 * @param importStore Import store
+	 * @param systemField FieldDTO
+	 * @param customField CustomFieldDTO
+	 * @return String field ID. Null if not found.
+	 * @throws Exception
+	 */
+	public String resolveFieldId(
+			DTOStore exportStore, DTOStore importStore, 
+			FieldDTO systemField, CustomFieldDTO customField) throws Exception {
+		String fieldId = null;
+		FieldUtil fieldUtil = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
+		if (customField != null) {
+			LOGGER.debug("Custom field");
+			// Look up custom field in importStore to find if there is a mappedObject
+			Map<String, String> params = new HashMap<>();
+			params.put(CustomFieldUtil.MATCH_ID, customField.getId());
+			List<JiraConfigDTO> list = findMatches(importStore, params);
+			if (list != null && list.size() == 1) {
+				LOGGER.debug("Custom field found by ID");
+				CustomFieldDTO dto = (CustomFieldDTO) list.get(0);
+				if (dto.getMappedObject() != null) {
+					LOGGER.debug("Using mapped object");
+					// Use mapped object
+					dto = (CustomFieldDTO) findByUniqueKey(dto.getMappedObject().getUniqueKey());
+					if (dto != null) {
+						LOGGER.debug("Mapped object found");
+						fieldId = dto.getId();
+					}
+				} else {
+					// Lookup for single match
+					LOGGER.debug("Using single match");
+					params.clear();
+					params.put(CustomFieldUtil.MATCH_NAME, customField.getName());
+					list = findMatches(exportStore, params);
+					if (list != null && list.size() == 1) {
+						LOGGER.debug("Single match found");
+						fieldId = ((CustomFieldDTO) list.get(0)).getId();
+					}
+				}
+			}
+		} else if (systemField != null) {
+			LOGGER.debug("System field");
+			// Look up system field
+			FieldDTO field = (FieldDTO) fieldUtil.findByDTO(systemField);
+			if (field != null) {
+				fieldId = field.getId();
+			}
+		}
+		LOGGER.debug("Final Field ID: " + fieldId);
+		return fieldId;
+	}
+	
 }

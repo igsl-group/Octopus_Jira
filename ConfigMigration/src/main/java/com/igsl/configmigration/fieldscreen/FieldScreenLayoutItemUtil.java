@@ -81,45 +81,7 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		FieldUtil fieldUtil = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
 		// Check importStore for CustomField mapping
 		CustomFieldUtil cfUtil = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil((CustomFieldUtil.class));
-		String fieldId = null;
-		if (src.getCustomField() != null) {
-			LOGGER.debug("Custom field");
-			// Look up custom field in importStore to find if there is a mappedObject
-			Map<String, String> params = new HashMap<>();
-			params.put(CustomFieldUtil.MATCH_ID, src.getCustomField().getId());
-			List<JiraConfigDTO> list = cfUtil.findMatches(importStore, params);
-			if (list != null && list.size() == 1) {
-				LOGGER.debug("Custom field found by ID");
-				CustomFieldDTO dto = (CustomFieldDTO) list.get(0);
-				if (dto.getMappedObject() != null) {
-					LOGGER.debug("Using mapped object");
-					// Use mapped object
-					dto = (CustomFieldDTO) cfUtil.findByUniqueKey(dto.getMappedObject().getUniqueKey());
-					if (dto != null) {
-						LOGGER.debug("Mapped object found");
-						fieldId = dto.getId();
-					}
-				} else {
-					// Lookup for single match
-					LOGGER.debug("Using single match");
-					params.clear();
-					params.put(CustomFieldUtil.MATCH_NAME, src.getCustomField().getName());
-					list = cfUtil.findMatches(exportStore, params);
-					if (list != null && list.size() == 1) {
-						LOGGER.debug("Single match found");
-						fieldId = ((CustomFieldDTO) list.get(0)).getId();
-					}
-				}
-			}
-		} else {
-			LOGGER.debug("System field");
-			// Look up system field
-			FieldDTO field = (FieldDTO) fieldUtil.findByDTO(src.getSystemField());
-			if (field != null) {
-				fieldId = field.getId();
-			}
-		}
-		LOGGER.debug("Final Field ID: " + fieldId);
+		String fieldId = cfUtil.resolveFieldId(exportStore, importStore, src.getSystemField(), src.getCustomField());
 		if (fieldId != null) {
 			if (original != null) {
 				// Update
