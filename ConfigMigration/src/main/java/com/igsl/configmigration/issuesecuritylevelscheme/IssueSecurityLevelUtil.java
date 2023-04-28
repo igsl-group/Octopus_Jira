@@ -12,6 +12,7 @@ import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -54,7 +55,9 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		IssueSecurityLevelDTO original = null;
 		if (oldItem != null) {

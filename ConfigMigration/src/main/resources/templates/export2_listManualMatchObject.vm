@@ -111,10 +111,11 @@
 						Show matching export objects here 
 						With checkboxes to select mappedObject and indicate conflict
 					-->
-					#set ($targetList = $util.findUniqueKeyMatches($action.getExportStore(), $importObj.getUniqueKey()))
+					#set ($params = {"name": $importObj.getName(), "customFieldType": $importObj.getCustomFieldType().getName()})
+					#set ($targetList = $util.findMatches($action.getExportStore(), $params))
 					#if ($targetList.size() > 1)
 						#if (!$conflictWarnings.contains($util.getName()))
-							$conflictWarnings.add($util.getName())
+							#set ($temp = $conflictWarnings.add($util.getName()))
 						#end
 						<table>
 							<tr>
@@ -174,7 +175,7 @@
 						</table>
 					#else
 						#if ($targetList.size() == 1)
-							$importObj.setMappedObject($targetList.get(0))
+							#set ($temp = $importObj.setMappedObject($targetList.get(0)))
 						#end					
 					#end
 				</td>

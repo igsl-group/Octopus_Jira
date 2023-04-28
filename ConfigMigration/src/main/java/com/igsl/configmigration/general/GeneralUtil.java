@@ -3,6 +3,7 @@ package com.igsl.configmigration.general;
 import java.util.Collections;
 import java.util.Map;
 
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -45,7 +46,9 @@ public class GeneralUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("General is read only");
 	}
 

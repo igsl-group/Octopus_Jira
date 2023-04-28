@@ -12,6 +12,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -68,7 +69,9 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("Not implemented");
 	}
 

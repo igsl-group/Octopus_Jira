@@ -11,6 +11,7 @@ import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.managers.CustomFieldSearcherManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -51,7 +52,9 @@ public class CustomFieldSearcherUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		throw new Exception("CustomFieldSearcher is read only");
 	}
 	

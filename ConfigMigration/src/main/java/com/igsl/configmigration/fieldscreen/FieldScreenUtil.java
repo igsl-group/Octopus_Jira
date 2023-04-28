@@ -13,6 +13,7 @@ import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -54,7 +55,9 @@ public class FieldScreenUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		FieldScreenDTO original = null;
 		if (oldItem != null) {
@@ -95,7 +98,7 @@ public class FieldScreenUtil extends JiraConfigUtil {
 				JiraConfigTypeRegistry.getConfigUtil(FieldScreenTabUtil.class);
 		for (FieldScreenTabDTO tab : src.getTabs()) {
 			tab.setJiraObject(null, created);
-			tabUtil.merge(null, tab);
+			tabUtil.merge(exportStore, null, importStore, tab);
 		}
 		return result;
 	}

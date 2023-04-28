@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -105,7 +106,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		final CustomFieldTypeUtil CUSTOM_FIELD_TYPE_UTIL = 
 				(CustomFieldTypeUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldTypeUtil.class);
@@ -199,7 +202,8 @@ public class CustomFieldUtil extends JiraConfigUtil {
 				for (OptionDTO opt : src.getOptions().getRootOptions()) {
 					// Update option's FieldConfig
 					opt.setJiraObject(null, configDTO, null);
-					OptionDTO createdOption = (OptionDTO) OPTION_UTIL.merge(null, opt).getNewDTO();
+					OptionDTO createdOption = (OptionDTO) 
+							OPTION_UTIL.merge(exportStore, null, importStore, opt).getNewDTO();
 					LOGGER.debug("merged option raw: " + createdOption.getJiraObject());
 					opt.setJiraObject(createdOption.getJiraObject(), configDTO, null);
 				}
@@ -219,6 +223,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 			CustomFieldDTO created = new CustomFieldDTO();
 			created.setJiraObject(createdJira);
 			result.setNewDTO(created);
+			// Update mappedObject in DTOStore
+			JiraConfigDTO storeSrc = importStore.getTypeStore(this.getImplementation()).get(src.getUniqueKey());
+			storeSrc.setMappedObject(created);
 		}
 		return result;
 	}
@@ -353,24 +360,41 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		return true;
 	}
 	
+	public static final String MATCH_ID = "id";
+	public static final String MATCH_UNIQUEKEY = "uniqueKey";
+	public static final String MATCH_NAME = "name";
+	public static final String MATCH_CUSTOMFIELDTYPE = "customFieldType";
+	
 	@Override
-	public List<JiraConfigDTO> findUniqueKeyMatches(DTOStore store, String uniqueKey) throws Exception {
+	public List<JiraConfigDTO> findMatches(DTOStore store, Map<String, String> params) throws Exception {
 		List<JiraConfigDTO> result = new ArrayList<>();
 		// Parse unique key into parts
-		if (uniqueKey != null) {
-			String[] parts = uniqueKey.split(Pattern.quote(DELIMITER));
-			if (parts != null && parts.length == 3) {
-				String name = parts[1];
-				String type = parts[2];
-				// Find items with matching name and custom field type
-				Map<String, JiraConfigDTO> dtoMap = store.getTypeStore(this);
-				for (JiraConfigDTO dto : dtoMap.values()) {
-					CustomFieldDTO cf = (CustomFieldDTO) dto;
-					if (cf.getName().equals(name) && 
-						cf.getCustomFieldType().getName().equals(type)) {
-						result.add(cf);
-					}
+		if (params != null) {
+			String id = params.get(MATCH_ID);
+			String uniqueKey = params.get(MATCH_UNIQUEKEY);
+			String name = params.get(MATCH_NAME);
+			String customFieldType = params.get(MATCH_CUSTOMFIELDTYPE);
+			LOGGER.debug("id: " + id);
+			LOGGER.debug("uniqueKey: " + uniqueKey);
+			LOGGER.debug("name: " + name);
+			LOGGER.debug("customFieldType: " + customFieldType);
+			// Find items with matching name and custom field type
+			Map<String, JiraConfigDTO> dtoMap = store.getTypeStore(this);
+			for (JiraConfigDTO dto : dtoMap.values()) {
+				CustomFieldDTO cf = (CustomFieldDTO) dto;
+				if (id != null && !cf.getId().equals(id)) {
+					continue;
 				}
+				if (uniqueKey != null && !cf.getUniqueKey().equals(uniqueKey)) {
+					continue;
+				}
+				if (name != null && !cf.getName().equals(name)) {
+					continue;
+				}
+				if (customFieldType != null && !cf.getCustomFieldType().getName().equals(customFieldType)) {
+					continue;
+				}
+				result.add(cf);
 			}
 		}
 		return result;
@@ -387,7 +411,9 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		for (JiraConfigDTO exportObj : exportList) {
 			KeyGuide kg = new KeyGuide();
 			kg.exportUniqueKey = exportObj.getUniqueKey();
-			List<JiraConfigDTO> list = findUniqueKeyMatches(importStore, exportObj.getUniqueKey());
+			Map<String, String> params = new HashMap<>();
+			params.put(MATCH_UNIQUEKEY, exportObj.getUniqueKey());
+			List<JiraConfigDTO> list = findMatches(importStore, params);
 			if (list.size() == 1) {
 				kg.importUniqueKey = list.get(0).getUniqueKey();
 				importList.remove(list.get(0));

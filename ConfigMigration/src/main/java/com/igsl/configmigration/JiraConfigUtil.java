@@ -219,12 +219,16 @@ public abstract class JiraConfigUtil {
 	
 	/**
 	 * Merge items. 
+	 * @param exportStore DTOStore containing the current items.
 	 * @param oldItem Existing item from calling find(), can be null. If non-null, .getJiraObject() is non-null.
+	 * @param importStore DTOStore containing the import items.
 	 * @param newItem New item. .getJiraObject() will be null.
 	 * @return Item after merge.
 	 * @throws Exception
 	 */
-	public abstract MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception;
+	public abstract MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception;
 	
 	public static final String printException(Throwable t) {
 		StringBuilder sb = new StringBuilder();
@@ -257,11 +261,12 @@ public abstract class JiraConfigUtil {
 	 * @param items Map of ImportData to be merged.
 	 * @throws Exception
 	 */
-	public final void merge(Map<String, ImportData> items) throws Exception {
+	public final void merge(DTOStore exportStore, DTOStore importStore, Map<String, ImportData> items) 
+			throws Exception {
 		if (items != null) {
 			for (ImportData data : items.values()) {
 				try {
-					MergeResult result = merge(data.getServer(), data.getData());
+					MergeResult result = merge(exportStore, data.getServer(), importStore, data.getData());
 					data.setServer(result.getNewDTO());
 					data.setImportResult("Updated");
 				} catch (Exception ex) {
@@ -394,10 +399,10 @@ public abstract class JiraConfigUtil {
 	 * Default implementation returns empty list.
 	 * 
 	 * @param store DTOStore to find matches from.
-	 * @param uniqueKey Unique key to match against.
-	 * @return List of JiraConfigDTO with matching unique key.
+	 * @param params Map of parameters to match against. Depends on implementation.
+	 * @return List of JiraConfigDTO with matching data.
 	 */
-	public List<JiraConfigDTO> findUniqueKeyMatches(DTOStore store, String uniqueKey) throws Exception {
+	public List<JiraConfigDTO> findMatches(DTOStore store, Map<String, String> params) throws Exception {
 		List<JiraConfigDTO> result = new ArrayList<>();
 		return result;
 	}

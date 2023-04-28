@@ -11,6 +11,7 @@ import com.atlassian.jira.project.ProjectCategoryImpl;
 import com.atlassian.jira.project.ProjectManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -50,7 +51,9 @@ public class ProjectCategoryUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		ProjectCategoryDTO original = null;
 		if (oldItem != null) {

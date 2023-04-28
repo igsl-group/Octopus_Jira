@@ -1,5 +1,7 @@
 package com.igsl.configmigration.fieldscreen;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -13,10 +15,13 @@ import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
+import com.igsl.configmigration.customfield.CustomFieldDTO;
+import com.igsl.configmigration.customfield.CustomFieldUtil;
 import com.igsl.configmigration.field.FieldDTO;
 import com.igsl.configmigration.field.FieldUtil;
 
@@ -59,7 +64,9 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		FieldScreenLayoutItemDTO original = null;
 		if (oldItem != null) {
@@ -72,30 +79,73 @@ public class FieldScreenLayoutItemUtil extends JiraConfigUtil {
 		FieldScreenTabDTO tab = (FieldScreenTabDTO) src.getObjectParameters()[0];
 		FieldScreenLayoutItem createdJira = null;
 		FieldUtil fieldUtil = (FieldUtil) JiraConfigTypeRegistry.getConfigUtil(FieldUtil.class);
-		FieldDTO field = (FieldDTO) fieldUtil.findByDTO(src.getField());
-		if (field != null) {
+		// Check importStore for CustomField mapping
+		CustomFieldUtil cfUtil = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil((CustomFieldUtil.class));
+		String fieldId = null;
+		if (src.getCustomField() != null) {
+			LOGGER.debug("Custom field");
+			// Look up custom field in importStore to find if there is a mappedObject
+			Map<String, String> params = new HashMap<>();
+			params.put(CustomFieldUtil.MATCH_ID, src.getCustomField().getId());
+			List<JiraConfigDTO> list = cfUtil.findMatches(importStore, params);
+			if (list != null && list.size() == 1) {
+				LOGGER.debug("Custom field found by ID");
+				CustomFieldDTO dto = (CustomFieldDTO) list.get(0);
+				if (dto.getMappedObject() != null) {
+					LOGGER.debug("Using mapped object");
+					// Use mapped object
+					dto = (CustomFieldDTO) cfUtil.findByUniqueKey(dto.getMappedObject().getUniqueKey());
+					if (dto != null) {
+						LOGGER.debug("Mapped object found");
+						fieldId = dto.getId();
+					}
+				} else {
+					// Lookup for single match
+					LOGGER.debug("Using single match");
+					params.clear();
+					params.put(CustomFieldUtil.MATCH_NAME, src.getCustomField().getName());
+					list = cfUtil.findMatches(exportStore, params);
+					if (list != null && list.size() == 1) {
+						LOGGER.debug("Single match found");
+						fieldId = ((CustomFieldDTO) list.get(0)).getId();
+					}
+				}
+			}
+		} else {
+			LOGGER.debug("System field");
+			// Look up system field
+			FieldDTO field = (FieldDTO) fieldUtil.findByDTO(src.getSystemField());
+			if (field != null) {
+				fieldId = field.getId();
+			}
+		}
+		LOGGER.debug("Final Field ID: " + fieldId);
+		if (fieldId != null) {
 			if (original != null) {
 				// Update
-				originalJira.setFieldId(field.getId());
+				originalJira.setFieldId(fieldId);
 				originalJira.setFieldScreenTab((FieldScreenTab) tab.getJiraObject());
 				originalJira.setPosition(src.getPosition());
-				LOGGER.debug("Update Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
+				LOGGER.debug("Update Field Id: " + fieldId + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.updateFieldScreenLayoutItem(originalJira);
 				createdJira = originalJira;
 			} else {
 				// Create
 				createdJira = new FieldScreenLayoutItemImpl(MANAGER, FIELD_MANAGER);
-				createdJira.setFieldId(field.getId());
+				createdJira.setFieldId(fieldId);
 				createdJira.setFieldScreenTab((FieldScreenTab) tab.getJiraObject());
 				createdJira.setPosition(src.getPosition());
-				LOGGER.debug("Create Field Id: " + field.getId() + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
+				LOGGER.debug("Create Field Id: " + fieldId + ", Tab: " + tab.getId() + ", Pos: " + src.getPosition());
 				MANAGER.createFieldScreenLayoutItem(createdJira);
 			}
 			FieldScreenLayoutItemDTO created = new FieldScreenLayoutItemDTO();
 			created.setJiraObject(createdJira, tab);
 			result.setNewDTO(created);
 		} else {
-			LOGGER.error("Field " + src.getField().getUniqueKey() + " cannot be found, excluded from tab " + tab.getName());
+			String target = (src.getCustomField() == null)? 
+								src.getSystemField().getUniqueKey() : 
+								src.getCustomField().getUniqueKey();
+			LOGGER.error("Field " + target + " cannot be found, excluded from tab " + tab.getName());
 			result.addWarning(
 					"Field \"" + src.getConfigName() + 
 					"\" cannot be found, excluded from tab \"" + tab.getConfigName() + "\"");

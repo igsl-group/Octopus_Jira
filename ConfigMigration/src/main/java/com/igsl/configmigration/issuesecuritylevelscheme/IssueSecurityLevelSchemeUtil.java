@@ -15,6 +15,7 @@ import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
 import com.atlassian.jira.scheme.Scheme;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -59,7 +60,9 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 	}
 	
 	@SuppressWarnings("deprecation")
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		final IssueSecurityLevelUtil LEVEL_UTIL = 
 				(IssueSecurityLevelUtil) JiraConfigTypeRegistry.getConfigUtil(IssueSecurityLevelUtil.class);
@@ -97,7 +100,7 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
 				item.setSchemeId(id);
 				item.setJiraObject(null, created);
-				MergeResult mr = LEVEL_UTIL.merge(null, item);
+				MergeResult mr = LEVEL_UTIL.merge(exportStore, null, importStore, item);
 				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) mr.getNewDTO();
 				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
 					defaultLevel = level.getId();

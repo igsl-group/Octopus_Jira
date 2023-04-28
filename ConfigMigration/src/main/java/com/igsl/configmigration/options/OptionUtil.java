@@ -9,6 +9,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.customfields.manager.OptionsManager;
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -53,7 +54,9 @@ public class OptionUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		Option created = null;
 		OptionDTO src = (OptionDTO) oldItem;
@@ -79,7 +82,7 @@ public class OptionUtil extends JiraConfigUtil {
 			for (OptionDTO child : tar.getChildOptions()) {
 				child.setJiraObject(null, fieldConfig, created.getOptionId());
 				child.setParentId(created.getOptionId());
-				OptionDTO createdChild = (OptionDTO) merge(null, child).getNewDTO();
+				OptionDTO createdChild = (OptionDTO) merge(exportStore, null, importStore, child).getNewDTO();
 			}
 		}
 		tar.setJiraObject(created, fieldConfig, parentId);

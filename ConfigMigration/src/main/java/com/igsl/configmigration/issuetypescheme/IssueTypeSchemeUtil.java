@@ -15,6 +15,7 @@ import com.atlassian.jira.issue.fields.option.OptionSet;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -68,7 +69,9 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 	}
 
 	@Override
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		final OptionSetUtil OPTION_SET_UTIL = 
 				(OptionSetUtil) JiraConfigTypeRegistry.getConfigUtil(OptionSetUtil.class);
@@ -92,7 +95,7 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 			}
 		}
 		if (original != null) {
-			FIELD_CONFIG_UTIL.merge(original.getFieldConfig(), src.getFieldConfig());
+			FIELD_CONFIG_UTIL.merge(exportStore, original.getFieldConfig(), importStore, src.getFieldConfig());
 			List<String> optionIds = new ArrayList<>();
 			for (IssueTypeDTO issueType : src.getAssociatedIssueTypes()) {
 				if (!ISSUE_TYPE_UTIL.isDefaultObject(issueType)) {
@@ -111,7 +114,7 @@ public class IssueTypeSchemeUtil extends JiraConfigUtil {
 			MANAGER.addProjectAssociations(updatedJira, projects);
 		} else {
 			FieldConfigDTO fc = src.getFieldConfig();
-			FIELD_CONFIG_UTIL.merge(null, src.getFieldConfig());
+			FIELD_CONFIG_UTIL.merge(exportStore, null, importStore, src.getFieldConfig());
 			List<String> optionIds = new ArrayList<>();
 			for (IssueTypeDTO issueType : src.getAssociatedIssueTypes()) {
 				IssueTypeDTO dto = (IssueTypeDTO) ISSUE_TYPE_UTIL.findByDTO(issueType);

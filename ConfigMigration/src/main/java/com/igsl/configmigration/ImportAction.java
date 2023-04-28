@@ -216,7 +216,7 @@ public class ImportAction extends JiraWebActionSupport {
 					if (itemList.size() != 0) {
 						this.debug += util.getName() + " importing: " + OM.writeValueAsString(itemList) + "\n";
 						try {
-							util.merge(itemList);
+							util.merge(null, null, itemList);
 						} catch (Exception ex) {
 							this.debug += JiraConfigUtil.printException(ex);
 						}

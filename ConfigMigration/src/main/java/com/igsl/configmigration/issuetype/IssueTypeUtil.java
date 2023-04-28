@@ -51,7 +51,9 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		return null;
 	}
 
-	public MergeResult merge(JiraConfigDTO oldItem, JiraConfigDTO newItem) throws Exception {
+	public MergeResult merge(
+			DTOStore exportStore, JiraConfigDTO oldItem, 
+			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
 		MergeResult result = new MergeResult();
 		IssueTypeDTO original = null;
 		if (oldItem != null) {
@@ -66,7 +68,8 @@ public class IssueTypeUtil extends JiraConfigUtil {
 		IssueTypeDTO src = (IssueTypeDTO) newItem;
 		// Avatar
 		AvatarUtil avatarUtil = new AvatarUtil();
-		AvatarDTO av = (AvatarDTO) avatarUtil.merge(null, src.getAvatarConfigItem()).getNewDTO();
+		AvatarDTO av = (AvatarDTO) avatarUtil.merge(
+				exportStore, null, importStore, src.getAvatarConfigItem()).getNewDTO();
 		if (original != null) {
 			// Update
 			ISSUE_MANAGER.updateIssueType(originalJira, src.getName(), src.getDescription(), av.getId());

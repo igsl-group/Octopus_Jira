@@ -318,7 +318,7 @@ public class ExportAction2 extends JiraWebActionSupport {
 	
 	private MergeResult merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
 		JiraConfigDTO oldObj = this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
-		return util.merge(oldObj, newObj);
+		return util.merge(this.data.exportStore, oldObj, this.data.importStore, newObj);
 	}
 	
 	private void clearExportView() {
