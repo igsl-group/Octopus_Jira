@@ -66,11 +66,11 @@ public class FieldLayoutSchemeEntityDTO extends JiraConfigDTO {
 		if (scheme != null) {
 			if (this.fieldLayout != null) {
 				scheme.addRelatedObject(this.fieldLayout);
-				this.fieldLayout.addRelatedObject(scheme);
+				this.fieldLayout.addReferencedObject(scheme);
 			}
 			if (this.issueType != null) {
-				scheme.addReferencedObject(this.issueType);
-				this.issueType.addRelatedObject(scheme);
+				scheme.addRelatedObject(this.issueType);
+				this.issueType.addReferencedObject(scheme);
 			}
 		}
 	}

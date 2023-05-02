@@ -43,16 +43,6 @@ public class FieldLayoutDTO extends JiraConfigDTO {
 	}
 	
 	@Override
-	protected void setupRelatedObjects() throws Exception {
-//		if (this.fieldLayoutItems != null) {
-//			for (FieldLayoutItemDTO dto : this.fieldLayoutItems) {
-//				addRelatedObject(dto);
-//				dto.addReferencedObject(this);
-//			}
-//		}
-	}
-	
-	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
 		Map<String, JiraConfigProperty> r = new TreeMap<>();
 		r.put("ID", new JiraConfigProperty(this.id));
