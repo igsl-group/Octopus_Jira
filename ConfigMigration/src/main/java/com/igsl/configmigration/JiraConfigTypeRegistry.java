@@ -23,6 +23,8 @@ import org.apache.log4j.Logger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.fieldlayout.FieldLayoutUtil;
+import com.igsl.configmigration.fieldlayoutscheme.FieldLayoutSchemeUtil;
 import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
 import com.igsl.configmigration.group.GroupUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
@@ -52,13 +54,15 @@ public class JiraConfigTypeRegistry {
 			IssueTypeUtil.class,
 			PriorityUtil.class,
 			ResolutionUtil.class,
-			IssueSecurityLevelSchemeUtil.class,
 			PluginUtil.class,
 			CustomFieldUtil.class,
 			FieldScreenUtil.class,
+			FieldLayoutUtil.class, 
 			WorkflowUtil.class,
 			ProjectCategoryUtil.class,
 			ProjectUtil.class,
+			IssueSecurityLevelSchemeUtil.class,
+			//FieldLayoutSchemeUtil.class,
 			IssueTypeSchemeUtil.class,
 			WorkflowSchemeUtil.class
 			);
