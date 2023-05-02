@@ -28,6 +28,7 @@ public class IssueTypeDTO extends JiraConfigDTO {
 	private AvatarDTO avatarConfigItem;
 	private String name;
 	private String id;
+	private boolean subTask;
 	
 	@Override
 	public void fromJiraObject(Object o) throws Exception {
@@ -43,6 +44,7 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		this.description = obj.getDescription();
 		this.name = obj.getName();
 		this.id = obj.getId();
+		this.subTask = obj.isSubTask();
 		this.uniqueKey = this.name;
 	}
 	
@@ -53,6 +55,7 @@ public class IssueTypeDTO extends JiraConfigDTO {
 		r.put("Description", new JiraConfigProperty(this.description));
 		r.put("Name", new JiraConfigProperty(this.name));
 		r.put("ID", new JiraConfigProperty(this.id));
+		r.put("Is Sub Task", new JiraConfigProperty(this.subTask));
 		return r;
 	}
 	
@@ -118,6 +121,14 @@ public class IssueTypeDTO extends JiraConfigDTO {
 	@Override
 	public Class<?> getJiraClass() {
 		return IssueType.class;
+	}
+
+	public boolean isSubTask() {
+		return subTask;
+	}
+
+	public void setSubTask(boolean subTask) {
+		this.subTask = subTask;
 	}
 
 }
