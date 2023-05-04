@@ -72,6 +72,7 @@ public abstract class JiraConfigDTO {
 	 * MAP_EXCLUDE_METHODS contains method names that are excluded by default.
 	 * @return List of String
 	 */
+	@Deprecated
 	protected abstract List<String> getCompareMethods();
 	
 	private static final String DIFFERENCE_DELIMITER = ".";

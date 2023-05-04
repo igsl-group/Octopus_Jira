@@ -486,6 +486,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 			List<MergeReportData> reportData = new ArrayList<>();
 			// Merge selected objects
 			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
+				if (util.isReadOnly()) {
+					// Skip read-only JiraConfigUtil
+					continue;
+				}
 				for (Map.Entry<String, JiraConfigDTO> entry : this.data.importStore.getTypeStore(util).entrySet()) {
 					JiraConfigDTO dto = entry.getValue();
 					if (dto.isSelected()) {

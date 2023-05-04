@@ -432,6 +432,53 @@ public class CustomFieldUtil extends JiraConfigUtil {
 	}
 
 	/**
+	 * Resolve CustomField.
+	 * 
+	 * CustomField will be looked up in importStore. 
+	 * If there is mappedObject, it will be used. 
+	 * If not, it will be looked up in exportStore for a single match.
+	 * 
+	 * @param exportStore DTOStore
+	 * @param importStore DTOStore
+	 * @param id String, custom field ID in importStore. 
+	 * 
+	 * Returns null if an exact match cannot be found.
+	 */
+	public CustomFieldDTO resovleCustomField(DTOStore exportStore, DTOStore importStore, String id) throws Exception {
+		CustomFieldDTO result = null;
+		Map<String, String> params = new HashMap<>();
+		if (id != null) {
+			params.put(CustomFieldUtil.MATCH_ID, id);
+		}
+		List<JiraConfigDTO> list = findMatches(importStore, params);
+		if (list != null && list.size() == 1) {
+			LOGGER.debug("Custom field found by ID");
+			CustomFieldDTO dto = (CustomFieldDTO) list.get(0);
+			if (dto.getMappedObject() != null) {
+				LOGGER.debug("Using mapped object");
+				// Use mapped object
+				dto = (CustomFieldDTO) findByUniqueKey(dto.getMappedObject().getUniqueKey());
+				if (dto != null) {
+					LOGGER.debug("Found mapped object: " + dto.getId() + ", " + dto.getUniqueKey());
+					result = dto;
+				}
+			} else {
+				// Lookup for single match
+				LOGGER.debug("Using single match");
+				params.clear();
+				params.put(CustomFieldUtil.MATCH_NAME, dto.getName());
+				list = findMatches(exportStore, params);
+				if (list != null && list.size() == 1) {
+					CustomFieldDTO cf = (CustomFieldDTO) list.get(0);
+					LOGGER.debug("Found single match object: " + cf.getId() + ", " + cf.getUniqueKey());
+					result = cf;
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * Resolve field ID.
 	 * systemField or customField must be non-null.
 	 * 
