@@ -46,6 +46,7 @@ public class NotificationTypeDTO extends JiraConfigDTO {
 		 * 
 		 * The actual string needed is found inside file notification-event-types.xml in WEB-INF\classes.
 		 */
+		// TODO Parse these out of the XML file?
 		if (ev instanceof CurrentAssignee) {
 			this.type = "Current_Assignee";
 		} else if (ev instanceof CurrentReporter) {
