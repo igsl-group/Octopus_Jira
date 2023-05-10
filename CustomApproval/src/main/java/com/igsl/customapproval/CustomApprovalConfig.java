@@ -28,14 +28,17 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 	private static final String PARAM_ADMIN_GROUPS = "adminGroups";
 	private static final String PARAM_JOB_FREQUENCY = "jobFrequency";
 	private static final String PARAM_JOB_FILTER = "jobFilter";
+	private static final String PARAM_DELEGATION_FILTER = "delegationFilter";
 	private static final String PARAM_SAVE = "Save";
 	
 	private long delegationHistoryRetainDays = CustomApprovalUtil.DEFAULT_RETAIN_DAYS;
 	private List<String> adminGroups = Arrays.asList(CustomApprovalUtil.DEFAULT_ADMIN_GROUP);
 	private long jobFrequency = CustomApprovalUtil.DEFAULT_JOB_FREQUENCY;
 	private String jobFilter = CustomApprovalUtil.DEFAULT_JOB_FILTER;
+	private String delegationFilter = CustomApprovalUtil.DEFAULT_DELEGATION_FILTER;
 	private String newFilter = null;
-	private List<String> issuesFound = null;
+	private List<String> jobIssuesFound = null;
+	private List<String> delegationIssuesFound = null;
 	
 	@Inject
 	protected CustomApprovalConfig(@ComponentImport ManagedConfigurationItemService managedConfigurationItemService) {
@@ -48,6 +51,10 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 	
 	public String getJobFilter() {
 		return jobFilter;
+	}
+	
+	public String getDelegationFilter() {
+		return delegationFilter;
 	}
 
 	public String getAdminGroupsAsJSON() {
@@ -78,16 +85,41 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 		return CustomApprovalUtil.DEFAULT_JOB_FILTER;
 	}
 	
-	public String getIssuesFound() {
+	public String getDefaultDelegationFilter() {
+		return CustomApprovalUtil.DEFAULT_DELEGATION_FILTER;
+	}
+	
+	public String getDelegationIssuesFound() {
 		final String DELIMITER = ", ";
 		StringBuilder result = new StringBuilder("");
 		if (this.newFilter != null) {
 			result.append("With filter: ").append(this.newFilter).append("\n");
 		}
-		if (this.issuesFound != null) {
+		if (this.delegationIssuesFound != null) {
 			StringBuilder issueList = new StringBuilder();
-			if (this.issuesFound.size() != 0) {
-				for (String s : this.issuesFound) {
+			if (this.delegationIssuesFound.size() != 0) {
+				for (String s : this.delegationIssuesFound) {
+					issueList.append(DELIMITER).append(s);
+				}
+				issueList.delete(0, DELIMITER.length());
+			} else {
+				issueList.append("None");
+			}
+			result.append("Issues found: ").append(issueList);
+		}
+		return result.toString();
+	}
+	
+	public String getJobIssuesFound() {
+		final String DELIMITER = ", ";
+		StringBuilder result = new StringBuilder("");
+		if (this.newFilter != null) {
+			result.append("With filter: ").append(this.newFilter).append("\n");
+		}
+		if (this.jobIssuesFound != null) {
+			StringBuilder issueList = new StringBuilder();
+			if (this.jobIssuesFound.size() != 0) {
+				for (String s : this.jobIssuesFound) {
 					issueList.append(DELIMITER).append(s);
 				}
 				issueList.delete(0, DELIMITER.length());
@@ -106,7 +138,9 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 		this.adminGroups = CustomApprovalUtil.getDelegationAdminGroups();
 		this.jobFrequency = CustomApprovalUtil.getJobFrequency();
 		this.jobFilter = CustomApprovalUtil.getJobFilter();
-		this.issuesFound = CustomApprovalUtil.setJobFilter(this.jobFilter);
+		this.jobIssuesFound = CustomApprovalUtil.setJobFilter(this.jobFilter);
+		this.delegationFilter = CustomApprovalUtil.getDelegationFilter();
+		this.delegationIssuesFound = CustomApprovalUtil.setDelegationFilter(this.delegationFilter);
 		this.newFilter = null;
 		HttpServletRequest req = getHttpRequest();
 		if (req.getParameter(PARAM_SAVE) != null) {
@@ -153,7 +187,7 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 			}
 			try {
 				this.newFilter = req.getParameter(PARAM_JOB_FILTER);
-				this.issuesFound = CustomApprovalUtil.setJobFilter(this.newFilter);
+				this.jobIssuesFound = CustomApprovalUtil.setJobFilter(this.newFilter);
 				this.jobFilter = this.newFilter;
 			} catch (Exception ex) {
 				LOGGER.error(ex);
@@ -162,6 +196,16 @@ public class CustomApprovalConfig extends AbstractEditConfigurationItemAction {
 				this.addErrorMessage(ex.getMessage());
 			}
 			CustomApprovalUtil.createScheduledJob(this.jobFrequency);
+			try {
+				this.newFilter = req.getParameter(PARAM_DELEGATION_FILTER);
+				this.delegationIssuesFound = CustomApprovalUtil.setJobFilter(this.newFilter);
+				this.delegationFilter = this.newFilter;
+			} catch (Exception ex) {
+				LOGGER.error(ex);
+				this.delegationFilter = CustomApprovalUtil.getDelegationFilter();
+				this.addErrorMessage("Unable to set Delegation Scheduled Job Filter");
+				this.addErrorMessage(ex.getMessage());
+			}
 		}
 		return JiraWebActionSupport.INPUT;
 	}

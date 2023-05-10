@@ -5,11 +5,15 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.ofbiz.core.entity.GenericEntityException;
 
+import com.atlassian.jira.application.ApplicationRoleManager;
+import com.atlassian.jira.bc.user.search.UserSearchParams;
+import com.atlassian.jira.bc.user.search.UserSearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.event.issue.IssueEventBundle;
 import com.atlassian.jira.event.issue.IssueEventBundleFactory;
@@ -20,6 +24,8 @@ import com.atlassian.jira.project.Project;
 import com.atlassian.jira.project.ProjectManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.UserPropertyManager;
+import com.atlassian.jira.user.util.UserManager;
+import com.atlassian.jira.web.bean.UserBrowserFilter;
 import com.igsl.customapproval.CustomApprovalSetup;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.DelegationSetting;
@@ -29,7 +35,8 @@ public class DelegationUtil {
 	
 	private static final Logger LOGGER = Logger.getLogger(DelegationUtil.class);
 	private static final UserPropertyManager UPM = ComponentAccessor.getUserPropertyManager();
-
+	private static final UserSearchService USS = ComponentAccessor.getUserSearchService();
+	
 	private static final String PROPERTY_DELEGATION = "customApprovalDelegation";
 
 	public static final String DELEGATE_FROM_USER = "From";
@@ -159,12 +166,66 @@ public class DelegationUtil {
 				IssueEventManager iem = ComponentAccessor.getIssueEventManager();
 				iem.dispatchEvent(bundle);
 				LOGGER.debug("Event triggered");
+				// Setup scheduled job for delegation, if needed
+				if (added) {
+					LOGGER.debug("Adding adhoc job pair");
+					// Create schedule for start/end time
+					// Note: Jira will immediately execute if date is in the past
+					boolean addJob = CustomApprovalUtil.createAdhocJob(
+							delta.getStartDate(), true, delta.getFromUser(), delta.getDelegateToUser());
+					LOGGER.debug("Add job created: " + addJob);
+					if (delta.getEndDate() != null) {
+						boolean removeJob = CustomApprovalUtil.createAdhocJob(
+								delta.getEndDate(), false, delta.getFromUser(), delta.getDelegateToUser());
+						LOGGER.debug("Remove job created " + removeJob);
+					}
+				} else {
+					// Delete existing jobs
+					boolean removeAddJob = CustomApprovalUtil.deleteAdhocJob(
+							delta.getStartDate(), true, delta.getFromUser(), delta.getDelegateToUser());
+					LOGGER.debug("Cancel add job: " + removeAddJob);
+					if (delta.getEndDate() != null) {
+						boolean removeRemoveJob = CustomApprovalUtil.deleteAdhocJob(
+							delta.getEndDate(), false, delta.getFromUser(), delta.getDelegateToUser());
+						LOGGER.debug("Cancel remove job: " + removeRemoveJob);
+					}
+					// Remove immediately if entry is active
+					Date now = new Date();
+					if (now.after(delta.getStartDate())) {
+						LOGGER.debug("Adding removal adhoc job");
+						boolean removeJob = CustomApprovalUtil.createAdhocJob(
+								new Date(), false, delta.getFromUser(), delta.getDelegateToUser());
+						LOGGER.debug("Remove job created: " + removeJob);
+					}
+				}
 			} else {
 				LOGGER.error("No issue found for use with event");
 			}
 		} else {
 			LOGGER.debug("Event type not found");
 		}
+	}
+	
+	/**
+	 * Load all delegation settings
+	 * @return List of DelegationSetting
+	 */
+	public static List<DelegationSetting> loadAllData() {
+		List<DelegationSetting> result = new ArrayList<>();
+		ApplicationRoleManager arm = ComponentAccessor.getComponent(ApplicationRoleManager.class);
+		UserBrowserFilter filter = new UserBrowserFilter(Locale.getDefault(), arm);
+		try {
+			List<ApplicationUser> list = filter.getFilteredUsers();
+			for (ApplicationUser user : list) {
+				List<DelegationSetting> settings = loadData(user.getKey(), null);
+				LOGGER.debug("user: " + user.getKey() + " size: " + settings.size());
+				result.addAll(settings);
+			}
+		} catch (Exception ex) {
+			LOGGER.error("Failed to get user list", ex);
+		}
+		LOGGER.debug("loadAllData: " + result.size());
+		return result;
 	}
 	
 	/**

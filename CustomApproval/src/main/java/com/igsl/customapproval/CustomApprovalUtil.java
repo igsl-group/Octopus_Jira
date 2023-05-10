@@ -1,5 +1,7 @@
 package com.igsl.customapproval;
 
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -87,15 +89,19 @@ public class CustomApprovalUtil {
 	private static final String KEY_ADMIN_GROUPS = CONFIG_KEY + "adminGroups";
 	private static final String KEY_JOB_FREQUENCY = CONFIG_KEY + "jobFrequency";
 	private static final String KEY_JOB_FILTER = CONFIG_KEY + "jobFilter";
+	private static final String KEY_DELEGATION_FILTER = CONFIG_KEY + "delegationFilter";
 	public static final long DEFAULT_RETAIN_DAYS = 365;
 	public static final long DEFAULT_JOB_FREQUENCY = 300000;
 	public static final String DEFAULT_ADMIN_GROUP = "jira-administrators";
 	public static final String DEFAULT_JOB_FILTER = 
 			"statusCategory != Done and \"" + CustomApprovalUtil.CUSTOM_FIELD_NAME + "\" is not empty";
+	public static final String DEFAULT_DELEGATION_FILTER = 
+			"\"" + CustomApprovalUtil.CUSTOM_FIELD_NAME + "\" is not empty and statusCategory != Done";
 	
 	// System custom field types
 	public static final String SYSTEM_CUSTOM_FIELD_TYPE = "com.atlassian.jira.plugin.system.customfieldtypes:";
 	public static final String CUSTOM_FIELD_TEXT_AREA = SYSTEM_CUSTOM_FIELD_TYPE + "textarea";
+	public static final String CUSTOM_FIELD_USERS = SYSTEM_CUSTOM_FIELD_TYPE + "multiuserpicker";
 	public static final String CUSTOM_FIELD_USER_PICKER = SYSTEM_CUSTOM_FIELD_TYPE + "userpicker";
 	public static final String CUSTOM_FIELD_USER_PICKER_MULTI = SYSTEM_CUSTOM_FIELD_TYPE + "multiuserpicker";
 	public static final String CUSTOM_FIELD_GROUP_PICKER = SYSTEM_CUSTOM_FIELD_TYPE + "grouppicker";
@@ -114,6 +120,10 @@ public class CustomApprovalUtil {
 	public static final String LOCK_FIELD_DESCRIPTION = "[Custom Approval] Approval lock";
 	public static final String CUSTOM_FIELD_NAME = "Approval Data";
 	public static final String CUSTOM_FIELD_DESCRIPTION = "[Custom Approval] Approval data as JSON string";
+	public static final String MANUAL_REUQEST_PARTICIPANT_FIELD_NAME = "[Custom Approval] Manual Request Participant";
+	public static final String MANUAL_REUQEST_PARTICIPANT_FIELD_DESCRIPTION = "Request participants added manually";
+	
+	public static final String REUQEST_PARTICIPANT_FIELD_NAME = "Request participants";
 	
 	/**
 	 * Get issue by key.
@@ -326,6 +336,11 @@ public class CustomApprovalUtil {
 	public static ApprovalData getApprovalData(Issue issue) {
 		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
 		Object value = issue.getCustomFieldValue(cf);
+		try {
+			LOGGER.debug("ApprovalData value: " + OM.writeValueAsString(value));
+		} catch (Exception ex) {
+			LOGGER.error("Failed to serialize ApprovalData value", ex);
+		}
 		if (value == null) {
 			LOGGER.debug("No approval data");
 			return null;
@@ -367,21 +382,24 @@ public class CustomApprovalUtil {
 	public static ApprovalSettings getApprovalSettings(Issue issue) {
 		// Check if status matches
 		ApprovalData data = getApprovalData(issue);
-		String currentStatusId = issue.getStatus().getId();
-		LOGGER.debug("Current status: " + issue.getStatus().getName() + " = " + currentStatusId);
-		ApprovalSettings settings = null;
-		for (Map.Entry<String, ApprovalSettings> entry : data.getSettings().entrySet()) {
-			if (entry.getValue().getStartingStatus().equals(currentStatusId)) {
-				settings = entry.getValue();
-				break;
+		if (data != null) {
+			String currentStatusId = issue.getStatus().getId();
+			LOGGER.debug("Current status: " + issue.getStatus().getName() + " = " + currentStatusId);
+			ApprovalSettings settings = null;
+			for (Map.Entry<String, ApprovalSettings> entry : data.getSettings().entrySet()) {
+				if (entry.getValue().getStartingStatus().equals(currentStatusId)) {
+					settings = entry.getValue();
+					break;
+				}
 			}
+			try {
+				LOGGER.debug("Settings: " + OM.writeValueAsString(settings));
+			} catch (Exception ex) {
+				LOGGER.error("Failed to serialize settings", ex);
+			}
+			return settings;
 		}
-		try {
-			LOGGER.debug("Settings: " + OM.writeValueAsString(settings));
-		} catch (Exception ex) {
-			LOGGER.error("Failed to serialize settings", ex);
-		}
-		return settings;
+		return null;
 	}
 	
 	/**
@@ -989,6 +1007,47 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
+	 * Set delegation scheduled job filter.
+	 * @param filter
+	 * @return List opf string containing issues found.
+	 * @throws Exception
+	 */
+	public static List<String> setDelegationFilter(String filter) throws Exception {
+		List<String> result = null;
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		try {
+			Query q = JQL_PARSER.parseQuery(filter);
+			settings.put(KEY_DELEGATION_FILTER, filter);
+			// Execute the query
+			SearchResults<Issue> list = SEARCH_SERVICE.search(getAdminUser(), q, PagerFilter.getUnlimitedFilter());
+			if (list.getResults() != null) {
+				result = new ArrayList<>();
+				for (Issue issue : list.getResults()) {
+					result.add(issue.getKey());
+				}
+			}
+		} catch (Exception e) {
+			throw new Exception("Filter is not valid: " + filter, e);
+		}
+		return result;
+	}
+	
+	/**
+	 * Get JQL for delegation scheduled job.
+	 * @return JQL as string
+	 */
+	public static String getDelegationFilter() {
+		PluginSettingsFactory factory = ComponentAccessor.getOSGiComponentInstanceOfType(PluginSettingsFactory.class);
+		PluginSettings settings = factory.createGlobalSettings();
+		Object o = settings.get(KEY_DELEGATION_FILTER);
+		if (o != null) {
+			return String.valueOf(o);
+		}
+		return DEFAULT_DELEGATION_FILTER;
+	}
+	
+	/**
 	 * Set no. of days to retain delegation history.
 	 * @param days
 	 * @throws Exception
@@ -1015,23 +1074,20 @@ public class CustomApprovalUtil {
 			// While ConfigMigration seems just fine.
 			// Installing JSM may be a part of the problem.
 			// As such, avoid using TypeReference which is only in newer Jackson versions.
-			
 //			list = OM.readValue(String.valueOf(settings.get(KEY_ADMIN_GROUPS)), 
 //					new TypeReference<List<String>>() {});
-			list = new ArrayList<>();
-			MappingIterator<String> it = 
-					OM.readerFor(String.class).readValues(String.valueOf(settings.get(KEY_ADMIN_GROUPS)));
-			while (it.hasNext()) {
-				list.add(it.next());            
+			String s = (String) settings.get(KEY_ADMIN_GROUPS);
+			if (s != null && !s.isEmpty()) {
+				MappingIterator<String> it = 
+						OM.readerFor(String.class).readValues(s);
+				while (it.hasNext()) {
+					list.add(it.next());            
+				}
 			}
-		
 		} catch (Exception ex) {
 			LOGGER.error("Failed to read delegation admin groups", ex);
 		}
-		if (list == null || list.isEmpty()) {
-			if (list == null) {
-				list = new ArrayList<>();
-			}
+		if (list.isEmpty()) {
 			// Add default
 			Group adminGroup = checkGroupName(DEFAULT_ADMIN_GROUP);
 			if (adminGroup != null) {
@@ -1052,6 +1108,73 @@ public class CustomApprovalUtil {
 		settings.put(KEY_ADMIN_GROUPS, OM.writeValueAsString(groups));
 	}
 	
+	private static String getAdhocJobUniqueKey(
+			Date dateTime, 
+			boolean isStart, 
+			String delegatorUserKey,
+			String targetUserKey) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		String uniqueKey = CustomApprovalDelegationJob.class.getSimpleName() + "-" + 
+				delegatorUserKey + "-" + 
+				(isStart? "Add" : "Remove") + "-" + targetUserKey + "-" + 
+				sdf.format(dateTime);
+		return uniqueKey;
+	}
+	
+	public static boolean deleteAdhocJob(
+			Date dateTime, 
+			boolean isStart, 
+			String delegatorUserKey,
+			String targetUserKey) {
+		boolean result = false;
+		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
+		String uniqueKey = getAdhocJobUniqueKey(dateTime, isStart, delegatorUserKey, targetUserKey);
+		JobRunnerKey key = JobRunnerKey.of(uniqueKey);
+		List<JobDetails> jobList = schedulerService.getJobsByJobRunnerKey(key);
+		if (jobList != null) { 
+			for (JobDetails job : jobList) {
+				schedulerService.unscheduleJob(job.getJobId());
+				result = true;
+			}
+		}
+		schedulerService.unregisterJobRunner(key);
+		return result;
+	}
+	
+	public static boolean createAdhocJob(
+			Date dateTime,
+			boolean isStart, 
+			String delegatorUserKey,
+			String targetUserKey) {
+		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		String uniqueKey = getAdhocJobUniqueKey(dateTime, isStart, delegatorUserKey, targetUserKey);
+		JobRunnerKey key = JobRunnerKey.of(uniqueKey);
+		// Unregister if exists
+		deleteAdhocJob(dateTime, isStart, delegatorUserKey, targetUserKey);
+		// Register
+		Map<String, Serializable> parameters = new HashMap<>();
+		parameters.put(CustomApprovalDelegationJob.PARAMETER_IS_START, isStart);
+		parameters.put(CustomApprovalDelegationJob.PARAMETER_DELEGATOR, delegatorUserKey);
+		parameters.put(CustomApprovalDelegationJob.PARAMETER_TARGET, targetUserKey);
+		schedulerService.registerJobRunner(key, new CustomApprovalDelegationJob());
+		Schedule schedule = Schedule.runOnce(dateTime);
+		JobConfig jobConfig = JobConfig
+				.forJobRunnerKey(key)
+				.withSchedule(schedule)
+				.withRunMode(RunMode.RUN_ONCE_PER_CLUSTER)
+				.withParameters(parameters);
+		JobId jobId = JobId.of(uniqueKey);
+		try {
+			schedulerService.scheduleJob(jobId, jobConfig);
+			LOGGER.debug("Created adhoc job: " + uniqueKey);
+		} catch (SchedulerServiceException e) {
+			LOGGER.error("Failed to create adhoc job: " + uniqueKey, e);
+			return false;
+		}
+		return true;
+	}
+	
 	/**
 	 * Create/replace schedule job to scan issue for custom approval that hasn't transited
 	 * Such issues are caused by changing approver definition.
@@ -1060,7 +1183,7 @@ public class CustomApprovalUtil {
 	 */
 	public static boolean createScheduledJob(long frequency) {
 		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
-		JobRunnerKey key = JobRunnerKey.of(CustomApprovalScheduleJob.class.getCanonicalName());
+		JobRunnerKey key = JobRunnerKey.of(CustomApprovalTransitionJob.class.getCanonicalName());
 		// Unregister
 		List<JobDetails> jobList = schedulerService.getJobsByJobRunnerKey(key);
 		if (jobList != null) { 
@@ -1071,13 +1194,13 @@ public class CustomApprovalUtil {
 		schedulerService.unregisterJobRunner(key);
 		if (frequency > 0) {
 			// Register
-			schedulerService.registerJobRunner(key, new CustomApprovalScheduleJob());
+			schedulerService.registerJobRunner(key, new CustomApprovalTransitionJob());
 			Schedule schedule = Schedule.forInterval(frequency, null);
 			JobConfig jobConfig = JobConfig
 					.forJobRunnerKey(key)
 					.withSchedule(schedule)
 					.withRunMode(RunMode.RUN_ONCE_PER_CLUSTER);
-			JobId jobId = JobId.of(CustomApprovalScheduleJob.class.getCanonicalName());
+			JobId jobId = JobId.of(CustomApprovalTransitionJob.class.getCanonicalName());
 			try {
 				schedulerService.scheduleJob(jobId, jobConfig);
 			} catch (SchedulerServiceException e) {

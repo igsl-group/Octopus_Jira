@@ -62,6 +62,7 @@
 						Approval Check Scheduled Job Filter: 						
 					</th>
 					<td>
+						<i>This filter is used to scan for issues with a pending approval that should be completed due to change of approvers</i>
 						<textarea
 								rows="3"
 								cols="80"
@@ -72,9 +73,30 @@
 					</td>
 				</tr>
 				<tr>
-					<th>Issues found: </th>
+					<th>Approval Issues found: </th>
 					<td>
-						<textarea rows="3" cols="80" readonly>${action.getIssuesFound()}</textarea>
+						<textarea rows="3" cols="80" readonly>${action.getJobIssuesFound()}</textarea>
+					</td>
+				</tr>
+				<tr>
+					<th>
+						Delegation Scheduled Job Filter: 						
+					</th>
+					<td>
+						<i>This filter is used to scan for issues with approval enabled to apply changes in approver delegation</i>
+						<textarea
+								rows="3"
+								cols="80"
+								id="delegationFilter"
+								name="delegationFilter" 
+						>${action.getDelegationFilter()}</textarea>
+						<i>Default: ${action.getDefaultDelegationFitler()}</i>
+					</td>
+				</tr>
+				<tr>
+					<th>Delegation Issues found: </th>
+					<td>
+						<textarea rows="3" cols="80" readonly>${action.getDelegationIssuesFound()}</textarea>
 					</td>
 				</tr>
 				<tr>
