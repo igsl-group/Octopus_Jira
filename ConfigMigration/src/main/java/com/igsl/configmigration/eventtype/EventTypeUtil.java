@@ -1,4 +1,4 @@
-package com.igsl.configmigration.notificationscheme;
+package com.igsl.configmigration.eventtype;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

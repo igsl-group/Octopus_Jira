@@ -1,4 +1,4 @@
-package com.igsl.configmigration.notificationscheme;
+package com.igsl.configmigration.permissionscheme;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,13 +15,20 @@ import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class NotificationSchemeEntityUtil extends JiraConfigUtil {
+public class PermissionSchemeEntityUtil extends JiraConfigUtil {
 
-	private static final Logger LOGGER = Logger.getLogger(NotificationSchemeEntityUtil.class);
+	private static final Logger LOGGER = Logger.getLogger(PermissionSchemeEntityUtil.class);
 	
 	@Override
 	public String getName() {
-		return "Priority Scheme Entity";
+		return "Permission Scheme Entity";
+	}
+	
+	@Override
+	@SuppressWarnings("rawtypes")
+	@JsonIgnore
+	public Comparator getComparator() {
+		return new PermissionSchemeEntityComparator();
 	}
 	
 	@Override
@@ -37,12 +44,12 @@ public class NotificationSchemeEntityUtil extends JiraConfigUtil {
 	public MergeResult merge(
 			DTOStore exportStore, JiraConfigDTO oldItem, 
 			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
-		throw new Exception("Notification Scheme Entity is read only");
+		throw new Exception("Permission Scheme Entity is read only");
 	}
 
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
-		return NotificationSchemeEntityDTO.class;
+		return PermissionSchemeEntityDTO.class;
 	}
 
 	@Override

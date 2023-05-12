@@ -1,4 +1,4 @@
-package com.igsl.configmigration.notificationscheme;
+package com.igsl.configmigration.eventtype;
 
 import java.util.Arrays;
 import java.util.List;

@@ -8,8 +8,6 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.event.type.EventTypeManager;
-import com.atlassian.jira.notification.NotificationType;
 import com.atlassian.jira.notification.NotificationTypeManager;
 import com.atlassian.jira.scheme.SchemeEntity;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -18,10 +16,10 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
-import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
+import com.igsl.configmigration.eventtype.EventTypeDTO;
+import com.igsl.configmigration.eventtype.EventTypeUtil;
 import com.igsl.configmigration.general.GeneralDTO;
 import com.igsl.configmigration.general.GeneralUtil;
-import com.igsl.configmigration.projectrole.ProjectRoleDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class NotificationSchemeEntityDTO extends JiraConfigDTO {

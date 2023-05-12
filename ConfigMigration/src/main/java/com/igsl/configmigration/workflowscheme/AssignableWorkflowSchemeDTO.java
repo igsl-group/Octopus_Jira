@@ -50,9 +50,11 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		WorkflowUtil wfUtil = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(WorkflowUtil.class);
 		Map<String, JiraConfigDTO> workflows = wfUtil.search(null);
 		// Locate default workflow
-		if (workflows.containsKey(this.configuredDefaultWorkflow)) {
-			WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(this.configuredDefaultWorkflow);
-			this.relatedWorkflows.add(relatedWorkflow);
+		if (this.configuredDefaultWorkflow != null) {
+			if (workflows.containsKey(this.configuredDefaultWorkflow)) {
+				WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(this.configuredDefaultWorkflow);
+				this.relatedWorkflows.add(relatedWorkflow);
+			}
 		}
 		// Locate workflow for each project mapping
 		if (this.mappings != null) {

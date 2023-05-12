@@ -1,27 +1,26 @@
-package com.igsl.configmigration.notificationscheme;
+package com.igsl.configmigration.permissionscheme;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
+import com.igsl.configmigration.notificationscheme.NotificationSchemeEntityDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
-public class NotificationSchemeEntityUtil extends JiraConfigUtil {
+public class ProjectPermissionKeyUtil extends JiraConfigUtil {
 
-	private static final Logger LOGGER = Logger.getLogger(NotificationSchemeEntityUtil.class);
+	private static final Logger LOGGER = Logger.getLogger(ProjectPermissionKeyUtil.class);
 	
 	@Override
 	public String getName() {
-		return "Priority Scheme Entity";
+		return "Project Permission Key";
 	}
 	
 	@Override
@@ -37,12 +36,12 @@ public class NotificationSchemeEntityUtil extends JiraConfigUtil {
 	public MergeResult merge(
 			DTOStore exportStore, JiraConfigDTO oldItem, 
 			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
-		throw new Exception("Notification Scheme Entity is read only");
+		throw new Exception("Project Permission Key is read only");
 	}
 
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
-		return NotificationSchemeEntityDTO.class;
+		return ProjectPermissionKeyDTO.class;
 	}
 
 	@Override

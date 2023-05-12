@@ -30,6 +30,8 @@ import com.igsl.configmigration.group.GroupUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
+import com.igsl.configmigration.notificationscheme.NotificationSchemeUtil;
+import com.igsl.configmigration.permissionscheme.PermissionSchemeUtil;
 import com.igsl.configmigration.plugin.PluginUtil;
 import com.igsl.configmigration.priority.PriorityUtil;
 import com.igsl.configmigration.project.ProjectUtil;
@@ -62,9 +64,11 @@ public class JiraConfigTypeRegistry {
 			ProjectCategoryUtil.class,
 			ProjectUtil.class,
 			IssueSecurityLevelSchemeUtil.class,
-			//FieldLayoutSchemeUtil.class,
+			FieldLayoutSchemeUtil.class,
 			IssueTypeSchemeUtil.class,
-			WorkflowSchemeUtil.class
+			WorkflowSchemeUtil.class,
+			NotificationSchemeUtil.class,
+			PermissionSchemeUtil.class
 			);
 	private static List<String> orderedList = new ArrayList<>();
 	private static List<String> unorderedList = new ArrayList<>();
