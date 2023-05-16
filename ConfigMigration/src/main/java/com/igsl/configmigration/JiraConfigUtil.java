@@ -17,6 +17,9 @@ import javax.annotation.Nonnull;
 
 import org.apache.log4j.Logger;
 
+import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.user.util.UserManager;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -28,6 +31,9 @@ import com.igsl.configmigration.SessionData.ImportData;
 @JsonDeserialize(using=JiraConfigUtilDeserializer.class)
 @JsonIgnoreProperties(value={"implementation"}, allowGetters=true)
 public abstract class JiraConfigUtil {
+
+	private static final UserManager USER_MANAGER = ComponentAccessor.getUserManager();
+	private static final String ADMIN_USER_NAME = "admin";
 	
 	private static final Logger LOGGER = Logger.getLogger(JiraConfigUtil.class);
 	protected static final ObjectMapper OM = new ObjectMapper()
@@ -35,6 +41,14 @@ public abstract class JiraConfigUtil {
 												.setSerializationInclusion(Include.NON_NULL);
 	private static final String NEWLINE = "\r\n";
 
+	/**
+	 * Get admin user.
+	 * @return ApplicationUser
+	 */
+	public static ApplicationUser getAdminUser() {
+		return USER_MANAGER.getUserByName(ADMIN_USER_NAME);
+	}
+	
 	/**
 	 * Returns if this JiraConfigUtil require manual mapping.
 	 * Default is false, override if needed.

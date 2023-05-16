@@ -297,7 +297,7 @@
 					<input 	type="file" 
 							id="importFile" 
 							name="importFile" 
-							accept=".json"
+							accept=".json,.zip"
 							value=""/>
 				</form>
 		    </div>

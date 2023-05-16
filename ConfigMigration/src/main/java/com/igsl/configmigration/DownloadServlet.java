@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -55,23 +57,36 @@ public class DownloadServlet extends HttpServlet {
 			if (data != null && data.length == 1) {
 				resp.setContentType("text/plain");
 				ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getExportUser());
-				String fileName = 
+				String baseFileName = 
 						"Export" + 
 						((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
 						" on " + SDF.format(data[0].getExportDate()) + 
-						" - " + 
-						data[0].getDescription() + 
-						".json";
-				resp.setContentType("application/json; charset=UTF-8");
-		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
+						((data[0].getDescription() == null || data[0].getDescription().length() == 0)? 
+								"" : 
+								" - " + data[0].getDescription());
+				String fileName = baseFileName + ".json";
+				String zipFileName = baseFileName + ".zip";
+				resp.setContentType("application/zip");
+		        resp.setHeader("Content-disposition", "attachment; filename=\"" + zipFileName + "\"");
 		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes("UTF8")); 
-		        		OutputStream out = resp.getOutputStream()) {
+		        		ZipOutputStream zout = new ZipOutputStream(resp.getOutputStream())) {
+		        	ZipEntry entry = new ZipEntry(fileName);
+		        	zout.putNextEntry(entry);
 		        	byte[] buffer = new byte[BUFFER_SIZE];
 		            int numBytesRead;
 		            while ((numBytesRead = in.read(buffer)) > 0) {
-		            	out.write(buffer, 0, numBytesRead);
+		            	zout.write(buffer, 0, numBytesRead);
 		            }
-		        }
+		            zout.closeEntry();
+		        }		        
+//		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes("UTF8")); 
+//		        		OutputStream out = resp.getOutputStream()) {
+//		        	byte[] buffer = new byte[BUFFER_SIZE];
+//		            int numBytesRead;
+//		            while ((numBytesRead = in.read(buffer)) > 0) {
+//		            	out.write(buffer, 0, numBytesRead);
+//		            }
+//		        }
 			} else {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
 			}

@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.atlassian.crowd.embedded.api.Directory;
+import com.atlassian.crowd.manager.directory.DirectoryManager;
+import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.user.util.UserManager;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
@@ -15,12 +19,16 @@ import com.igsl.configmigration.JiraConfigUtil;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ApplicationUserDTO extends JiraConfigDTO {
 
+	private static final UserManager USER_MANAGER = ComponentAccessor.getUserManager();
+	// TODO Better way to identify internal directory?
+	private static final String JIRA_INTERNAL_DIRECTORY = "Jira Internal Directory";	
 	private Long id;
 	private String key;
 	private String name;
 	private String userName;
 	private String emailAddress;
 	private String displayName;
+	private boolean jiraUser;	// If user is in Jira, i.e. not in external directory
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
@@ -32,6 +40,10 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		this.emailAddress = o.getEmailAddress();
 		this.userName = o.getUsername();
 		this.uniqueKey = o.getKey();
+		Directory dir = USER_MANAGER.getDirectory(o.getDirectoryId());
+		if (dir != null) {
+			jiraUser = dir.getName().equals(JIRA_INTERNAL_DIRECTORY);
+		}
 	}
 
 	@Override
@@ -42,6 +54,7 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		r.put("Email Address", new JiraConfigProperty(emailAddress));
 		r.put("Key", new JiraConfigProperty(key));
 		r.put("ID", new JiraConfigProperty(id));
+		r.put("Jira Internal Directory User", new JiraConfigProperty(this.jiraUser));
 		return r;
 	}
 	
@@ -127,6 +140,14 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 	@Override
 	public Class<?> getJiraClass() {
 		return ApplicationUser.class;
+	}
+
+	public boolean isJiraUser() {
+		return jiraUser;
+	}
+
+	public void setJiraUser(boolean jiraUser) {
+		this.jiraUser = jiraUser;
 	}
 
 }

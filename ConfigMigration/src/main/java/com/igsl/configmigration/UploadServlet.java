@@ -4,6 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +23,37 @@ public class UploadServlet extends HttpServlet {
 	private static final long MAX_SIZE = 100L * 1024 * 1024 * 1024;
 	private static final int BUFFER_SIZE = 10240;
 	
+	private String getJsonUpload(InputStream in) throws Exception {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		int cnt = 0;
+		byte[] buffer = new byte[BUFFER_SIZE];
+		do {
+			cnt = in.read(buffer);
+			if (cnt > 0) {
+				baos.write(buffer, 0, cnt);
+			}
+		} while (cnt > 0);
+		return baos.toString("UTF8");
+	}
+	
+	private String getZipUpload(InputStream in) throws Exception {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ZipInputStream zin = new ZipInputStream(in);
+		// Assume there's only a single entry
+		ZipEntry entry = zin.getNextEntry();
+		if (entry != null) {
+			int cnt = 0;
+			byte[] buffer = new byte[BUFFER_SIZE];
+			do {
+				cnt = zin.read(buffer);
+				if (cnt > 0) {
+					baos.write(buffer, 0, cnt);
+				}
+			} while (cnt > 0);
+		}
+		return baos.toString("UTF8");
+	}
+	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
@@ -29,21 +62,17 @@ public class UploadServlet extends HttpServlet {
 			List<FileItem> fileItems = upload.parseRequest(req);
 			if (fileItems.size() == 1) {
 				FileItem fi = fileItems.get(0);
+				String fileName = fi.getName().toUpperCase();
+				LOGGER.debug("File Item: " + fileName);
 				Object data = req.getSession().getAttribute(ExportAction2.SESSION_DATA);
 				if (data != null && data instanceof ExportAction2SessionData) {
 					ExportAction2SessionData d = (ExportAction2SessionData) data;
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					InputStream in = fi.getInputStream();
-					int cnt = 0;
-					byte[] buffer = new byte[BUFFER_SIZE];
-					do {
-						cnt = in.read(buffer);
-						if (cnt > 0) {
-							LOGGER.debug("Received: " + cnt);
-							baos.write(buffer, 0, cnt);
-						}
-					} while (cnt > 0);
-					d.upload = baos.toString("UTF8");
+					if (fileName.endsWith(".ZIP")) {
+						d.upload = getZipUpload(in);
+					} else {
+						d.upload = getJsonUpload(in);
+					}
 					LOGGER.debug("Received: <" + d.upload + ">");
 				}
 				// Redirect back to ExportAction2
