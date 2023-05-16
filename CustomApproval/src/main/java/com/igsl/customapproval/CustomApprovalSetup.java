@@ -37,6 +37,8 @@ import com.igsl.customapproval.delegation.DelegationUtil;
 public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	
 	private static final Logger LOGGER = Logger.getLogger(CustomApprovalSetup.class);
+	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
+	private static final EventTypeManager EVENT_TYPE_MANAGER = ComponentAccessor.getEventTypeManager();
 	
 	private static final String GENERIC_EVENT = "Generic Event";
 	private static final String DELEGATOR_CHANGED_EVENT = "Custom Approval Delegator Changed";
@@ -48,14 +50,22 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	public CustomApprovalSetup(@JiraImport EventPublisher eventPublisher) {
 	    this.eventPublisher = eventPublisher;
 	}
+	
+	/**
+	 * Get CustomField with ID.
+	 * @return CustomField
+	 */
+	public static CustomField getCustomFieldById(String id) {
+		return CUSTOM_FIELD_MANAGER.getCustomFieldObject(id);
+	}
 
 	/**
 	 * Get CustomField for Request Participant.
 	 * @return CustomField
 	 */
 	public static CustomField getRequestParticipantField() {
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.REUQEST_PARTICIPANT_FIELD_NAME);
+		Collection<CustomField> list = CUSTOM_FIELD_MANAGER.getCustomFieldObjectsByName(
+				CustomApprovalUtil.REUQEST_PARTICIPANT_FIELD_NAME);
 		if (list != null && list.size() == 1) {
 			return list.iterator().next();
 		}
@@ -68,9 +78,9 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	 */
 	public static CustomField getManualRequestParticipantCustomField() {
 		CustomField result = null;
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldTypeUsers();
-		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_NAME);
+		Collection<CustomField> list = CUSTOM_FIELD_MANAGER.getCustomFieldObjectsByName(
+				CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_NAME);
 		if (list != null) {
 			Iterator<CustomField> it = list.iterator();
 			while (it.hasNext()) {
@@ -91,9 +101,9 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	 */
 	public static CustomField getApprovalLockCustomField() {
 		CustomField result = null;
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldTypeTextArea();
-		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.LOCK_FIELD_NAME);
+		Collection<CustomField> list = CUSTOM_FIELD_MANAGER.getCustomFieldObjectsByName(
+				CustomApprovalUtil.LOCK_FIELD_NAME);
 		if (list != null) {
 			Iterator<CustomField> it = list.iterator();
 			while (it.hasNext()) {
@@ -114,9 +124,9 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	 */
 	public static CustomField getApprovalDataCustomField() {
 		CustomField result = null;
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfType = getCustomFieldTypeTextArea();
-		Collection<CustomField> list = cfMan.getCustomFieldObjectsByName(CustomApprovalUtil.CUSTOM_FIELD_NAME);
+		Collection<CustomField> list = CUSTOM_FIELD_MANAGER.getCustomFieldObjectsByName(
+				CustomApprovalUtil.CUSTOM_FIELD_NAME);
 		if (list != null) {
 			Iterator<CustomField> it = list.iterator();
 			while (it.hasNext()) {
@@ -132,28 +142,27 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	}
 	
 	public static CustomFieldType<?, ?> getCustomFieldTypeTextArea() {
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(CustomApprovalUtil.CUSTOM_FIELD_TEXT_AREA);
+		CustomFieldType<?, ?> cfType = CUSTOM_FIELD_MANAGER.getCustomFieldType(
+				CustomApprovalUtil.CUSTOM_FIELD_TEXT_AREA);
 		return cfType;
 	}
 	
 	public static CustomFieldType<?, ?> getCustomFieldTypeUsers() {
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
-		CustomFieldType<?, ?> cfType = cfMan.getCustomFieldType(CustomApprovalUtil.CUSTOM_FIELD_USERS);
+		CustomFieldType<?, ?> cfType = CUSTOM_FIELD_MANAGER.getCustomFieldType(
+				CustomApprovalUtil.CUSTOM_FIELD_USERS);
 		return cfType;
 	}
 	
 	private static void createCustomFields() {
-		CustomFieldManager cfMan = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> cfTypeTextArea = getCustomFieldTypeTextArea(); 
 		CustomFieldType<?, ?> cfTypeUsers = getCustomFieldTypeUsers();
 		CustomFieldSearcher cfSearcherTextArea = null;
-		List<CustomFieldSearcher> cfSearcherList = cfMan.getCustomFieldSearchers(cfTypeTextArea);
+		List<CustomFieldSearcher> cfSearcherList = CUSTOM_FIELD_MANAGER.getCustomFieldSearchers(cfTypeTextArea);
 		if (cfSearcherList != null && cfSearcherList.size() != 0) {
 			cfSearcherTextArea = cfSearcherList.get(0);
 		}
 		CustomFieldSearcher cfSearcherUsers = null;
-		cfSearcherList = cfMan.getCustomFieldSearchers(cfTypeUsers);
+		cfSearcherList = CUSTOM_FIELD_MANAGER.getCustomFieldSearchers(cfTypeUsers);
 		if (cfSearcherList != null && cfSearcherList.size() != 0) {
 			cfSearcherUsers = cfSearcherList.get(0);
 		}
@@ -164,7 +173,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
 			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
 			try {
-				CustomField created = cfMan.createCustomField(
+				CustomField created = CUSTOM_FIELD_MANAGER.createCustomField(
 					CustomApprovalUtil.CUSTOM_FIELD_NAME, 
 					CustomApprovalUtil.CUSTOM_FIELD_DESCRIPTION, 
 					cfTypeTextArea, 
@@ -193,7 +202,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
 			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
 			try {
-				CustomField created = cfMan.createCustomField(
+				CustomField created = CUSTOM_FIELD_MANAGER.createCustomField(
 					CustomApprovalUtil.LOCK_FIELD_NAME, 
 					CustomApprovalUtil.LOCK_FIELD_DESCRIPTION, 
 					cfTypeTextArea, 
@@ -222,7 +231,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
 			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
 			try {
-				CustomField created = cfMan.createCustomField(
+				CustomField created = CUSTOM_FIELD_MANAGER.createCustomField(
 					CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_NAME, 
 					CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_DESCRIPTION, 
 					cfTypeUsers, 
@@ -247,8 +256,7 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	}
 	
 	public static Long getCustomEventType() {
-		EventTypeManager evm = ComponentAccessor.getEventTypeManager();
-		for (EventType et : evm.getEventTypes()) {
+		for (EventType et : EVENT_TYPE_MANAGER.getEventTypes()) {
 			if (DELEGATOR_CHANGED_EVENT.equals(et.getName())) {
 				return et.getId();
 			}
@@ -257,10 +265,10 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	}
 	
 	private static void createCustomEvent() {
-		EventTypeManager evm = ComponentAccessor.getEventTypeManager();
-		if (!evm.isEventTypeExists(DELEGATOR_CHANGED_EVENT)) {
-			EventType ev = new EventType(DELEGATOR_CHANGED_EVENT, DELEGATOR_CHANGED_EVENT_DESC, EventType.ISSUE_GENERICEVENT_ID);
-			evm.addEventType(ev);
+		if (!EVENT_TYPE_MANAGER.isEventTypeExists(DELEGATOR_CHANGED_EVENT)) {
+			EventType ev = new EventType(
+					DELEGATOR_CHANGED_EVENT, DELEGATOR_CHANGED_EVENT_DESC, EventType.ISSUE_GENERICEVENT_ID);
+			EVENT_TYPE_MANAGER.addEventType(ev);
 		}
 	}
 	

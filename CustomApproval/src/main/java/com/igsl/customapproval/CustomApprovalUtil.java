@@ -448,31 +448,39 @@ public class CustomApprovalUtil {
 				!settings.getApproverUserField().isEmpty()) {
 				CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(settings.getApproverUserField());
 				if (cf != null) {
+					LOGGER.debug("Approver list from user field");
 					Object o = issue.getCustomFieldValue(cf);
 					if (o instanceof List) {
 						for (ApplicationUser u : (List<ApplicationUser>) o) {
 							result.put(u.getKey(), u);
+							LOGGER.debug("User list: " + u.getName());
 						}
 					} else if (o instanceof ApplicationUser) {
 						ApplicationUser u = (ApplicationUser) o;
 						result.put(u.getKey(), u);
+						LOGGER.debug("User: " + u.getName());
 					}
 				}
 			} else if (	settings.getApproverGroupField() != null && 
 						!settings.getApproverGroupField().isEmpty()) {
 				CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(settings.getApproverGroupField());
 				if (cf != null) {
+					LOGGER.debug("Approver list from group field");
 					Object o = issue.getCustomFieldValue(cf);
 					if (o instanceof List) {
 						List<Group> groupList = (List<Group>) o;
 						for (Group grp : groupList) {
+							LOGGER.debug("Group: " + grp.getName());
 							for (ApplicationUser u : GROUP_MANAGER.getUsersInGroup(grp)) {
 								result.put(u.getKey(), u);
+								LOGGER.debug("Group member: " + u.getName());
 							}
 						}
 					} else if (o instanceof ApplicationUser) {
+						LOGGER.debug("Group: " + ((Group) o).getName());
 						for (ApplicationUser u : GROUP_MANAGER.getUsersInGroup((Group) o)) {
 							result.put(u.getKey(), u);
+							LOGGER.debug("Group member: " + u.getName());
 						}
 					}
 				}
