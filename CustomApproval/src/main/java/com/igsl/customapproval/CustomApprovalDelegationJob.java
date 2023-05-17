@@ -58,7 +58,8 @@ public class CustomApprovalDelegationJob implements JobRunner {
 		LOGGER.debug("Adhoc job executes: " + request.getJobId());
 		CustomField manualRequestParticipantField = CustomApprovalSetup.getManualRequestParticipantCustomField();
 		CustomField requestParticipantField = CustomApprovalSetup.getRequestParticipantField();
-		if (manualRequestParticipantField != null && requestParticipantField != null) {
+		CustomField indicatorField = CustomApprovalSetup.getIndicatorCustomField();
+		if (manualRequestParticipantField != null && requestParticipantField != null && indicatorField != null) {
 			ObjectReader or = OM.readerFor(String.class);
 			String msg = "";
 			Map<String, Serializable> params = request.getJobConfig().getParameters();
@@ -138,12 +139,14 @@ public class CustomApprovalDelegationJob implements JobRunner {
 								LOGGER.debug("New Request participant: " + u.getKey());
 							}
 							mi.setCustomFieldValue(requestParticipantField, requestParticipant);
+							// Indicate to ignore the update to Request Participants
+							mi.setCustomFieldValue(indicatorField, Boolean.TRUE.toString());
+							LOGGER.debug("Issue updated with indicator on: " + mi.getKey());
 							ISSUE_MANAGER.updateIssue(
 									CustomApprovalUtil.getAdminUser(), 
 									mi, 
-									EventDispatchOption.DO_NOT_DISPATCH, 
+									EventDispatchOption.ISSUE_UPDATED, 
 									false);
-							LOGGER.debug("Issue updated: " + mi.getKey());
 							successCount++;
 						}
 					}
@@ -159,8 +162,10 @@ public class CustomApprovalDelegationJob implements JobRunner {
 			return JobRunnerResponse.success(msg);
 		} else {
 			return JobRunnerResponse.failed(
-					"Custom fields " + CustomApprovalUtil.REUQEST_PARTICIPANT_FIELD_NAME + 
-					" and " + CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_NAME + 
+					"Custom fields " + 
+					CustomApprovalUtil.REUQEST_PARTICIPANT_FIELD_NAME + 
+					" or " + CustomApprovalUtil.MANUAL_REUQEST_PARTICIPANT_FIELD_NAME + 
+					" or " + CustomApprovalUtil.INDICATOR_FIELD_NAME + 
 					" not found");
 		}
 	}

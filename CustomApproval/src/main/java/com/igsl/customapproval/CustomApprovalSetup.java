@@ -96,6 +96,29 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 	}
 	
 	/**
+	 * Get CustomField for issue updated event indicator.
+	 * @return CustomField
+	 */
+	public static CustomField getIndicatorCustomField() {
+		CustomField result = null;
+		CustomFieldType<?, ?> cfType = getCustomFieldTypeTextArea();
+		Collection<CustomField> list = CUSTOM_FIELD_MANAGER.getCustomFieldObjectsByName(
+				CustomApprovalUtil.INDICATOR_FIELD_NAME);
+		if (list != null) {
+			Iterator<CustomField> it = list.iterator();
+			while (it.hasNext()) {
+				CustomField cf = it.next();
+				if (cfType.equals(cf.getCustomFieldType()) && 
+					CustomApprovalUtil.INDICATOR_FIELD_DESCRIPTION.equals(cf.getDescription())) {
+					result = cf;
+					break;
+				}
+			}
+		}
+		return result;
+	}
+	
+	/**
 	 * Get CustomField for locking.
 	 * @return CustomField
 	 */
@@ -251,6 +274,35 @@ public class CustomApprovalSetup implements InitializingBean, DisposableBean {
 				LOGGER.debug("Manual Request Participant field created");
 			} catch (Exception ex) {
 				LOGGER.error("Failed to create manual request participant field", ex);
+			}
+		}
+		// Find if lock field exists
+		CustomField indicatorField = getIndicatorCustomField();
+		// Create if not
+		if (indicatorField == null) {
+			List<JiraContextNode> contexts = Arrays.asList(GlobalIssueContext.getInstance());
+			List<IssueType> issueTypes = Arrays.asList((IssueType) null);
+			try {
+				CustomField created = CUSTOM_FIELD_MANAGER.createCustomField(
+					CustomApprovalUtil.INDICATOR_FIELD_NAME, 
+					CustomApprovalUtil.INDICATOR_FIELD_DESCRIPTION, 
+					cfTypeTextArea, 
+					cfSearcherTextArea,
+					contexts, 
+					issueTypes);
+				// Lock the custom field
+				ManagedConfigurationItemService configItemService = 
+						ComponentAccessor.getComponent(ManagedConfigurationItemService.class);
+				ManagedConfigurationItem item = configItemService.getManagedCustomField(created);
+				ManagedConfigurationItemBuilder builder = item.newBuilder();
+				item = builder
+						.setConfigurationItemAccessLevel(ConfigurationItemAccessLevel.ADMIN)
+						.build();
+				configItemService.updateManagedConfigurationItem(item);
+				lockField = created;
+				LOGGER.debug("Indicator field created");
+			} catch (Exception ex) {
+				LOGGER.error("Failed to create indicator field", ex);
 			}
 		}
 	}

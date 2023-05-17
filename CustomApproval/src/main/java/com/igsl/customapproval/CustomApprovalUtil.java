@@ -122,7 +122,9 @@ public class CustomApprovalUtil {
 	public static final String CUSTOM_FIELD_DESCRIPTION = "[Custom Approval] Approval data as JSON string";
 	public static final String MANUAL_REUQEST_PARTICIPANT_FIELD_NAME = "[Custom Approval] Manual Request Participant";
 	public static final String MANUAL_REUQEST_PARTICIPANT_FIELD_DESCRIPTION = "Request participants added manually";
-	
+	public static final String INDICATOR_FIELD_NAME = "Issue Updated Event Indicator";
+	public static final String INDICATOR_FIELD_DESCRIPTION = "[Custom Approval] Issue Updated Event Indicator";
+
 	public static final String REUQEST_PARTICIPANT_FIELD_NAME = "Request participants";
 	
 	/**

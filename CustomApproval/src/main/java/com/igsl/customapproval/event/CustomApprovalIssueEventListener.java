@@ -129,6 +129,11 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 			LOGGER.debug("Manual Request Participants field not found");
 			return;
 		}
+		CustomField indicatorField = CustomApprovalSetup.getIndicatorCustomField();
+		if (indicatorField == null) {
+			LOGGER.debug("Issue Updated Event Indicator field not found");
+			return;
+		}
 		List<Issue> issueList = new ArrayList<>();
 		if (issue != null) {
 			issueList.add(issue);
@@ -198,9 +203,10 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 				continue;
 			}
 			mi.setCustomFieldValue(cfRequestParticipants, newParticipants);
+			mi.setCustomFieldValue(indicatorField, Boolean.TRUE.toString());
+			LOGGER.error("Issue updated with indicator on: " + is.getKey());
 			ISSUE_MANAGER.updateIssue(
-					CustomApprovalUtil.getAdminUser(), mi, EventDispatchOption.DO_NOT_DISPATCH, false);
-			LOGGER.error("Issue updated: " + is.getKey());
+					CustomApprovalUtil.getAdminUser(), mi, EventDispatchOption.ISSUE_UPDATED, false);
 		}
 	}
 	
@@ -233,12 +239,17 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 		}
 		CustomField manualRequestParticipant = CustomApprovalSetup.getManualRequestParticipantCustomField();
         CustomField requestParticipant = CustomApprovalSetup.getRequestParticipantField();
+        CustomField indicatorField = CustomApprovalSetup.getIndicatorCustomField();
 		if (manualRequestParticipant == null) {
 			LOGGER.debug("Manual Request Participant custom field cannot be found, event ignored");
 			return;
 		}
 		if (requestParticipant == null) {
 			LOGGER.debug("Request Participants custom field cannot be found, event ignored");
+			return;
+		}
+		if (indicatorField == null) {
+			LOGGER.debug("Issue Updated Event Indicator custom field cannot be found, event ignored");
 			return;
 		}
 		Issue issue = issueEvent.getIssue();
@@ -259,9 +270,9 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
     		}
     		if (value != null) {
     			is.setCustomFieldValue(manualRequestParticipant, value);
+	        	LOGGER.debug("Updated Manual Request Participant");
         		ISSUE_MANAGER.updateIssue(
         				CustomApprovalUtil.getAdminUser(), is, EventDispatchOption.DO_NOT_DISPATCH, false);
-	        	LOGGER.debug("Updated Manual Request Participant");
     		}
 		} else if (EventType.ISSUE_UPDATED_ID.equals(eventTypeId)) {
 			// Narrow down changed field
@@ -277,6 +288,19 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
     				LOGGER.debug("Changed fields: " + OM.writeValueAsString(gv.getAllFields()));
     				String fieldName = gv.get("field").toString();
     				if (CustomApprovalUtil.REUQEST_PARTICIPANT_FIELD_NAME.equals(fieldName)) {
+    					// Check indicator, if non-null/non-empty, set to null and ignore the event
+    					String value = (String) issue.getCustomFieldValue(indicatorField);
+		        		LOGGER.debug("Issue updated event indicator: " + value);
+    					if (value != null && value.length() != 0) {
+    						// Event is from CustomApproval updating request participants
+    						// Turn off indicator and ignore
+    						is.setCustomFieldValue(indicatorField, null);
+			        		LOGGER.debug("Issue updated event ignored");
+			        		ISSUE_MANAGER.updateIssue(
+			        				CustomApprovalUtil.getAdminUser(), is, 
+			        				EventDispatchOption.DO_NOT_DISPATCH, false);
+    						continue;
+    					}
     					List<ApplicationUser> originalParticipants = (List<ApplicationUser>) 
     		        			issue.getCustomFieldValue(manualRequestParticipant);
     		        	List<String> originalValues = new ArrayList<>();
@@ -341,10 +365,10 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 	    			        	}
 	    			        }
     			            is.setCustomFieldValue(manualRequestParticipant, newManualRequestParticipant);
-			        		ISSUE_MANAGER.updateIssue(
+				        	LOGGER.debug("Updated Manual Request Participant");
+    			            ISSUE_MANAGER.updateIssue(
 			        				CustomApprovalUtil.getAdminUser(), is, 
 			        				EventDispatchOption.DO_NOT_DISPATCH, false);
-				        	LOGGER.debug("Updated Manual Request Participant");
     			        }
     				} else {
     					// Check if changed field is approver field
@@ -369,7 +393,7 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
     						}
     					}
 						LOGGER.debug(fieldName + " vs " + userFieldName + ", " + groupFieldName);
-    					if (groupFieldName.equals(fieldName) || userFieldName.equals(fieldName)) {
+    					if (fieldName.equals(userFieldName) || fieldName.equals(groupFieldName)) {
     						updateRequestParticipants(issue);
     					}
     				}
