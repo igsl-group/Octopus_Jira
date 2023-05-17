@@ -126,6 +126,14 @@ public class PermissionSchemeEntityDTO extends JiraConfigDTO {
 	}
 
 	@Override
+	public void setupRelatedObjects() {
+		if (this.parameter != null) {
+			this.addRelatedObject(this.parameter);
+			this.parameter.addReferencedObject(this);
+		}
+	}
+	
+	@Override
 	public String getConfigName() {
 		StringBuilder sb = new StringBuilder();
 		sb	.append(this.entityTypeId.getConfigName() + " (")

@@ -9,7 +9,12 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.IssueTypeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.security.roles.ProjectRole;
+import com.atlassian.jira.security.roles.ProjectRoleImpl;
 import com.atlassian.jira.security.roles.ProjectRoleManager;
+import com.atlassian.mail.server.MailServer;
+import com.atlassian.mail.server.SMTPMailServer;
+import com.atlassian.mail.server.impl.PopMailServerImpl;
+import com.atlassian.mail.server.impl.SMTPMailServerImpl;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
@@ -18,6 +23,7 @@ import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
+import com.igsl.configmigration.mailserver.MailServerDTO;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class ProjectRoleUtil extends JiraConfigUtil {
@@ -57,7 +63,27 @@ public class ProjectRoleUtil extends JiraConfigUtil {
 	public MergeResult merge(
 			DTOStore exportStore, JiraConfigDTO oldItem, 
 			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
-		throw new Exception("ProjectRole is read only");
+		MergeResult result = new MergeResult();
+		ProjectRoleDTO original;
+		if (oldItem != null) {
+			original = (ProjectRoleDTO) oldItem;
+		} else {
+			original = (ProjectRoleDTO) findByDTO(newItem);
+		}
+		ProjectRoleDTO src = (ProjectRoleDTO) newItem;
+		ProjectRole createdJira = null;
+		if (original != null) {
+			createdJira = new ProjectRoleImpl(src.getId(), src.getName(), src.getDescription());
+			MANAGER.updateRole(createdJira);
+		} else {
+			// Create
+			createdJira = new ProjectRoleImpl(src.getName(), src.getDescription());
+			createdJira = MANAGER.createRole(createdJira);
+		}
+		ProjectRoleDTO created = new ProjectRoleDTO();
+		created.setJiraObject(createdJira);
+		result.setNewDTO(created);
+		return result;
 	}
 	
 	@Override
@@ -67,12 +93,12 @@ public class ProjectRoleUtil extends JiraConfigUtil {
 
 	@Override
 	public boolean isVisible() {
-		return false;
+		return true;
 	}
 	
 	@Override
 	public boolean isReadOnly() {
-		return true;
+		return false;
 	}
 
 	@Override

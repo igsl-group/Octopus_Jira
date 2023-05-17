@@ -36,6 +36,7 @@ import com.igsl.configmigration.plugin.PluginUtil;
 import com.igsl.configmigration.priority.PriorityUtil;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
+import com.igsl.configmigration.projectrole.ProjectRoleUtil;
 import com.igsl.configmigration.resolution.ResolutionUtil;
 import com.igsl.configmigration.status.StatusUtil;
 import com.igsl.configmigration.workflow.WorkflowUtil;
@@ -61,6 +62,7 @@ public class JiraConfigTypeRegistry {
 			FieldScreenUtil.class,
 			FieldLayoutUtil.class, 
 			WorkflowUtil.class,
+			ProjectRoleUtil.class,
 			ProjectCategoryUtil.class,
 			ProjectUtil.class,
 			IssueSecurityLevelSchemeUtil.class,
