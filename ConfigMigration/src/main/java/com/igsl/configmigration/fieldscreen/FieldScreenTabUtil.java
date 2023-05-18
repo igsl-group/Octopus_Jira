@@ -77,7 +77,6 @@ public class FieldScreenTabUtil extends JiraConfigUtil {
 			originalJira.setName(src.getName());
 			originalJira.setPosition(src.getPosition());
 			MANAGER.updateFieldScreenTab(originalJira);
-			// TODO Update items
 			createdJira = originalJira;
 		} else {
 			// Create
