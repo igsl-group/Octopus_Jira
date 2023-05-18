@@ -207,46 +207,37 @@ public abstract class JiraConfigDTO {
 			Class<?> cls2 = o2.getClass();
 			if (String.class.isAssignableFrom(cls1) && 
 				String.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as string");
 				if (((String) o1).compareTo((String) o2) != 0) {
 					result.add(title);
 				}
 			} else if (	Long.class.isAssignableFrom(cls1) && 
 						Long.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as long");
 				if (((Long) o1).compareTo((Long) o2) != 0) {
 					result.add(title);
 				}
 			} else if (	JiraConfigDTO.class.isAssignableFrom(cls1) && 
 						JiraConfigDTO.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as JiraConfigItem");
 				result.addAll(getDifferences(title, (JiraConfigDTO) o1, (JiraConfigDTO) o2));
 			} else if (	cls1.isArray() && 
 						cls2.isArray()) {
-				LOGGER.debug("Compare: " + title + " as array");
 				result.addAll(getDifferences(title, (Object[]) o1, (Object[]) o2));
 			} else if (	Collection.class.isAssignableFrom(cls1) && 
 						Collection.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as collection");
 				result.addAll(getDifferences(title, (Collection) o1, (Collection) o2));
 			} else if (	Map.class.isAssignableFrom(cls1) && 
 						Map.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as map");
 				result.addAll(getDifferences(title, (Map) o1, (Map) o2));
 			} else if (	Comparable.class.isAssignableFrom(cls1) && 
 						Comparable.class.isAssignableFrom(cls2)) {
-				LOGGER.debug("Compare: " + title + " as comparable");
 				if (((Comparable) o1).compareTo((Comparable) o2) != 0) {
 					result.add(title);
 				}
 			} else {
-				LOGGER.debug("Compare: " + title + " as string tokens");
 				if ((String.valueOf(o1)).compareTo(String.valueOf(o2)) != 0) {
 					result.add(title);
 				}
 			}
 		} else if ((o1 != null && o2 == null) || (o1 == null && o2 != null)) {
-			LOGGER.debug("Compare: " + title + " one item is null");
 			result.add(title + DIFFERENCE_WILDCARD);
 		}
 		return result;
@@ -292,6 +283,12 @@ public abstract class JiraConfigDTO {
 		}
 		
 		// TODO Debug adding extra fields
+		{
+			JiraConfigProperty prop = new JiraConfigProperty();
+			prop.setType(JiraConfigPropertyType.TEXT);
+			prop.setValue(this.getInternalId());
+			result.put("Internal ID", prop);
+		}
 		{
 			JiraConfigProperty prop = new JiraConfigProperty();
 			prop.setType(JiraConfigPropertyType.TEXT);
@@ -454,25 +451,18 @@ public abstract class JiraConfigDTO {
 		if (o1 != null) {
 			Class<?> cls1 = o1.getClass();
 			if (String.class.isAssignableFrom(cls1)) {
-				LOGGER.debug("getMap: " + title + " as string");
 				result.put(title, (String) o1);
 			} else if (Long.class.isAssignableFrom(cls1)) {
-				LOGGER.debug("getMap: " + title + " as long");
 				result.put(title, Long.toString((Long) o1));
 			} else if (JiraConfigDTO.class.isAssignableFrom(cls1)) {
-				LOGGER.debug("getMap: " + title + " as JiraConfigItem");
 				result.putAll(getMap(title, (JiraConfigDTO) o1));
 			} else if (cls1.isArray()) {
-				LOGGER.debug("getMap: " + title + " as array");
 				result.putAll(getMap(title, (Object[]) o1));
 			} else if (Collection.class.isAssignableFrom(cls1)) {
-				LOGGER.debug("getMap: " + title + " as collection");
 				result.putAll(getMap(title, (Collection<?>) o1));
 			} else if (Map.class.isAssignableFrom(cls1)) {
-				LOGGER.debug("getMap: " + title + " as map");
 				result.putAll(getMap(title, (Map<?, ?>) o1));
 			} else {
-				LOGGER.debug("getMap: " + title + " as JSON");
 				try {
 					result.put(title, OM.writeValueAsString(o1));
 				} catch (JsonProcessingException e) {
@@ -781,7 +771,6 @@ public abstract class JiraConfigDTO {
 		if (s != null) {
 			String m = s.replaceAll("'", "\\\\'");
 			m = m.replaceAll("\"", "\\\\\"");
-			LOGGER.debug("getJSUniqueKey [" + s + "] => [" + m + "]");
 			return m;
 		}
 		return s;

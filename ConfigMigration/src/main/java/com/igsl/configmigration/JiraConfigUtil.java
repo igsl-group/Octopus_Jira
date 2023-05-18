@@ -305,36 +305,28 @@ public abstract class JiraConfigUtil {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public JiraConfigDTO register(DTOStore store, JiraConfigDTO dto) throws Exception {
 		if (store != null && dto != null) {
-			LOGGER.debug("[TEST] " + dto.getUtilClass().getSimpleName() + ", dto: " + dto.getUniqueKey());
 			// Check for nested DTOs
 			BeanInfo info = Introspector.getBeanInfo(dto.getClass());
 			for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {
 				if (propDesc.getReadMethod() == null) {
-					LOGGER.debug("[TEST] No read method");
 					continue;
 				}
 				if (propDesc.getWriteMethod() == null) {
-					LOGGER.debug("[TEST] No write method");
 					continue;
 				}
 				if (JiraConfigDTO.MAP_EXCLUDE_METHODS.indexOf(propDesc.getReadMethod().getName()) != -1) {
-					LOGGER.debug("[TEST] Is default ignored method");
 					continue;
 				}
 				if (dto.getMapIgnoredMethods().indexOf(propDesc.getReadMethod().getName()) != -1) {
-					LOGGER.debug("[TEST] Is ignored method");
 					continue;
 				}
-				LOGGER.debug("[TEST] Processing property name: " + propDesc.getName());
 				if (JiraConfigDTO.class.isAssignableFrom(propDesc.getPropertyType())) {
 					// Nested DTO found
 					JiraConfigDTO nestedDTO = (JiraConfigDTO) propDesc.getReadMethod().invoke(dto);
 					if (nestedDTO != null) {
-						LOGGER.debug("[TEST] Checking nested DTO: " + nestedDTO.getUniqueKey() + " (" + nestedDTO.getClass() + ")");
 						JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(nestedDTO.getUtilClass());
 						JiraConfigDTO checkedNestedDTO  = nestedUtil.register(store, nestedDTO);
 						propDesc.getWriteMethod().invoke(dto, checkedNestedDTO);
-						LOGGER.debug("[TEST] Updated nested DTO: " + checkedNestedDTO.getUniqueKey());
 					} 
 				} else if (Collection.class.isAssignableFrom(propDesc.getPropertyType())) {
 					Collection oldData = (Collection) propDesc.getReadMethod().invoke(dto);
@@ -343,17 +335,14 @@ public abstract class JiraConfigUtil {
 						for (Object item : oldData) {
 							if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
 								JiraConfigDTO dtoItem = (JiraConfigDTO) item;
-								LOGGER.debug("[TEST] Checking nested DTO: " + dtoItem.getUniqueKey() + " (" + dtoItem.getClass() + ")");
 								JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(dtoItem.getUtilClass());
 								JiraConfigDTO checkedItem = nestedUtil.register(store, dtoItem);
 								newData.add(checkedItem);
-								LOGGER.debug("[TEST] Updated nested DTO: " + checkedItem.getUniqueKey());
 							} else {
 								newData.add(item);
 							}
 						}
 						propDesc.getWriteMethod().invoke(dto, newData);
-						LOGGER.debug("[TEST] Updated list property: " + propDesc.getName());
 					}
 				} else if (Map.class.isAssignableFrom(propDesc.getPropertyType())) {
 					Map oldData = (Map) propDesc.getReadMethod().invoke(dto);
@@ -363,18 +352,15 @@ public abstract class JiraConfigUtil {
 							Map.Entry e = (Map.Entry) entry;
 							if (e.getValue() != null && JiraConfigDTO.class.isAssignableFrom(e.getValue().getClass())) {
 								JiraConfigDTO dtoItem = (JiraConfigDTO) e.getValue();
-								LOGGER.debug("[TEST] Checking nested DTO: " + dtoItem.getUniqueKey() + " (" + dtoItem.getClass() + ")");
 								JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(
 										dtoItem.getUtilClass());
 								JiraConfigDTO checkedItem = nestedUtil.register(store, dtoItem);
 								newData.put(e.getKey(), checkedItem);
-								LOGGER.debug("[TEST] Updated nested DTO: " + checkedItem.getUniqueKey());
 							} else {
 								newData.put(e.getKey(), e.getValue());
 							}
 						}
 						propDesc.getWriteMethod().invoke(dto, newData);
-						LOGGER.debug("[TEST] Updated map property: " + propDesc.getName());
 					}
 				} else if (propDesc.getPropertyType().isArray() && 
 						JiraConfigDTO.class.isAssignableFrom(propDesc.getPropertyType().getComponentType())) {
@@ -382,14 +368,11 @@ public abstract class JiraConfigUtil {
 							propDesc.getReadMethod().invoke(dto);
 					List<JiraConfigDTO> newData = new ArrayList<>();
 					for (JiraConfigDTO item : oldData) {
-						LOGGER.debug("[TEST] Checking nested DTO: " + item.getUniqueKey() + " (" + item.getClass() + ")");
 						JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(item.getUtilClass());
 						JiraConfigDTO checkedItem = nestedUtil.register(store, item);
 						newData.add(checkedItem);
-						LOGGER.debug("[TEST] Updated nested DTO: " + checkedItem.getUniqueKey());
 					}
 					propDesc.getWriteMethod().invoke(dto, (Object[]) newData.toArray(new JiraConfigDTO[0]));
-					LOGGER.debug("[TEST] Updated array property: " + propDesc.getName());
 				}
 			}
 			JiraConfigDTO registered = store.checkAndRegister(dto);
@@ -401,7 +384,6 @@ public abstract class JiraConfigUtil {
 			for (JiraConfigRef ref : dto.getReferencedObjectList()) {
 				registered.addReferencedObject(ref);
 			}
-			LOGGER.debug("[TEST] Registered to store, type: " + dto.getClass() + ", dto: " + registered.getUniqueKey());
 			return registered;
 		}
 		return dto;

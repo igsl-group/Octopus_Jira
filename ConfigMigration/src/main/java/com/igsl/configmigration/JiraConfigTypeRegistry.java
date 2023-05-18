@@ -92,7 +92,6 @@ public class JiraConfigTypeRegistry {
 			int i1 = getOrder(o1);
 			int i2 = getOrder(o2);
 			int r = Integer.compare(i1, i2);
-			logger.debug("Compare [" + o1 + "] " + i1 + " vs [" + o2 + "] " + i2 + " = " + r);
 			return r;
 		}
 	}
@@ -163,7 +162,6 @@ public class JiraConfigTypeRegistry {
 		Logger logger = Logger.getLogger(LOGGER_NAME);
 		Collection<JiraConfigUtil> result = new ArrayList<JiraConfigUtil>();
 		for (Map.Entry<String, JiraConfigUtil> entry : UTIL_INSTANCE_MAP.entrySet()) {
-			logger.debug("Processing Key: " + entry.getKey());
 			if (publicOnly) {
 				if (entry.getValue().isVisible()) {
 					result.add(entry.getValue());
@@ -234,7 +232,6 @@ public class JiraConfigTypeRegistry {
 								break;
 							}
 							String entryName = entry.getName();
-							logger.debug("Registry checking entry: " + entryName);
 							if (entryName.toLowerCase().endsWith(CLASS_SUFFIX)) {
 								String className = entryName
 										.substring(0, entryName.length() - CLASS_SUFFIX.length())
@@ -245,17 +242,15 @@ public class JiraConfigTypeRegistry {
 										if (configItemClass.isAssignableFrom(cls) && 
 											!className.equals(JiraConfigDTO.class.getCanonicalName())) {
 											ITEM_NAMES.add(cls.getCanonicalName());
-											logger.debug("Registry added DTO: " + cls);
 										} else if (
 											utilClass.isAssignableFrom(cls) && 
 											!className.equals(JiraConfigUtil.class.getCanonicalName())) {
 											UTIL_NAMES.add(cls.getCanonicalName());
-											logger.debug("Registry added Util: " + cls);
 										}
 									}
 								} catch (Throwable ex) {
 									// Ignore
-									logger.debug(
+									logger.error(
 											"Registry error: " + 
 											ex.getClass().getCanonicalName() + ": " + 
 											ex.getMessage());
@@ -289,12 +284,6 @@ public class JiraConfigTypeRegistry {
 			}
 		}
 		Collections.sort(unorderedList);
-		try {
-			logger.debug("orderedList: " + OM.writeValueAsString(orderedList));
-			logger.debug("unorderedList: " + OM.writeValueAsString(unorderedList));
-		} catch (Exception ex) {
-			logger.error("OM error", ex);
-		}
 		for (String s : UTIL_NAMES) {
 			try {
 				Class<?> cls = cloader.loadClass(s);
@@ -303,14 +292,6 @@ public class JiraConfigTypeRegistry {
 			} catch (Throwable t) {
 				logger.error("Failed to load JiraConfigUtil for " + s, t);
 			}
-		}
-		try {
-			logger.debug("UtilMap: " + OM.writeValueAsString(UTIL_MAP));
-			logger.debug("InstanceMap: " + OM.writeValueAsString(UTIL_INSTANCE_MAP));
-			logger.debug("Public list: " + OM.writeValueAsString(getConfigUtilList(true)));
-			logger.debug("All list: " + OM.writeValueAsString(getConfigUtilList(false)));
-		} catch (Exception ex) {
-			logger.error("OM error", ex);
 		}
 	}
 }
