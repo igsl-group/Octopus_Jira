@@ -56,4 +56,12 @@ public class ProjectPermissionKeyDTO extends JiraConfigDTO {
 		return ProjectPermissionKey.class;
 	}
 
+	public String getPermissionKey() {
+		return permissionKey;
+	}
+
+	public void setPermissionKey(String permissionKey) {
+		this.permissionKey = permissionKey;
+	}
+
 }

@@ -1,11 +1,14 @@
 package com.igsl.configmigration.permissionscheme;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+import org.ofbiz.core.entity.GenericValue;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.permission.PermissionSchemeManager;
@@ -83,15 +86,8 @@ public class PermissionSchemeUtil extends JiraConfigUtil {
 			original = (PermissionSchemeDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		PermissionSchemeDTO src = (PermissionSchemeDTO) newItem;
-		if (original != null) {
-			// Delete and recreate
-			MANAGER.deleteScheme(original.getId());
-		} 
-		// Create
 		// Create entities
-		Collection<SchemeEntity> list = Collections.emptyList();
-		Scheme createdJira = new Scheme(null, src.getType(), src.getName(), src.getDescription(), list);
-		Collection<SchemeEntity> entities = createdJira.getEntities();
+		Collection<SchemeEntity> entities = new ArrayList<>();
 		for (PermissionSchemeEntityDTO e : src.getEntities()) {
 			SchemeEntity ent = new SchemeEntity(e.getType(), e.getEntityTypeId().getUniqueKey());
 			// Remap parameter based on type
@@ -124,10 +120,34 @@ public class PermissionSchemeUtil extends JiraConfigUtil {
 				}
 			}
 			ent.setParameter(param);
-			LOGGER.debug("Create notification scheme entity, param: " + ent.getParameter());
 			entities.add(ent);
 		}
-		createdJira = MANAGER.createSchemeAndEntities(createdJira);
+		Scheme createdJira = null;
+		if (original != null) {
+			// Delete entities
+			List<Long> oldEntities = new ArrayList<>();
+			for (PermissionSchemeEntityDTO dto : original.getEntities()) {
+				oldEntities.add(dto.getId());
+			}
+			MANAGER.deleteEntities(oldEntities);
+			// Update scheme. entities is ignored in MANAGER.updateScheme
+			createdJira = new Scheme(original.getId(), src.getType(), src.getName(), src.getDescription(), entities);	
+			MANAGER.updateScheme(createdJira);
+			// Recreate entities
+			for (SchemeEntity entity : entities) {
+				entity.setSchemeId(createdJira.getId()); 
+				@SuppressWarnings("deprecation")
+				GenericValue gv = MANAGER.getScheme(createdJira.getId());
+				GenericValue createdEntity = MANAGER.createSchemeEntity(gv, entity);
+				if (createdEntity == null) {
+					result.addWarning("Unable to create entity, type: " + entity.getType() + ", parameter: " + entity.getParameter());
+				}
+			}
+		} else {
+			// Create
+			createdJira = new Scheme(null, src.getType(), src.getName(), src.getDescription(), entities);
+			createdJira = MANAGER.createSchemeAndEntities(createdJira);
+		}
 		// Associate with project
 		for (ProjectDTO p : src.getProjects()) {
 			ProjectDTO proj = (ProjectDTO) projectUtil.findByDTO(p);

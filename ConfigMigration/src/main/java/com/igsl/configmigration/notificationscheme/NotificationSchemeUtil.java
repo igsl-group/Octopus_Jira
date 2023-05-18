@@ -1,19 +1,19 @@
 package com.igsl.configmigration.notificationscheme;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.ofbiz.core.entity.GenericValue;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.notification.NotificationSchemeManager;
 import com.atlassian.jira.project.Project;
 import com.atlassian.jira.scheme.Scheme;
 import com.atlassian.jira.scheme.SchemeEntity;
-import com.atlassian.jira.scheme.SchemeFactory;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
@@ -88,15 +88,8 @@ public class NotificationSchemeUtil extends JiraConfigUtil {
 			original = (NotificationSchemeDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		NotificationSchemeDTO src = (NotificationSchemeDTO) newItem;
-		if (original != null) {
-			// Delete and recreate
-			MANAGER.deleteScheme(original.getId());
-		} 
-		// Create
 		// Create entities
-		Collection<SchemeEntity> list = Collections.emptyList();
-		Scheme createdJira = new Scheme(null, src.getType(), src.getName(), src.getDescription(), list);
-		Collection<SchemeEntity> entities = createdJira.getEntities();
+		Collection<SchemeEntity> list = new ArrayList<>();
 		for (NotificationSchemeEntityDTO e : src.getEntities()) {
 			// Map event type
 			EventTypeDTO event = (EventTypeDTO) eventUtil.findByDTO(e.getEventType());
@@ -127,9 +120,30 @@ public class NotificationSchemeUtil extends JiraConfigUtil {
 			}
 			ent.setParameter(param);
 			LOGGER.debug("Create notification scheme entity, param: " + ent.getParameter());
-			entities.add(ent);
+			list.add(ent);
 		}
-		createdJira = MANAGER.createSchemeAndEntities(createdJira);
+		Scheme createdJira = null;
+		if (original != null) {
+			// Delete existing entities
+			List<Long> existingEntities = new ArrayList<>();
+			for (NotificationSchemeEntityDTO e : original.getEntities()) {
+				existingEntities.add(e.getId());
+			}
+			MANAGER.deleteEntities(existingEntities);
+			// Update
+			createdJira = new Scheme(original.getId(), src.getType(), src.getName(), src.getDescription(), list);
+			// Recreate entities
+			for (SchemeEntity e : list) {
+				e.setSchemeId(createdJira.getId());
+				@SuppressWarnings("deprecation")
+				GenericValue gv = MANAGER.getScheme(createdJira.getId());
+				MANAGER.createSchemeEntity(gv, e);
+			}
+		} else {
+			// Create
+			createdJira = new Scheme(null, src.getType(), src.getName(), src.getDescription(), list);
+			createdJira = MANAGER.createSchemeAndEntities(createdJira);
+		}
 		// Associate with project
 		for (ProjectDTO p : src.getProjects()) {
 			ProjectDTO proj = (ProjectDTO) projectUtil.findByDTO(p);
