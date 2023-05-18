@@ -177,7 +177,6 @@ public class DTOStore {
 	 */
 	public final Map<String, JiraConfigDTO> getTypeStore(String utilName) {
 		if (store.containsKey(utilName)) {
-			LOGGER.debug("Type store found for String: " + utilName);
 			return store.get(utilName);
 		}
 		return new LinkedHashMap<>();
@@ -190,7 +189,6 @@ public class DTOStore {
 	 */
 	public final Map<String, JiraConfigDTO> getTypeStore(JiraConfigUtil util) {
 		if (store.containsKey(util.getImplementation())) {
-			LOGGER.debug("Type store found for util: " + util);
 			return store.get(util.getImplementation());
 		}
 		return new LinkedHashMap<>();
