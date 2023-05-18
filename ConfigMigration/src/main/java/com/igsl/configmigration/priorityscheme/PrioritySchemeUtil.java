@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.config.manager.PrioritySchemeManager;
-import com.atlassian.jira.issue.priority.Priority;
 import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -79,11 +78,6 @@ public class PrioritySchemeUtil extends JiraConfigUtil {
 			original = (PrioritySchemeDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		PrioritySchemeDTO src = (PrioritySchemeDTO) newItem;
-		if (original != null) {
-			// Delete and recreate
-			MANAGER.delete((FieldConfigScheme) original.getJiraObject());
-		} 
-		// Create
 		List<String> optionIds = new ArrayList<>();
 		for (PriorityDTO dto : src.getPriorities()) {
 			PriorityDTO item = (PriorityDTO) priorityUtil.findByDTO(dto);
@@ -91,6 +85,17 @@ public class PrioritySchemeUtil extends JiraConfigUtil {
 				optionIds.add(item.getId());
 			}
 		}
+		FieldConfigScheme createdJira = null;
+		if (original != null) {
+			// Update
+			createdJira = (FieldConfigScheme) original.getJiraObject();
+			MANAGER.updateWithDefaultMapping(createdJira, optionIds);
+		} else { 
+			// Create
+			createdJira = MANAGER.createWithDefaultMapping(
+					src.getScheme().getName(), src.getScheme().getDescription(), optionIds);
+		}
+		// Set default
 		String defaultId = null;
 		if (src.getDefaultPriority() != null) {
 			PriorityDTO item = (PriorityDTO) priorityUtil.findByDTO(src.getDefaultPriority());
@@ -98,9 +103,8 @@ public class PrioritySchemeUtil extends JiraConfigUtil {
 				defaultId = item.getId();
 			}
 		}
-		FieldConfigScheme createdJira = MANAGER.createWithDefaultMapping(
-				src.getScheme().getName(), src.getScheme().getDescription(), optionIds);
 		MANAGER.setDefaultOption(createdJira.getOneAndOnlyConfig(), defaultId);
+		// Associate with project
 		if (src.getScheme().getAssocatedProjectObjects() != null) {
 			for (ProjectDTO proj : src.getScheme().getAssocatedProjectObjects()) {
 				ProjectDTO p = (ProjectDTO) projectUtil.findByDTO(proj);

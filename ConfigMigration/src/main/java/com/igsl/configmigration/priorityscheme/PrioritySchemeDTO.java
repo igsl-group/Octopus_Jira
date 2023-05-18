@@ -88,9 +88,10 @@ public class PrioritySchemeDTO extends JiraConfigDTO {
 			this.addRelatedObject(dto);
 			dto.addReferencedObject(this);
 		}
+		// For projects, have the project own priority scheme instead
 		for (ProjectDTO dto : this.projects) {
-			this.addRelatedObject(dto);
-			dto.addReferencedObject(this);
+			dto.addRelatedObject(this);
+			this.addReferencedObject(dto);
 		}
 	}
 
