@@ -6,16 +6,19 @@
 				<li>Application User in external directories</li>
 				<li>Applications (e.g. Jira Service Management)</li>
 				<li>Plugins and their data</li>
-				<li>System configurations except: 
+				<li>System configurations, except the followings which are included: 
 					<ul>
-						<li>Incoming/Outgoing Mail Servers</li>
+						<li>Project Role</li>
+						<li>Global Permissions</li>
+						<li>Outgoing Mail Servers</li>
+						<li>Incoming Mail Servers (not including mail handlers)</li>
 					</ul>
 				</li>
 			</ul>
 		</li>
 		<li>Please make sure the excluded items have been synchronized before merging.</li>
 		<li>Avatar objects will be created as duplicates, as Jira API modifies their filename and content on import, making identification of existing items impossible.</li>
-		<li>Workflow content may be incorrect and should be checked after merging.</li>
-		<li>Please migrate issue data via Jira functions after merging.</li>
+		<li>Workflow function configuration may be incorrect and should be checked after merging.</li>
+		<li>Migrate issue data via issue export/import after merging.</li>
 	</ul>
 </div>
