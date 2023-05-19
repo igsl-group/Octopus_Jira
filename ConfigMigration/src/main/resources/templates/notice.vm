@@ -1,17 +1,20 @@
 <div>
 	<ul>
-		<li>
-			The following data are not included: 
-			<ol>
+		<li>The following items are not included: 
+			<ul>
 				<li>User Directories</li>
-				<li>Application User</li>
-				<li>Applications</li>
+				<li>Application User in external directories</li>
+				<li>Applications (e.g. Jira Service Management)</li>
 				<li>Plugins and their data</li>
-				<li>System configurations</li>
-			</ol>
+				<li>System configurations except: 
+					<ul>
+						<li>Incoming/Outgoing Mail Servers</li>
+					</ul>
+				</li>
+			</ul>
 		</li>
-		<li>Avatar objects will create duplicates, as Jira API modifies their filename and content on import.</li>
-		<li>Please make sure the above data have been synchronized before merging.</li>
+		<li>Please make sure the excluded items have been synchronized before merging.</li>
+		<li>Avatar objects will be created as duplicates, as Jira API modifies their filename and content on import, making identification of existing items impossible.</li>
 		<li>Workflow content may be incorrect and should be checked after merging.</li>
 		<li>Please migrate issue data via Jira functions after merging.</li>
 	</ul>

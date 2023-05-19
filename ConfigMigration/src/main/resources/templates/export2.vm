@@ -255,6 +255,7 @@
 				<span>Description: </span>
 				<input type="text" id="mergeDescInput" name="mergeDesc" value="" 
 						onkeydown="if (event.key == 'Enter') { $('#merge-dialogOK').click(); }"/>
+				<hr/>
 			    #parse("/templates/notice.vm")
 		    </div>
 		    <!-- Dialog footer -->
