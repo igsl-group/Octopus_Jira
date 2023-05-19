@@ -1,14 +1,10 @@
 package com.igsl.configmigration;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
@@ -317,8 +313,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 	}
 	
 	private MergeResult merge(JiraConfigUtil util, JiraConfigDTO newObj) throws Exception {
-		JiraConfigDTO oldObj = this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
-		return util.merge(this.data.exportStore, oldObj, this.data.importStore, newObj);
+		//JiraConfigDTO oldObj = this.data.exportStore.getTypeStore(util).get(newObj.getUniqueKey());
+		// Don't provide old object, so it is always using the latest image
+		return util.merge(this.data.exportStore, null, this.data.importStore, newObj);
 	}
 	
 	private void clearExportView() {
