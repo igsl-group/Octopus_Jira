@@ -72,19 +72,29 @@ public class FieldLayoutSchemeUtil extends JiraConfigUtil {
 			original = (FieldLayoutSchemeDTO) findByDTO(newItem);
 		}
 		FieldLayoutSchemeDTO src = (FieldLayoutSchemeDTO) newItem;
+		FieldLayoutScheme createdJira = null;
 		if (original != null) {
-			// Delete and recreate
-			MANAGER.deleteFieldLayoutScheme((FieldLayoutScheme) original.getJiraObject());
+			// Update
+			createdJira = (FieldLayoutScheme) original.getJiraObject();
+			createdJira.setDescription(src.getDescription());
+			createdJira.setName(src.getName());
+			// Drop entities
+			for (FieldLayoutSchemeEntity e : createdJira.getEntities()) {
+				MANAGER.removeFieldLayoutSchemeEntity(e);
+			}
+			MANAGER.updateFieldLayoutScheme(createdJira);
+		} else {
+			// Create
+			createdJira = new FieldLayoutSchemeImpl(MANAGER, null);
+			createdJira.setDescription(src.getDescription());
+			createdJira.setName(src.getName());
+			createdJira = MANAGER.createFieldLayoutScheme(createdJira);
 		}
-		// Create
-		FieldLayoutScheme createdJira = new FieldLayoutSchemeImpl(MANAGER, null);
-		createdJira.setDescription(src.getDescription());
-		createdJira.setName(src.getName());
-		createdJira = MANAGER.createFieldLayoutScheme(createdJira);
 		// Create entities
 		FieldLayoutUtil flUtil = (FieldLayoutUtil) JiraConfigTypeRegistry.getConfigUtil(FieldLayoutUtil.class);
 		IssueTypeUtil itUtil = (IssueTypeUtil) JiraConfigTypeRegistry.getConfigUtil(IssueTypeUtil.class);
 		for (FieldLayoutSchemeEntityDTO e : src.getEntities()) {
+			// Only create entity if either issue type or field layout is not null
 			FieldLayoutSchemeEntity entity = new FieldLayoutSchemeEntityImpl(MANAGER, null, CONSTANTS_MANAGER);
 			if (e.getFieldLayout() != null) {
 				FieldLayoutDTO layout = (FieldLayoutDTO) flUtil.findByDTO(e.getFieldLayout());
@@ -97,8 +107,7 @@ public class FieldLayoutSchemeUtil extends JiraConfigUtil {
 			}
 			MANAGER.createFieldLayoutSchemeEntity(entity);
 		}
-		FieldLayoutSchemeDTO created = new FieldLayoutSchemeDTO();
-		created.setJiraObject(createdJira);
+		FieldLayoutSchemeDTO created = (FieldLayoutSchemeDTO) findByInternalId(Long.toString(createdJira.getId()));
 		result.setNewDTO(created);
 		return result;
 	}

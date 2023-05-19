@@ -50,6 +50,23 @@ public class FieldLayoutSchemeEntityDTO extends JiraConfigDTO {
 		}
 		this.uniqueKey = Long.toString(this.id);
 	}
+	
+	@Override
+	public String getConfigName() {
+		StringBuilder sb = new StringBuilder();
+		if (this.issueType != null) {
+			sb.append(this.issueType.getConfigName());
+		} else {
+			sb.append("(Default Issue Types)");
+		}
+		sb.append(" - ");
+		if (this.fieldLayout != null) {
+			sb.append(this.fieldLayout.getConfigName());
+		} else {
+			sb.append("(Default Field Configuration)");
+		}
+		return sb.toString();
+	}
 
 	@Override
 	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {

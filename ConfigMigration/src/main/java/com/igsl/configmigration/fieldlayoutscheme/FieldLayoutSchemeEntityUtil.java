@@ -1,39 +1,20 @@
 package com.igsl.configmigration.fieldlayoutscheme;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
-import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
-import com.atlassian.jira.issue.fields.config.manager.IssueTypeSchemeManager;
 import com.atlassian.jira.issue.fields.layout.field.FieldLayoutManager;
 import com.atlassian.jira.issue.fields.layout.field.FieldLayoutScheme;
 import com.atlassian.jira.issue.fields.layout.field.FieldLayoutSchemeEntity;
-import com.atlassian.jira.issue.fields.option.OptionSet;
-import com.atlassian.jira.project.Project;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
-import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
-import com.igsl.configmigration.SessionData.ImportData;
-import com.igsl.configmigration.fieldconfig.FieldConfigDTO;
-import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
-import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeDTO;
-import com.igsl.configmigration.issuetype.IssueTypeDTO;
-import com.igsl.configmigration.issuetype.IssueTypeUtil;
-import com.igsl.configmigration.optionset.OptionSetDTO;
-import com.igsl.configmigration.optionset.OptionSetUtil;
-import com.igsl.configmigration.project.ProjectDTO;
-import com.igsl.configmigration.project.ProjectUtil;
 
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class FieldLayoutSchemeEntityUtil extends JiraConfigUtil {
