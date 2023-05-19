@@ -139,7 +139,7 @@ public class CustomFieldUtil extends JiraConfigUtil {
 		}
 		LOGGER.debug("CustomFieldType: " + fieldType);
 		CustomFieldSearcherDTO fieldSearcher = null;
-		if (src.getCustomFieldSearcher() != null) {
+		if (src.getCustomFieldSearcher() != null && !CUSTOM_FIELD_SEARCHER_UTIL.isDefaultObject(src.getCustomFieldSearcher())) {
 			src.getCustomFieldSearcher().setJiraObject(null, (CustomFieldType<?, ?>) fieldType.getJiraObject());		
 			fieldSearcher = (CustomFieldSearcherDTO) CUSTOM_FIELD_SEARCHER_UTIL.findByDTO(
 					src.getCustomFieldSearcher());
