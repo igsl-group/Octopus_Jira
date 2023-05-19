@@ -36,7 +36,7 @@ public class FieldLayoutDTO extends JiraConfigDTO {
 		this.description = o.getDescription();
 		for (FieldLayoutItem item : o.getFieldLayoutItems()) {
 			FieldLayoutItemDTO dto = new FieldLayoutItemDTO();
-			dto.setJiraObject(item);
+			dto.setJiraObject(item, this);
 			fieldLayoutItems.add(dto);
 		}
 		this.uniqueKey = this.name;

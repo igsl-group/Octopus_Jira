@@ -76,11 +76,6 @@ public class FieldLayoutUtil extends JiraConfigUtil {
 			original = (FieldLayoutDTO) findByUniqueKey(newItem.getUniqueKey());
 		}
 		FieldLayoutDTO src = (FieldLayoutDTO) newItem;
-		if (original != null) {
-			// Destroy and recreate
-			MANAGER.deleteFieldLayout((FieldLayout) original.getJiraObject());
-		} 
-		// Create
 		CustomFieldUtil util = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldUtil.class);
 		List<FieldLayoutItem> items = new ArrayList<>();
 		for (FieldLayoutItemDTO item : src.getFieldLayoutItems()) {
@@ -103,10 +98,23 @@ public class FieldLayoutUtil extends JiraConfigUtil {
 				.build();
 			items.add(it);
 		}
-		EditableFieldLayout createdJira = new EditableFieldLayoutImpl(null, items);
-		createdJira.setDescription(src.getDescription());
-		createdJira.setName(src.getName());			
-		createdJira = MANAGER.storeAndReturnEditableFieldLayout(createdJira);
+		EditableFieldLayout createdJira = null;
+		if (original != null) {
+			// Update
+			// Fetch the original as EditableLayoutItem to access its .getGenericValue()
+			createdJira = MANAGER.getEditableFieldLayout(original.getId());	
+			// Create a clone with same ID but new items
+			createdJira = new EditableFieldLayoutImpl(createdJira.getGenericValue(), items);	
+			createdJira.setDescription(src.getDescription());
+			createdJira.setName(src.getName());
+			createdJira = MANAGER.storeAndReturnEditableFieldLayout(createdJira);
+		} else {
+			// Create
+			createdJira = new EditableFieldLayoutImpl(null, items);
+			createdJira.setDescription(src.getDescription());
+			createdJira.setName(src.getName());			
+			createdJira = MANAGER.storeAndReturnEditableFieldLayout(createdJira);
+		}
 		FieldLayoutDTO created = new FieldLayoutDTO();
 		created.setJiraObject(createdJira);
 		result.setNewDTO(created);

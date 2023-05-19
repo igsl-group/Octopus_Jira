@@ -41,13 +41,20 @@ public class FieldLayoutItemDTO extends JiraConfigDTO {
 	}
 	
 	@Override
+	public int getObjectParameterCount() {
+		// #0: FieldLayoutDTO
+		return 1;
+	}
+	
+	@Override
 	protected void setupRelatedObjects() throws Exception {
-		if (this.customField != null) {
+		FieldLayoutDTO parent = (FieldLayoutDTO) this.objectParameters[0];
+		if (this.customField != null && parent != null) {
 			CustomFieldUtil util = (CustomFieldUtil) JiraConfigTypeRegistry.getConfigUtil(CustomFieldUtil.class);
 			CustomFieldDTO cf = (CustomFieldDTO) util.findByInternalId(this.customField.getInternalId());
 			if (cf != null) {
-				addRelatedObject(cf);
-				cf.addReferencedObject(this);
+				parent.addRelatedObject(cf);
+				cf.addReferencedObject(parent);
 			}
 		}
 	}
