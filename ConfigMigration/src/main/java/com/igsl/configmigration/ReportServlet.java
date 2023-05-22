@@ -61,12 +61,15 @@ public class ReportServlet extends HttpServlet {
 				ApplicationUser mergeUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
 				String fileName;
 				byte[] content;
+				String desc = (data[0].getDescription() != null && data[0].getDescription().length() != 0)?
+						" - " + data[0].getDescription() : 
+						"";
 				if (PARAM_TYPE_REPORT.equals(type)) {
 					fileName = 
 						"Merge Report" + 
 						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
 						" on " + SDF.format(data[0].getMergeDate()) + 
-						" - " + data[0].getDescription() + 
+						desc + 
 						".json";
 					content = data[0].getReport().getBytes("UTF8");
 				} else {
@@ -74,7 +77,7 @@ public class ReportServlet extends HttpServlet {
 						"Merge Data" + 
 						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
 						" on " + SDF.format(data[0].getMergeDate()) + 
-						" - " + data[0].getDescription() + 
+						desc + 
 						".json";
 					content = data[0].getImportData().getBytes("UTF8");
 				}
