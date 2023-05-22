@@ -329,20 +329,38 @@ public abstract class JiraConfigUtil {
 						propDesc.getWriteMethod().invoke(dto, checkedNestedDTO);
 					} 
 				} else if (Collection.class.isAssignableFrom(propDesc.getPropertyType())) {
-					Collection oldData = (Collection) propDesc.getReadMethod().invoke(dto);
-					if (oldData != null) {
-						Collection newData = new ArrayList();	// TODO How to get concrete class?
-						for (Object item : oldData) {
-							if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
-								JiraConfigDTO dtoItem = (JiraConfigDTO) item;
-								JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(dtoItem.getUtilClass());
-								JiraConfigDTO checkedItem = nestedUtil.register(store, dtoItem);
-								newData.add(checkedItem);
-							} else {
-								newData.add(item);
+					if (Set.class.isAssignableFrom(propDesc.getPropertyType())) {
+						Set oldData = (Set) propDesc.getReadMethod().invoke(dto);
+						if (oldData != null) {
+							Set newData = new HashSet();	// TODO How to get concrete class?
+							for (Object item : oldData) {
+								if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
+									JiraConfigDTO dtoItem = (JiraConfigDTO) item;
+									JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(dtoItem.getUtilClass());
+									JiraConfigDTO checkedItem = nestedUtil.register(store, dtoItem);
+									newData.add(checkedItem);
+								} else {
+									newData.add(item);
+								}
 							}
+							propDesc.getWriteMethod().invoke(dto, newData);
 						}
-						propDesc.getWriteMethod().invoke(dto, newData);
+					} else {
+						Collection oldData = (Collection) propDesc.getReadMethod().invoke(dto);
+						if (oldData != null) {
+							Collection newData = new ArrayList();	// TODO How to get concrete class?
+							for (Object item : oldData) {
+								if (item != null && JiraConfigDTO.class.isAssignableFrom(item.getClass())) {
+									JiraConfigDTO dtoItem = (JiraConfigDTO) item;
+									JiraConfigUtil nestedUtil = JiraConfigTypeRegistry.getConfigUtil(dtoItem.getUtilClass());
+									JiraConfigDTO checkedItem = nestedUtil.register(store, dtoItem);
+									newData.add(checkedItem);
+								} else {
+									newData.add(item);
+								}
+							}
+							propDesc.getWriteMethod().invoke(dto, newData);
+						}
 					}
 				} else if (Map.class.isAssignableFrom(propDesc.getPropertyType())) {
 					Map oldData = (Map) propDesc.getReadMethod().invoke(dto);
