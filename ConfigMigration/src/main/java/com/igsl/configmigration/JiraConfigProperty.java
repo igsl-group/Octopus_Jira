@@ -13,9 +13,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class JiraConfigProperty {
 	
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final String NEWLINE = "\r\n";
 	
 	public enum JiraConfigPropertyType {
 		TEXT,
+		TEXT_LIST,
 		LIST,
 		MAP,
 		IMAGE,
@@ -26,6 +28,7 @@ public class JiraConfigProperty {
 	private String value;
 	private List<JiraConfigRef> list = new ArrayList<>();
 	private Map<Object, JiraConfigRef> map = new TreeMap<>();
+	private List<String> textList = new ArrayList<>();
 	private JiraConfigPropertyType type;
 	
 	@JsonIgnore
@@ -58,37 +61,27 @@ public class JiraConfigProperty {
 		}
 	}
 	public JiraConfigProperty(Map<?, ?> value) {
-		this.type = JiraConfigPropertyType.TEXT;
+		this.type = JiraConfigPropertyType.TEXT_LIST;
 		if (value != null) {
-			StringBuilder sb = new StringBuilder();
 			for (Object o : value.entrySet()) {
 				if (o != null) {
 					Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-					sb.append(e.getKey()).append(" = ").append(e.getValue());
+					this.textList.add(e.getKey() + " = " + e.getValue());
 				} else {
-					sb.append("null");
+					this.textList.add("null");
 				}
-				sb.append(", ");
-			}
-			if (sb.toString().endsWith(", ")) {
-				this.value = sb.toString().substring(0, sb.length() - 2);
 			}
 		}
 	}
 	public JiraConfigProperty(List<?> value) {
-		this.type = JiraConfigPropertyType.TEXT;
+		this.type = JiraConfigPropertyType.TEXT_LIST;
 		if (value != null) {
-			StringBuilder sb = new StringBuilder();
 			for (Object o : value) {
 				if (o != null) {
-					sb.append(o.toString());
+					this.textList.add(o.toString());
 				} else {
-					sb.append("null");
+					this.textList.add("null");
 				}
-				sb.append(", ");
-			}
-			if (sb.toString().endsWith(", ")) {
-				this.value = sb.toString().substring(0, sb.length() - 2);
 			}
 		}
 	}
@@ -199,5 +192,11 @@ public class JiraConfigProperty {
 	}
 	public void setImageType(String imageType) {
 		this.imageType = imageType;
+	}
+	public List<String> getTextList() {
+		return textList;
+	}
+	public void setTextList(List<String> textList) {
+		this.textList = textList;
 	}	
 }

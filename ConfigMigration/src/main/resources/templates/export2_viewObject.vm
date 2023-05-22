@@ -47,6 +47,9 @@
 								#if ($item.getValue().getType() == "MAP")
 									Size: ${item.getValue().getMap().size()}
 								#end
+								#if ($item.getValue().getType() == "TEXT_LIST")
+									Size: ${item.getValue().getTextList().size()}
+								#end
 							</div>
 						</th>
 						#if ($item.getValue().getType() == "TEXT")
@@ -61,6 +64,15 @@
 							<td width="70%">
 								<div style="display: inline-block; background-color: ${item.getValue().getValue()}; width: 1em; height: 1em"/>
 								$!{item.getValue().getValue()}
+							</td>
+						#end
+						#if ($item.getValue().getType() == "TEXT_LIST")
+							<td width="70%">
+								#foreach ($prop in $item.getValue().getTextList())
+									<div>
+										$!{prop}
+									</div>
+								#end
 							</td>
 						#end
 						#if ($item.getValue().getType() == "LIST")
