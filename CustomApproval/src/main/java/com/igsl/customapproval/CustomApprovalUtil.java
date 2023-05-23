@@ -3,12 +3,15 @@ package com.igsl.customapproval;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -52,6 +55,7 @@ import com.atlassian.scheduler.config.JobRunnerKey;
 import com.atlassian.scheduler.config.RunMode;
 import com.atlassian.scheduler.config.Schedule;
 import com.atlassian.scheduler.status.JobDetails;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -66,8 +70,22 @@ import com.igsl.customapproval.exception.InvalidWorkflowException;
 import com.igsl.customapproval.exception.LockException;
 import com.igsl.customapproval.panel.ApprovalPanelData;
 import com.igsl.customapproval.panel.ApprovalPanelHistory;
+import com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction;
+import com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunctionFactory;
+import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.ActionDescriptor;
+import com.opensymphony.workflow.loader.ConditionDescriptor;
+import com.opensymphony.workflow.loader.ConditionalResultDescriptor;
+import com.opensymphony.workflow.loader.ConditionsDescriptor;
+import com.opensymphony.workflow.loader.FunctionDescriptor;
+import com.opensymphony.workflow.loader.JoinDescriptor;
+import com.opensymphony.workflow.loader.PermissionDescriptor;
+import com.opensymphony.workflow.loader.RegisterDescriptor;
+import com.opensymphony.workflow.loader.RestrictionDescriptor;
+import com.opensymphony.workflow.loader.ResultDescriptor;
+import com.opensymphony.workflow.loader.SplitDescriptor;
 import com.opensymphony.workflow.loader.StepDescriptor;
+import com.opensymphony.workflow.loader.ValidatorDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
 public class CustomApprovalUtil {
@@ -106,6 +124,9 @@ public class CustomApprovalUtil {
 	public static final String CUSTOM_FIELD_USER_PICKER_MULTI = SYSTEM_CUSTOM_FIELD_TYPE + "multiuserpicker";
 	public static final String CUSTOM_FIELD_GROUP_PICKER = SYSTEM_CUSTOM_FIELD_TYPE + "grouppicker";
 	public static final String CUSTOM_FIELD_GROUP_PICKER_MULTI = SYSTEM_CUSTOM_FIELD_TYPE + "multigrouppicker";
+	
+	// Post function module key argument name
+	private static final String POST_FUNCTION_ARGUMENT_CLASS_NAME = "class.name";
 	
 	// Plugin Key
 	// Must match ${groupId}.${artifactId} in pom.xml
@@ -257,6 +278,153 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
+	 * To handle non-generic list in AbstractDescriptor
+	 * @param list List of AbstractDescriptor
+	 * @return Set<String> containing approval names found
+	 */
+	private static Set<String> findApprovalNames(List<?> list) {
+		Set<String> returnValue = new HashSet<>();
+		for (Object o : list) {
+			if (o instanceof AbstractDescriptor) {
+				AbstractDescriptor ad = (AbstractDescriptor) o;
+				returnValue.addAll(findApprovalNames(ad));
+			}
+		}
+		return returnValue;
+	}
+	
+	/**
+	 * Recursively locate instances of Initialize Approval Post Function and collect a list of approval names.
+	 * @param ad AbstractDescriptor. Caller should provide the top level WorkflowDescriptor.
+	 * @return Set<String> containing approval names found
+	 */
+	public static Set<String> findApprovalNames(AbstractDescriptor ad) {
+		LOGGER.debug("finaApprovaNames start");
+		LOGGER.debug("findApprovalNames: " + ((ad == null)? "null" : ad.getClass()));
+		Set<String> returnValue = new HashSet<>();
+		if (ad != null) {
+			if (ad instanceof ActionDescriptor) {
+				ActionDescriptor action = (ActionDescriptor) ad;
+				LOGGER.debug("ActionDescriptor: " + action.getName());
+				returnValue.addAll(findApprovalNames(action.getPostFunctions()));
+				returnValue.addAll(findApprovalNames(action.getPreFunctions()));
+				returnValue.addAll(findApprovalNames(action.getConditionalResults()));
+				returnValue.addAll(findApprovalNames(action.getUnconditionalResult()));
+			} else if (ad instanceof ConditionDescriptor) {
+				ConditionDescriptor condition = (ConditionDescriptor) ad;
+				LOGGER.debug("ConditionDescriptor: " + condition.getName());
+				// No action
+			} else if (ad instanceof ConditionsDescriptor) {
+				ConditionsDescriptor conditions = (ConditionsDescriptor) ad;
+				LOGGER.debug("ConditionsDescriptor: " + conditions.getId());
+				// No action
+			} else if (ad instanceof FunctionDescriptor) {
+				FunctionDescriptor function = (FunctionDescriptor) ad;
+				LOGGER.debug("FunctionDescriptor: " + function.getName());
+				Map<?, ?> args = function.getArgs();
+				// Check if it is Initialize Approval Post Function
+				String className = String.valueOf(args.get(POST_FUNCTION_ARGUMENT_CLASS_NAME));
+				LOGGER.debug("findApprovalNames function descriptor class name: " + className);
+				if (InitializeApprovalPostFunction.class.getCanonicalName().equals(className)) {
+					// If yes, collect approval names from settings
+					try {
+						Map<String, String[]> arguments = InitializeApprovalPostFunctionFactory.parseArguments(args);
+						String[] list = (String[]) arguments.get(InitializeApprovalPostFunctionFactory.PARAM_APPROVAL_NAME);
+						String s = "ToBeInitialized";
+						try {
+							s = OM.writeValueAsString(list);
+						} catch (Exception ex) {
+							LOGGER.error("Failed to serialize approval name list", ex);
+						}
+						LOGGER.debug("findApprovalNames initialize approval post function located: " + s);
+						returnValue.addAll(Arrays.asList(list));
+					} catch (Exception ex) {
+						LOGGER.error("Failed to parse argument map", ex);
+					}
+				}
+			} else if (ad instanceof JoinDescriptor) {
+				JoinDescriptor join = (JoinDescriptor) ad;
+				LOGGER.debug("JoinDescriptor: " + join.getId());
+				returnValue.addAll(findApprovalNames(join.getResult()));
+			} else if (ad instanceof PermissionDescriptor) {
+				PermissionDescriptor permission = (PermissionDescriptor) ad;
+				LOGGER.debug("PermissionDescriptor: " + permission.getName());
+				// No action
+			} else if (ad instanceof RegisterDescriptor) {
+				RegisterDescriptor register = (RegisterDescriptor) ad;
+				LOGGER.debug("RegisterDescriptor: " + register.getId());
+				// No action
+			} else if (ad instanceof RestrictionDescriptor) {
+				RestrictionDescriptor restriction = (RestrictionDescriptor) ad;
+				LOGGER.debug("RestrictionDescriptor: " + restriction.getId());
+				// No action
+			} else if (ad instanceof ResultDescriptor) {
+				ResultDescriptor result = (ResultDescriptor) ad;
+				LOGGER.debug("ResultDescriptor: " + result.getDisplayName());
+				returnValue.addAll(findApprovalNames(result.getPostFunctions()));
+				returnValue.addAll(findApprovalNames(result.getPreFunctions()));
+				returnValue.addAll(findApprovalNames(result.getValidators()));
+			} else if (ad instanceof SplitDescriptor) {
+				SplitDescriptor split = (SplitDescriptor) ad;
+				LOGGER.debug("SplitDescriptor: " + split.getId());
+				returnValue.addAll(findApprovalNames(split.getResults()));
+			} else if (ad instanceof StepDescriptor) {
+				StepDescriptor step = (StepDescriptor) ad;
+				LOGGER.debug("StepDescriptor: " + step.getName());
+				returnValue.addAll(findApprovalNames(step.getPostFunctions()));
+				returnValue.addAll(findApprovalNames(step.getPreFunctions()));
+				returnValue.addAll(findApprovalNames(step.getActions()));
+				returnValue.addAll(findApprovalNames(step.getCommonActions()));
+			} else if (ad instanceof ValidatorDescriptor) {
+				ValidatorDescriptor validator = (ValidatorDescriptor) ad;
+				LOGGER.debug("ValidatorDescriptor: " + validator.getName());
+				// No action
+			} else if (ad instanceof WorkflowDescriptor) {
+				WorkflowDescriptor workflow = (WorkflowDescriptor) ad;
+				LOGGER.debug("WorkflowDescriptor: " + workflow.getName());
+				returnValue.addAll(findApprovalNames(workflow.getGlobalActions()));
+				returnValue.addAll(findApprovalNames(workflow.getInitialActions()));
+				returnValue.addAll(findApprovalNames(workflow.getSteps()));
+			} else {
+				LOGGER.error("findApprovalNames Unsupported AbstractDescriptor: " + ad.getClass().getCanonicalName());
+			}
+		}
+		String s = "ToBeInitialized";
+		try {
+			s = OM.writeValueAsString(returnValue);
+		} catch (Exception ex) {
+			LOGGER.error("Failed to serialize approval name list", ex);
+		}
+		LOGGER.debug("findApprovalNames = " + s);
+		return returnValue;
+	}
+	
+	/**
+	 * Get list of approvals based on workflow provided.
+	 * @param wfDesc WorkflowDescriptor object. If null, null is returned. Otherwise return defined approvals in the workflow.
+	 */
+	public static Set<String> getApprovalList(WorkflowDescriptor wfDesc) {
+		if (wfDesc != null) {
+			Set<String> result = new HashSet<>();
+			// Look through whole workflow for InitializeApprovalPostFunction instances and record them
+			for (Object a : wfDesc.getGlobalActions()) {
+				ActionDescriptor action = (ActionDescriptor) a;
+				action.getPostFunctions();
+				action.getPreFunctions();
+				action.getUnconditionalResult().getPreFunctions();
+				action.getUnconditionalResult().getPostFunctions();
+				for (Object cr : action.getConditionalResults()) {
+					ConditionalResultDescriptor crd = (ConditionalResultDescriptor) cr;
+					crd.getPostFunctions();
+					crd.getPreFunctions();
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+	
+	/**
 	 * Get list of transitions
 	 * @param wfDesc WorkflowDescriptor
 	 * @return Map. Key is action ID (Long), value is action name.
@@ -331,6 +499,62 @@ public class CustomApprovalUtil {
 	}
 	
 	/**
+	 * Clear all approval history from issue.
+	 * @param user Updating user
+	 * @param MutableIssue issue
+	 */
+	public static void clearAllApprovalHistory(ApplicationUser user, MutableIssue issue) throws JsonProcessingException {
+		ApprovalData data = getApprovalData(issue);
+		if (data != null) {
+			for (ApprovalSettings settings : data.getSettings().values()) {
+				settings.setFinalApproveCount(0);
+				settings.setFinalApproveCountTarget(0);
+				settings.getFinalApproverList().clear();
+				settings.setFinalRejectCount(0);
+				settings.setFinalRejectCountTarget(0);
+				settings.setCompleted(false);
+				settings.setApproved(false);
+			}
+			data.getHistory().clear();
+			setApprovalData(user, issue, data);
+		}
+	}
+	
+	/**
+	 * Clear approval history for specific approval from issue.
+	 * @param user Updating user
+	 * @param MutableIssue issue
+	 * @param String... approvalNames If null or empty, clear all approvals.
+	 */
+	public static void clearApprovalHistory(ApplicationUser user, MutableIssue issue, String... approvalNames) throws JsonProcessingException {
+		if (approvalNames == null || approvalNames.length == 0) {
+			clearAllApprovalHistory(user, issue);
+		} else {
+			ApprovalData data = getApprovalData(issue);
+			if (data != null) {
+				for (String approvalName : approvalNames) {
+					if (data.getSettings().containsKey(approvalName)) {
+						ApprovalSettings settings = data.getSettings().get(approvalName);
+						if (settings != null) {
+							settings.setFinalApproveCount(0);
+							settings.setFinalApproveCountTarget(0);
+							settings.getFinalApproverList().clear();
+							settings.setFinalRejectCount(0);
+							settings.setFinalRejectCountTarget(0);
+							settings.setCompleted(false);
+							settings.setApproved(false);
+						}
+					}
+					if (data.getHistory().containsKey(approvalName)) {
+						data.getHistory().remove(approvalName);
+					}
+				}
+				setApprovalData(user, issue, data);
+			}
+		}
+	}
+	
+	/**
 	 * Retrieve ApprovalData custom field value from issue.
 	 * @param issue Issue
 	 * @return ApprovalData, null if not present or invalid.
@@ -369,10 +593,11 @@ public class CustomApprovalUtil {
 	 * @param user Updating user.
 	 * @param issue Issue
 	 * @param data ApprovalData from getApprovalData().
+	 * @throws Exception if provided ApprovalData cannot be converted to string
 	 */
-	public static void setApprovalData(ApplicationUser user, MutableIssue issue, ApprovalData data) {
+	public static void setApprovalData(ApplicationUser user, MutableIssue issue, ApprovalData data) throws JsonProcessingException {
 		CustomField cf = CustomApprovalSetup.getApprovalDataCustomField();
-		issue.setCustomFieldValue(cf, data);
+		issue.setCustomFieldValue(cf, OM.writeValueAsString(data));
 		ISSUE_MANAGER.updateIssue(user, issue, EventDispatchOption.DO_NOT_DISPATCH, false);
 	}
 	
@@ -659,6 +884,7 @@ public class CustomApprovalUtil {
 	 */
 	public static void approve(MutableIssue issue, ApplicationUser user, boolean approve) 
 			throws 
+				JsonProcessingException,
 				LockException, 
 				InvalidApproverException, 
 				InvalidApprovalException, 
@@ -683,6 +909,7 @@ public class CustomApprovalUtil {
 	 */
 	public static boolean approve(MutableIssue issue, ApprovalSettings settings, ApplicationUser user, boolean approve) 
 			throws 
+				JsonProcessingException,
 				LockException, 
 				InvalidApproverException, 
 				InvalidApprovalException, 
@@ -694,7 +921,6 @@ public class CustomApprovalUtil {
 		if (settings == null) {
 			throw new InvalidApprovalException();
 		}
-		CustomField approvalDataCustomField = CustomApprovalSetup.getApprovalDataCustomField();
 		String lockId = null;
 		try {
 			lockId = CustomApprovalUtil.lockApproval(issue);
@@ -1157,7 +1383,6 @@ public class CustomApprovalUtil {
 			String delegatorUserKey,
 			String targetUserKey) {
 		SchedulerService schedulerService = ComponentAccessor.getComponent(SchedulerService.class);
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
 		String uniqueKey = getAdhocJobUniqueKey(dateTime, isStart, delegatorUserKey, targetUserKey);
 		JobRunnerKey key = JobRunnerKey.of(uniqueKey);
 		// Unregister if exists

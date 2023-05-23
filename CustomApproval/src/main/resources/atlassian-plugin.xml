@@ -139,7 +139,7 @@
 		</condition>
 	</web-panel>
 
-	<!-- Workflow post function -->
+	<!-- Workflow post function - Initialize Approval -->
 	<workflow-function key="initialize-post-function"
 		name="Initialize Approval Post Function [Custom Approval]"
 		class="com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunctionFactory">
@@ -155,6 +155,24 @@
 			location="templates/postFunction/input.vm" />
 		<resource type="velocity" name="edit-parameters"
 			location="templates/postFunction/input.vm" />
+	</workflow-function>
+
+	<!-- Workflow post function - Clear Approval History -->
+	<workflow-function key="clear-approval-history-post-function"
+		name="Clear Approval History Post Function [Custom Approval]"
+		class="com.igsl.customapproval.workflow.postfunction.ClearApprovalHistoryPostFunctionFactory">
+		<description key="postFunc.desc">Clear custom approval history</description>
+		<orderable>true</orderable>
+		<unique>true</unique>
+		<deletable>true</deletable>
+		<function-class>com.igsl.customapproval.workflow.postfunction.ClearApprovalHistoryPostFunction
+		</function-class>
+		<resource type="velocity" name="view"
+			location="templates/clearHistory/view.vm" />
+		<resource type="velocity" name="input-parameters"
+			location="templates/clearHistory/create.vm" />
+		<resource type="velocity" name="edit-parameters"
+			location="templates/clearHistory/edit.vm" />
 	</workflow-function>
 
 	<!-- Web Action for approve/reject buttons -->
