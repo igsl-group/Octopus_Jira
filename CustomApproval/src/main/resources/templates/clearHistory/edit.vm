@@ -1,0 +1,43 @@
+<script type="text/javascript">
+	function clearIndividual() {
+		console.log('clearing individual items');
+		$('input[type="checkbox"][step]').prop('checked', false);
+		$('input[type="hidden"][step]').prop('disabled', true);
+	}
+	
+	function clearAll() {
+		$('#cb_all').attr('checked', false);
+	}
+</script>
+<h4>Clear approval history</h4>
+<table class="CustomApproval" style="width: 30% !important">
+	<tbody>
+		#foreach ($item in $approvalList)
+			#set ($itemJS = $item.replaceAll("\s", ""))
+			#set ($disabled = "")
+			#set ($checked = "")
+			#if ($approvalName.contains($item))
+				#set ($checked = "checked")
+			#else
+				#set ($disabled = "disabled")
+			#end
+			<tr>
+				<td>
+					<input type="hidden" step id="data_${itemJS}" name="approvalName" ${disabled} value="${item}"/>
+					<input type="checkbox" step style="width: 5% !important" id="cb_${itemJS}" ${checked} onchange="clearAll(); $('#data_${itemJS}').prop('disabled', !this.checked)"  />
+					<label for="cb_${itemJS}">${item}</label>
+				</td>
+			</tr>
+		#end
+		#set ($all = "")
+		#if ($approvalName == $null || $approvalName.size() == 0)
+			#set ($all = "checked")
+		#end
+		<tr>
+			<td>
+				<input type="checkbox" style="width: 5% !important" id="cb_all" ${all} onchange="clearIndividual()"  />
+				<label for="cb_all">All approvals</label>
+			</td>
+		</tr>
+	</tbody>
+</table>

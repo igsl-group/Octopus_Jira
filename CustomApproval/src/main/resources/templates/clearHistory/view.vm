@@ -1,0 +1,12 @@
+#set ($data = "")
+#if ($approvalName == $null || $approvalName.size() == 0)
+	#set ($data = "All approvals")
+#else 
+	#foreach ($item in $approvalName)
+		#set ($data = $data + ", " + $item)
+	#end
+	#if ($data.length() > 1)
+		#set ($data = $data.substring(1))
+	#end
+#end
+Clear approval history: $!{data}
