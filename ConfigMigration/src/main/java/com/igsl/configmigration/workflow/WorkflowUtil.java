@@ -44,13 +44,14 @@ public class WorkflowUtil extends JiraConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(WorkflowUtil.class);
 	private static final WorkflowManager WORKFLOW_MANAGER = ComponentAccessor.getWorkflowManager();
+	private static final String DEFAULT_WORKFLOW = "jira";
 	
 	@Override
 	public boolean isDefaultObject(JiraConfigDTO dto) {
 		if (dto != null && 
 			(
 				JiraConfigDTO.NULL_KEY.equals(dto.getUniqueKey()) || 
-				WorkflowDTO2.DEFAULT_WORKFLOW.equals(dto.getUniqueKey())
+				DEFAULT_WORKFLOW.equals(dto.getUniqueKey())
 			)) {
 			return true;
 		}
@@ -85,7 +86,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	public JiraConfigDTO findByInternalId(String id, Object... params) throws Exception {
 		JiraWorkflow wf = WORKFLOW_MANAGER.getWorkflow(id);
 		if (wf != null) {
-			WorkflowDTO2 item = new WorkflowDTO2();
+			WorkflowDTO item = new WorkflowDTO();
 			item.setJiraObject(wf);
 			return item;
 		}
@@ -96,7 +97,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (JiraWorkflow wf : WORKFLOW_MANAGER.getWorkflows()) {
 			if (uniqueKey.equals(wf.getName())) {
-				WorkflowDTO2 item = new WorkflowDTO2();
+				WorkflowDTO item = new WorkflowDTO();
 				item.setJiraObject(wf);
 				return item;
 			}
@@ -112,13 +113,13 @@ public class WorkflowUtil extends JiraConfigUtil {
 		LOGGER.debug("merge starts");
 		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-		WorkflowDTO2 original = null;
+		WorkflowDTO original = null;
 		if (oldItem != null) {
-			original = (WorkflowDTO2) oldItem;
+			original = (WorkflowDTO) oldItem;
 		} else {
-			original = (WorkflowDTO2) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
+			original = (WorkflowDTO) findByUniqueKey(newItem.getUniqueKey(), newItem.getObjectParameters());
 		}
-		WorkflowDTO2 src = (WorkflowDTO2) newItem;
+		WorkflowDTO src = (WorkflowDTO) newItem;
 		// Remap data in XML
 		// status
 		// //workflow/steps/step[name]
@@ -179,6 +180,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 			LOGGER.error("Error updating Status in Workflow XML", ex);
 		}
 		// TODO custom fields?
+		// TODO Modify all data via configured XPath?
 		if (original != null) {
 			// Update
 			WorkflowDescriptor wfDesc = 
@@ -217,7 +219,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 			wf.setDescription(src.getDescription());
 			// Commit
 			WORKFLOW_MANAGER.createWorkflow(currentUser, wf);
-			WorkflowDTO2 created = new WorkflowDTO2();
+			WorkflowDTO created = new WorkflowDTO();
 			created.setJiraObject(wf);
 			result.setNewDTO(created);
 		}
@@ -226,7 +228,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	
 	@Override
 	public Class<? extends JiraConfigDTO> getDTOClass() {
-		return WorkflowDTO2.class;
+		return WorkflowDTO.class;
 	}
 
 	@Override
@@ -243,7 +245,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	public Map<String, JiraConfigDTO> search(String filter, Object... params) throws Exception {
 		Map<String, JiraConfigDTO> result = new TreeMap<>();
 		for (JiraWorkflow wf : WORKFLOW_MANAGER.getWorkflows()) {
-			WorkflowDTO2 item = new WorkflowDTO2();
+			WorkflowDTO item = new WorkflowDTO();
 			item.setJiraObject(wf);
 			if (!matchFilter(item, filter)) {
 				continue;

@@ -23,7 +23,7 @@ import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.project.ProjectDTO;
 import com.igsl.configmigration.project.ProjectUtil;
-import com.igsl.configmigration.workflow.WorkflowDTO2;
+import com.igsl.configmigration.workflow.WorkflowDTO;
 import com.igsl.configmigration.workflow.WorkflowUtil;
 
 /**
@@ -41,7 +41,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 	private Map<String, String> mappings;
 	private String name;
 	private List<ProjectDTO> projects;
-	private List<WorkflowDTO2> relatedWorkflows = new ArrayList<>();
+	private List<WorkflowDTO> relatedWorkflows = new ArrayList<>();
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
@@ -52,7 +52,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		// Locate default workflow
 		if (this.configuredDefaultWorkflow != null) {
 			if (workflows.containsKey(this.configuredDefaultWorkflow)) {
-				WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(this.configuredDefaultWorkflow);
+				WorkflowDTO relatedWorkflow = (WorkflowDTO) workflows.get(this.configuredDefaultWorkflow);
 				this.relatedWorkflows.add(relatedWorkflow);
 			}
 		}
@@ -60,7 +60,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		if (this.mappings != null) {
 			for (String workflowName : this.mappings.values()) {
 				if (workflows.containsKey(workflowName)) {
-					WorkflowDTO2 relatedWorkflow = (WorkflowDTO2) workflows.get(workflowName);
+					WorkflowDTO relatedWorkflow = (WorkflowDTO) workflows.get(workflowName);
 					this.relatedWorkflows.add(relatedWorkflow);
 				}
 			}
@@ -108,7 +108,7 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		}
 		// Add related workflows
 		if (this.relatedWorkflows != null) {
-			for (WorkflowDTO2 relatedWorkflow : this.relatedWorkflows) {
+			for (WorkflowDTO relatedWorkflow : this.relatedWorkflows) {
 				addRelatedObject(relatedWorkflow);
 				relatedWorkflow.addReferencedObject(this);
 			}
@@ -187,11 +187,11 @@ public class AssignableWorkflowSchemeDTO extends JiraConfigDTO {
 		this.projects = projects;
 	}
 
-	public List<WorkflowDTO2> getRelatedWorkflows() {
+	public List<WorkflowDTO> getRelatedWorkflows() {
 		return relatedWorkflows;
 	}
 
-	public void setRelatedWorkflows(List<WorkflowDTO2> relatedWorkflows) {
+	public void setRelatedWorkflows(List<WorkflowDTO> relatedWorkflows) {
 		this.relatedWorkflows = relatedWorkflows;
 	}
 

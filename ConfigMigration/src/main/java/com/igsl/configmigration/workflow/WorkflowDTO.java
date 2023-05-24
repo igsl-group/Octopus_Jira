@@ -2,20 +2,26 @@ package com.igsl.configmigration.workflow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
+
+import org.apache.log4j.Logger;
 
 import com.atlassian.jira.workflow.JiraWorkflow;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
-import com.opensymphony.workflow.loader.ActionDescriptor;
+import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
+import com.igsl.configmigration.status.StatusDTO;
+import com.igsl.configmigration.status.StatusUtil;
+import com.opensymphony.workflow.loader.StepDescriptor;
 
 /**
  * Status wrapper.
@@ -23,38 +29,65 @@ import com.opensymphony.workflow.loader.ActionDescriptor;
 @JsonDeserialize(using = JsonDeserializer.None.class)
 public class WorkflowDTO extends JiraConfigDTO {
 
-	private String description;
-	private String displayName;
-	private String mode;
+	private static final Logger LOGGER = Logger.getLogger(WorkflowDTO.class);
+	
 	private String name;
-	private ApplicationUserDTO author;
-	private String authorName;
+	private String description;
+	private String mode;
+	private String displayName;
+	private String updateAuthorName;
+	private ApplicationUserDTO updateAuthor;
 	private Date updatedDate;
-	private Set<String> statusIds;
-	private WorkflowDescriptorDTO descriptor;
-	private Collection<ActionDescriptorDTO> actions;
+	private String xml;
+	@JsonIgnore
+	private List<StatusDTO> statuses = new ArrayList<>();
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
 		JiraWorkflow wf = (JiraWorkflow) obj;
-		actions = new ArrayList<>();
-		for (ActionDescriptor ad : wf.getAllActions()) {
-			ActionDescriptorDTO dto = new ActionDescriptorDTO();
-			dto.setJiraObject(ad);
-			actions.add(dto);
-		}
-		this.description = wf.getDescription();
-		this.descriptor = new WorkflowDescriptorDTO();
-		this.descriptor.fromJiraObject(wf.getDescriptor());
-		this.displayName = wf.getDisplayName();
-		this.statusIds = wf.getLinkedStatusIds();
-		this.mode = wf.getMode();
 		this.name = wf.getName();
-		this.author = new ApplicationUserDTO();
-		this.author.setJiraObject(wf.getUpdateAuthor());
-		this.authorName = wf.getUpdateAuthorName();
+		this.description = wf.getDescription();
+		this.displayName = wf.getDisplayName();
+		this.mode = wf.getMode();
+		this.updateAuthor = new ApplicationUserDTO();
+		this.updateAuthor.setJiraObject(wf.getUpdateAuthor());
+		this.updateAuthorName = wf.getUpdateAuthorName();
 		this.updatedDate = wf.getUpdatedDate();
+		this.xml = com.atlassian.jira.workflow.WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
 		this.uniqueKey = this.name;
+		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
+		for (Object step : wf.getDescriptor().getSteps()) {
+			StepDescriptor sd = (StepDescriptor) step;
+			String statusId = (String) sd.getMetaAttributes().get("jira.status.id");
+			StatusDTO status = (StatusDTO) statusUtil.findByInternalId(statusId);
+			if (status != null) {
+				this.statuses.add(status);
+			}
+		}
+	}
+	
+	@Override
+	protected void setupRelatedObjects() throws Exception {
+		// Link to status
+		for (StatusDTO status : this.statuses) {
+			this.addRelatedObject(status);
+			status.addReferencedObject(this);
+		}
+	}
+
+	@Override
+	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
+		Map<String, JiraConfigProperty> r = new TreeMap<>();
+		r.put("Name", new JiraConfigProperty(this.name));
+		r.put("Description", new JiraConfigProperty(this.description));
+		r.put("Display Name", new JiraConfigProperty(this.displayName));
+		r.put("Mode", new JiraConfigProperty(this.mode));
+		r.put("Update Author", new JiraConfigProperty(ApplicationUserUtil.class, this.updateAuthor));
+		r.put("Update Author Name", new JiraConfigProperty(this.updateAuthorName));
+		r.put("Updated Date", new JiraConfigProperty(this.updatedDate));
+		r.put("Status", new JiraConfigProperty(StatusUtil.class, this.statuses));
+		r.put("XML", new JiraConfigProperty(this.xml));
+		return r;
 	}
 	
 	@Override
@@ -65,50 +98,18 @@ public class WorkflowDTO extends JiraConfigDTO {
 	@Override
 	protected List<String> getCompareMethods() {
 		return Arrays.asList(
-				"getDescription",
-				"getActions",
-				"getDescriptor",
-				"getStatusIds",
-				"getMode",
-				"getName",
-				"getAuthor",
-				"getAuthorName",
-				"getUpdatedDate");
+				"getXml",
+				"getName");
 	}
 
 	@Override
 	public Class<? extends JiraConfigUtil> getUtilClass() {
-		return null;
+		return com.igsl.configmigration.workflow.WorkflowUtil.class;
 	}
 
 	@Override
 	public Class<?> getJiraClass() {
-		//return JiraWorkflow.class;
-		return null;
-	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getDisplayName() {
-		return displayName;
-	}
-
-	public void setDisplayName(String displayName) {
-		this.displayName = displayName;
-	}
-
-	public String getMode() {
-		return mode;
-	}
-
-	public void setMode(String mode) {
-		this.mode = mode;
+		return JiraWorkflow.class;
 	}
 
 	public String getName() {
@@ -119,20 +120,44 @@ public class WorkflowDTO extends JiraConfigDTO {
 		this.name = name;
 	}
 
-	public ApplicationUserDTO getAuthor() {
-		return author;
+	public String getDescription() {
+		return description;
 	}
 
-	public void setAuthor(ApplicationUserDTO author) {
-		this.author = author;
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
-	public String getAuthorName() {
-		return authorName;
+	public String getMode() {
+		return mode;
 	}
 
-	public void setAuthorName(String authorName) {
-		this.authorName = authorName;
+	public void setMode(String mode) {
+		this.mode = mode;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getUpdateAuthorName() {
+		return updateAuthorName;
+	}
+
+	public void setUpdateAuthorName(String updateAuthorName) {
+		this.updateAuthorName = updateAuthorName;
+	}
+
+	public ApplicationUserDTO getUpdateAuthor() {
+		return updateAuthor;
+	}
+
+	public void setUpdateAuthor(ApplicationUserDTO updateAuthor) {
+		this.updateAuthor = updateAuthor;
 	}
 
 	public Date getUpdatedDate() {
@@ -143,34 +168,20 @@ public class WorkflowDTO extends JiraConfigDTO {
 		this.updatedDate = updatedDate;
 	}
 
-	public Set<String> getStatusIds() {
-		return statusIds;
+	public String getXml() {
+		return xml;
 	}
 
-	public void setStatusIds(Set<String> statusIds) {
-		this.statusIds = statusIds;
+	public void setXml(String xml) {
+		this.xml = xml;
 	}
 
-	public WorkflowDescriptorDTO getDescriptor() {
-		return descriptor;
+	public List<StatusDTO> getStatuses() {
+		return statuses;
 	}
 
-	public void setDescriptor(WorkflowDescriptorDTO descriptor) {
-		this.descriptor = descriptor;
-	}
-
-	public Collection<ActionDescriptorDTO> getActions() {
-		return actions;
-	}
-
-	public void setActions(Collection<ActionDescriptorDTO> actions) {
-		this.actions = actions;
-	}
-
-	@Override
-	protected Map<String, JiraConfigProperty> getCustomConfigProperties() {
-		// TODO Auto-generated method stub
-		return null;
+	public void setStatuses(List<StatusDTO> statuses) {
+		this.statuses = statuses;
 	}
 
 }
