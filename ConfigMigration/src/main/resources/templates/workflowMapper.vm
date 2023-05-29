@@ -1,0 +1,47 @@
+<html>
+	<head>
+		<title>Workflow Mapper</title>
+		<meta content="admin" name="decorator" />
+		<script type="text/javascript">
+			function submitForm(action) {
+				document.getElementById('action').value = action;
+				window.onbeforeunload = null;
+				document.forms['mainForm'].submit();
+			}
+		</script>
+	</head>
+	<body>
+		<!-- 
+			List of mappers:
+				Option to enable/disable
+				Export/import
+				
+			Each mapper:
+				Name/Description
+				Target type? Validator/Function/etc?
+				XPath from selecting item from workflow/XML?
+				Replace items
+				Item type... which object?
+				Item reference type... unique key or internal ID?
+				Lookup interface to check settings
+		-->
+		<form action="WorkflowMapper.jspa" method="post" id="mainForm">
+			<input type="hidden" id="action" name="action" value=""/>
+			<div>
+				<label>Select Workflow: </label>
+				<select name="workflow" onchange="submitForm('loadWorkflow')">
+					#foreach ($item in $action.getWorkflows())
+						#set ($selected = "")
+						#if ($action.getSelectedWorkflow().equals($item.getName()))
+							#set ($selected = "selected")
+						#end
+						<option value="$!{item.getName()}" ${selected}>$!{item.getName()}</option>
+					#end
+				</select>
+			</div>
+			<div>
+				<textarea rows="20" cols="200">$!{action.getXml()}</textarea>
+			</div>
+		</form>
+	</body>
+</html>
