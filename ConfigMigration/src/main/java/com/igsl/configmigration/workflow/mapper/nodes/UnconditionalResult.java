@@ -1,33 +1,37 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "unconditional-result")
+@XmlType(name = "unconditional-result")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class UnconditionalResult {
-	@JacksonXmlProperty(isAttribute = true, localName = "old-status")
+	@XmlAttribute(name = "old-status")
 	private String oldStatus;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String status;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String step;
-	@JacksonXmlProperty(isAttribute = true, localName = "owner")
+	@XmlAttribute(name = "owner")
 	private String owner;
-	@JacksonXmlProperty(isAttribute = true, localName = "split")
+	@XmlAttribute(name = "split")
 	private String split;
-	@JacksonXmlProperty(isAttribute = true, localName = "join")
+	@XmlAttribute(name = "join")
 	private String join;
-	@JacksonXmlProperty(isAttribute = true, localName = "due-date")
+	@XmlAttribute(name = "due-date")
 	private String dueDate;
-	@JacksonXmlProperty(isAttribute = true, localName = "id")
+	@XmlAttribute(name = "id")
 	private String id;
-	@JacksonXmlProperty(isAttribute = true, localName = "display-name")
+	@XmlAttribute(name = "display-name")
 	private String displayName;
-	@JacksonXmlProperty(localName = "validators")
+	@XmlElement(name = "validators")
 	private Validators validators;
-	@JacksonXmlProperty(localName = "pre-functions")
+	@XmlElement(name = "pre-functions")
 	private Functions preFunctions;
-	@JacksonXmlProperty(localName = "post-functions")
+	@XmlElement(name = "post-functions")
 	private Functions postFunctions;
 	
 	public String getOldStatus() {

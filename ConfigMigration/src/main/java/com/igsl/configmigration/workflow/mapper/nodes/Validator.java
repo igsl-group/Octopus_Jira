@@ -3,20 +3,22 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "validator")
+@XmlType(name = "validator")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Validator {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String name;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String type;
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "arg")
+	@XmlElement(name = "arg")
 	private List<Arg> args = new ArrayList<>();
 	
 	public String getName() {

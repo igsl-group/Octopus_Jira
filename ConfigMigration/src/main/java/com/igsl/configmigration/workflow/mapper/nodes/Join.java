@@ -1,16 +1,21 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "join")
+@XmlType(name = "join")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Join {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(localName = "conditions")
+	@XmlElement(name = "conditions")
 	private Conditions conditions;	
-	@JacksonXmlProperty(localName = "unconditional-result")
+	@XmlElement(name = "unconditional-result")
 	private UnconditionalResult unconditionalResultList;
+	
 	public String getId() {
 		return id;
 	}

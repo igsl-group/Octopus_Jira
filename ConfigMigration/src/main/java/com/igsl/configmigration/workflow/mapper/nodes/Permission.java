@@ -1,15 +1,20 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "permission")
+@XmlType(name = "permission")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Permission {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String name;
-	@JacksonXmlProperty(localName = "restrict-to")
+	@XmlElement(name = "restrict-to")
+
 	private RestrictTo restrictTo;
 	public String getId() {
 		return id;

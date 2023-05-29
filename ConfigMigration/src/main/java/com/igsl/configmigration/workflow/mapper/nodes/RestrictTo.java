@@ -1,11 +1,14 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "restriction")
+@XmlType(name = "restriction")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class RestrictTo {
-	@JacksonXmlProperty(localName = "conditions")
+	@XmlElement(name = "conditions")
 	private Conditions conditions;
 
 	public Conditions getConditions() {

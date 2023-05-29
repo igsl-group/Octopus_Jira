@@ -2,17 +2,19 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "results")
+@XmlType(name = "results")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Results {
-	@JacksonXmlProperty(localName = "unconditional-result")
+	@XmlElement(name = "unconditional-result")
 	private UnconditionalResult unconditionalResult;
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "result")
+	@XmlElement(name = "result")
 	private List<Result> resultList;
+
 	public UnconditionalResult getUnconditionalResult() {
 		return unconditionalResult;
 	}

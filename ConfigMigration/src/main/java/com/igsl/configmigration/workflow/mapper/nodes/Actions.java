@@ -3,21 +3,16 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.EmptyCheck;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement
-public class Actions implements EmptyCheck {
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "action")
+@XmlType(name = "actions")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Actions {
+	@XmlElement(name = "action")
 	private List<Action> actions = new ArrayList<>();
-	
-	@Override
-	public boolean isEmpty() {
-		return (actions.size() == 0);
-	}
 	
 	public List<Action> getActions() {
 		return actions;

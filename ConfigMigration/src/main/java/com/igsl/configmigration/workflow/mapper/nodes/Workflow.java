@@ -1,59 +1,46 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.XMLDocumentHeader;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
-@JacksonXmlRootElement(localName = "workflow")
-@JsonPropertyOrder({"meta", "initial-actions", "global-actions", "steps"})
-public class Workflow implements XMLDocumentHeader {
+@XmlRootElement(name = "workflow")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Workflow {
 	
-	@JacksonXmlElementWrapper(useWrapping = false)	// For repeated elements
-	@JacksonXmlProperty(localName = "meta")
+	@XmlElement(name = "meta")
 	private List<Meta> metaList = new ArrayList<>();
 	
-	@JacksonXmlProperty(localName = "registers")
+	@XmlElement(name = "registers")
 	private Registers registers;
 
-	@JacksonXmlProperty(localName = "trigger-functions")
+	@XmlElement(name = "trigger-functions")
 	private TriggerFunctions triggerFunctions;
 	
-	@JacksonXmlProperty(localName = "global-conditions")
+	@XmlElement(name = "global-conditions")
 	private GlobalConditions globalConditions;
 	
-	@JacksonXmlProperty(localName = "initial-actions")
+	@XmlElement(name = "initial-actions")
 	private Actions initialActions;
 	
-	@JacksonXmlProperty(localName = "global-actions")
+	@XmlElement(name = "global-actions")
 	private Actions globalActions;
 	
-	@JacksonXmlProperty(localName = "common-actions")
+	@XmlElement(name = "common-actions")
 	private Actions commonActions;
 	
-	@JacksonXmlProperty(localName = "steps")
+	@XmlElement(name = "steps")
 	private Steps steps;
 	
-	@JacksonXmlProperty(localName = "splits")
+	@XmlElement(name = "splits")
 	private Splits splits;
 	
-	@JacksonXmlProperty(localName = "joins")
+	@XmlElement(name = "joins")
 	private Joins joins;
-	
-	// To add XML headers
-	@JsonIgnore
-	@Override
-	public List<String> getHeaders() {
-		return Arrays.asList(
-				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>", 
-				"<!DOCTYPE workflow PUBLIC \"-//OpenSymphony Group//DTD OSWorkflow 2.8//EN\" \"http://www.opensymphony.com/osworkflow/workflow_2_8.dtd\">");
-	}
 	
 	public Actions getInitialActions() {
 		return initialActions;

@@ -1,14 +1,17 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlType;
+import javax.xml.bind.annotation.XmlValue;
 
-@JacksonXmlRootElement(localName = "arg")
+@XmlType(name = "arg")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Arg {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String name;
-	@JacksonXmlText
+	@XmlValue
 	private String content;
 	
 	public String getName() {

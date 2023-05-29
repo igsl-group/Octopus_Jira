@@ -146,13 +146,6 @@
 		</actions>
 	</webwork1>
 	
-	<!-- Download servlet -->
-	<servlet name="Download Servlet" key="downloadServlet" class="com.igsl.configmigration.DownloadServlet">
-		<description>ConfigMigration Download Servlet</description>
-		<url-pattern>/configmigrationdownload</url-pattern>
-	</servlet>
- 
- 
  	<!-- Manage Report -->
 	<web-item key="ManageReports" name="Manage Reports"
 		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
@@ -173,7 +166,33 @@
 		</actions>
 	</webwork1>
 	
-	 <!-- Report servlet -->
+	<!-- Mapper -->
+	<web-item key="WorkflowMapperItem" name="Workflow Mapper"
+		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
+		<description key="desc">Workflow Mapper
+		</description>
+		<label key="Workflow Mapper" />
+		<link linkId="WorkflowMapperLink">/secure/admin/plugins/handler/WorkflowMapper.jspa
+		</link>
+	</web-item>
+	<webwork1 key="WorkflowMapper" name="Workflow Mapper"
+		class="java.lang.Object">
+		<description>Workflow Mapper</description>
+		<actions>
+			<action name="com.igsl.configmigration.workflow.mapper.WorkflowMapper"
+				alias="WorkflowMapper">
+				<view name="input">templates/workflowMapper.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	<!-- Download servlet -->
+	<servlet name="Download Servlet" key="downloadServlet" class="com.igsl.configmigration.DownloadServlet">
+		<description>ConfigMigration Download Servlet</description>
+		<url-pattern>/configmigrationdownload</url-pattern>
+	</servlet> 
+ 
+    <!-- Report servlet -->
 	<servlet name="Report Servlet" key="reportServlet" class="com.igsl.configmigration.ReportServlet">
 		<description>ConfigMigration Report Servlet</description>
 		<url-pattern>/configmigrationreport</url-pattern>

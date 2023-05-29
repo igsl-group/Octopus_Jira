@@ -1,16 +1,20 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "register")
+@XmlType(name = "register")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Register {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String type;
-	@JacksonXmlProperty(isAttribute = true, localName = "variable-name")
+	@XmlAttribute(name = "variable-name")
 	private String variableName;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
+	
 	public String getType() {
 		return type;
 	}

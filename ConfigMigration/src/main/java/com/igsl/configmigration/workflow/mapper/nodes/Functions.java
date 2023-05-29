@@ -3,22 +3,17 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.EmptyCheck;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "functions")
-public class Functions implements EmptyCheck {
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "function")
+@XmlType(name = "functions")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Functions {
+	@XmlElement(name = "function")
 	private List<Function> functions = new ArrayList<>();
 
-	@Override
-	public boolean isEmpty() {
-		return (functions.size() == 0);
-	}
-	
 	public List<Function> getFunctions() {
 		return functions;
 	}

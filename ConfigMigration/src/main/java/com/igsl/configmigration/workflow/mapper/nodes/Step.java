@@ -3,27 +3,30 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "step")
+@XmlType(name = "step")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Step {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String name;
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "meta")
+	@XmlElement(name = "meta")
 	private List<Meta> metas = new ArrayList<>();
-	@JacksonXmlProperty(localName = "actions")
+	@XmlElement(name = "actions")
 	private Actions actions;
-	@JacksonXmlProperty(localName = "pre-functions")
+	@XmlElement(name = "pre-functions")
 	private Functions preFunctions;
-	@JacksonXmlProperty(localName = "post-functions")
+	@XmlElement(name = "post-functions")
 	private Functions postFunctions;
-	@JacksonXmlProperty(localName = "external-permissions")
+	@XmlElement(name = "external-permissions")
 	private ExternalPermissions externalPermissions;	
+
 	public String getId() {
 		return id;
 	}

@@ -3,40 +3,36 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.EmptyFilter;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "action")
-@JsonPropertyOrder({"meta", "restrict-to", "validators", "results"})
+@XmlType(name = "action", propOrder = {"metas", "restrictTo", "validators", "preFunctions", "postFunctions", "results"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class Action {
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String name;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String view;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String auto;
-	@JacksonXmlProperty(isAttribute = true)
+	@XmlAttribute
 	private String finish;
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "meta")
+	@XmlElement(name = "meta")
 	private List<Meta> metas = new ArrayList<>();
-	@JacksonXmlProperty(localName = "validators")
+	@XmlElement(name = "validators")
 	private Validators validators;
-	@JacksonXmlElementWrapper(localName = "results")
-	@JacksonXmlProperty(localName = "unconditional-result")
-	private List<UnconditionalResult> results = new ArrayList<>();
-	@JacksonXmlProperty(localName = "restrict-to")
+	@XmlElement(name = "results")
+	private Results results;
+	@XmlElement(name = "restrict-to")
 	private RestrictTo restrictTo;
-	@JacksonXmlProperty(localName = "pre-functions")
+	@XmlElement(name = "pre-functions")
 	private Functions preFunctions;
-	@JacksonXmlProperty(localName = "post-functions")
+	@XmlElement(name = "post-functions")
 	private Functions postFunctions;	
 	public String getId() {
 		return id;
@@ -55,12 +51,6 @@ public class Action {
 	}
 	public void setMetas(List<Meta> metas) {
 		this.metas = metas;
-	}
-	public List<UnconditionalResult> getResults() {
-		return results;
-	}
-	public void setResults(List<UnconditionalResult> results) {
-		this.results = results;
 	}
 	public Validators getValidators() {
 		return validators;
@@ -103,5 +93,11 @@ public class Action {
 	}
 	public void setPostFunctions(Functions postFunctions) {
 		this.postFunctions = postFunctions;
+	}
+	public Results getResults() {
+		return results;
+	}
+	public void setResults(Results results) {
+		this.results = results;
 	}
 }

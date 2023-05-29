@@ -3,27 +3,24 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.EmptyCheck;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "conditions")
-public class Conditions implements EmptyCheck {
-	@JacksonXmlProperty(isAttribute = true)
+@XmlType(name = "conditions")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Conditions {
+	@XmlAttribute
 	private String type;
 	
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "conditions")
+	@XmlElement(name = "conditions")
 	private List<Conditions> conditionsList = new ArrayList<>();
 	
-	@JacksonXmlElementWrapper(useWrapping = false)
-	@JacksonXmlProperty(localName = "condition")
+	@XmlElement(name = "condition")
 	private List<Condition> conditionList = new ArrayList<>();
-	@Override
-	public boolean isEmpty() {
-		return (conditionsList.size() == 0) && (conditionList.size() == 0);
-	}
+	
 	public String getType() {
 		return type;
 	}

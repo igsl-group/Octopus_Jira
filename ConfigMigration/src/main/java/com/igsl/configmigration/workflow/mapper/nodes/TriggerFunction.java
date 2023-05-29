@@ -1,14 +1,19 @@
 package com.igsl.configmigration.workflow.mapper.nodes;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "trigger-function")
+@XmlType(name = "trigger-function")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class TriggerFunction {
-	@JacksonXmlProperty
+	@XmlAttribute
 	private String id;
-	@JacksonXmlProperty(localName = "function")
+	@XmlElement(name = "function")
 	private Function function;
+
 	public String getId() {
 		return id;
 	}

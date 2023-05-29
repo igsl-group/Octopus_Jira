@@ -3,18 +3,17 @@ package com.igsl.configmigration.workflow.mapper.nodes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
-import com.igsl.configmigration.workflow.mapper.serialization.EmptyCheck;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlType;
 
-@JacksonXmlRootElement(localName = "splits")
-public class Splits implements EmptyCheck {
-	@JacksonXmlProperty(localName = "split")
+@XmlType(name = "splits")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class Splits {
+	@XmlElement(name = "split")
 	private List<Split> splitList = new ArrayList<>();
-	@Override
-	public boolean isEmpty() {
-		return (splitList.size() == 0);
-	}
+
 	public List<Split> getSplitList() {
 		return splitList;
 	}
