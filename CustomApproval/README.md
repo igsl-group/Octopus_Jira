@@ -1,7 +1,7 @@
 ### Custom Approval
 
 #### Features
-1. Workflow approval without Jira Service Management.
+1. Workflow approval without requiring Jira Service Management.
 	* Custom field "Approval Data" is used to store approval settings and approval history.
 	* A post-function is provided to initialize Approval Data custom field.
 	* Adds approve/reject buttons to operations bar in issue view.
@@ -23,10 +23,53 @@
 	* If a delegated user has multiple delegators, the delegated user's decision will be applied for all delegators. 
 	* If change decision is allowed, delegator can overwrite delegated user's decision and vice versa. 
 
+### Supporting Jira Service Management
+1. Jira Service Management has Customer Portal(s) which are separate from Jira's interface. 
+1. Jira does not provide any plugin modules for customizing Customer Portal interface, so JavaScript is used to create the approval panel and approve/reject buttons. 
+1. Issue access rights in Customer Portal is determined by a custom field "Request Participants". Delegated approvers are automatically added to Request Participants so they can access the issue.
+1. An additional custom field "Manual Request Participant" is used to keep track of changes made to Request Participants by user action.
+
+### Scheduled Tasks
+This plugin creates background tasks to support its operations: 
+1. Run-once tasks for delegation settings becoming effective or expired.
+	* This will search for open issues with Custom Approval enabled, and recalculate approver list and update Request Participants. 
+1. Run-once tasks for group membership changed events.
+	* This will search for open issues with Custom Approval enabled, and recalculate approver list and update Request Participants. 
+1. Run-once tasks for issue updated events.
+	* This will check the issue if approver list custom fields have been changed, and recalculate approver list and update Request Participants. 
+1. A repeating task for checking approval status.
+	* Because approver list can change due to change in group membership, resulting in an issue reaching the approve/reject count without an approve/reject action.
+	* This background task will regularly scan issues and transit them if needed.
+	* Frequency can be configured.
+
+### Java API
+1. To retrieve approver list (not including delegated approvers): 
+	* Map<String, ApplicationUser> com.igsl.customapproval.CustomApprovalUtil.getApproverList(Issue issue).
+	* Key of the map is user key.
+	* Value of the map is ApplicationUser object.
+1. To retrieve delegated approver list: 
+	* Map<String, ApplicationUser> com.igsl.customapproval.CustomApprovalUtil.getDelegates(Map<String, ApplicationUser> approverList).
+	* Parameter approverList is the return value of getApproverList().
+	* Key of the map is user key.
+	* Value of the map is ApplicationUser object.
+1. To check if user is delegation target of delegatingUser on specified approvalDate: 
+	* boolean com.igsl.customapproval.delegation.DelegationUtil.isDelegate(String user, String delegatingUser, Date approvalDate)
+	* boolean com.igsl.customapproval.delegation.DelegationUtil.isDelegate(ApplicationUser user, ApplicationUser delegatingUser, Date approvalDate)
+
+### REST API
+1. To approve an issue: 
+	* Endpoint: /rest/igsl/latest/customApprove 
+	* Request Data: Issue key, e.g. "PROJ-1"
+	* Response Data: None
+	
+1. To reject an issue: 
+	* Endpoint: /rest/igsl/latest/customReject 
+	* Request Data: Issue key, e.g. "PROJ-1"
+	* Response Data: None
+	
 ### Unimplemented Features
 1. Email notification. 
 1. Approval via email.
-1. Service Management support.
 
 ### Usage
 1. Create workflow normally, creating statuses for approval steps. 
