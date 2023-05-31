@@ -1,3 +1,17 @@
+#macro(displayPojo $pojo)
+	#if ($level > 0)
+		#foreach ($i in [1..$level])
+			<span>@</span>
+		#end
+	#end
+	<label>${pojo.getPOJODisplayName()}: ${level}</label><br/>
+	#set ($level = $level + 1)
+	#foreach ($child in $pojo.getChildren())
+		#displayPojo($child)
+	#end
+	#set ($level = $level - 1)
+#end
+
 <html>
 	<head>
 		<title>Workflow Mapper</title>
@@ -30,6 +44,7 @@
 			<div>
 				<label>Select Workflow: </label>
 				<select name="workflow" onchange="submitForm('loadWorkflow')">
+					<option value="">Select a workflow</option>
 					#foreach ($item in $action.getWorkflows())
 						#set ($selected = "")
 						#if ($action.getSelectedWorkflow().equals($item.getName()))
@@ -40,8 +55,12 @@
 				</select>
 			</div>
 			<div>
-				<textarea rows="20" cols="200">$!{action.getXml()}</textarea>
+				<textarea rows="5" cols="200">$!{action.getXml()}</textarea>
 			</div>
+			#if ($action.getWorkflow())
+				#set ($level = 0)
+				#displayPojo($action.getWorkflow())
+			#end
 		</form>
 	</body>
 </html>

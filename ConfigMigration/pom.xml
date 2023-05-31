@@ -31,13 +31,27 @@
 	<packaging>atlassian-plugin</packaging>
 
 	<dependencies>
-	
+
+		<!-- Required for JAXB generated classes. There are package rename between versions, 3.0.0 fits JAXB used. -->
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>3.0.0</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.bind</groupId>
+			<artifactId>jaxb-impl</artifactId>
+			<version>3.0.0</version>
+			<scope>compile</scope>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/commons-fileupload/commons-fileupload -->
 		<dependency>
-		    <groupId>commons-fileupload</groupId>
-		    <artifactId>commons-fileupload</artifactId>
-		    <version>1.4</version>
-		    <scope>provided</scope>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>1.4</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<!-- Active Objects -->
@@ -68,19 +82,18 @@
 			<scope>provided</scope>
 		</dependency>
 
+		<!-- Jackson XML/JSON parser.  Due to XML parser dependencies, cannot use newer than 2.9.7 if Insight is also used. -->
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<!-- <version>2.13.4</version> -->
-			<version>2.9.7</version> <!-- Need this version due to Insight -->
+			<version>2.9.7</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<!-- <version>2.13.4</version> -->
-			<version>2.9.7</version> <!-- Need this version due to Insight -->
+			<version>2.9.7</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
@@ -172,6 +185,78 @@
 
 	<build>
 		<plugins>
+			
+			<!-- To programmatically add generated sources to sources path -->
+			<plugin>
+			    <groupId>org.codehaus.mojo</groupId>
+			    <artifactId>build-helper-maven-plugin</artifactId>
+			    <version>1.8</version>
+			    <executions>
+			        <execution>
+			            <id>add-source</id>
+			            <phase>generate-sources</phase>
+			            <goals>
+			                <goal>add-source</goal>
+			            </goals>
+			            <configuration>
+			                <sources>
+			                    <source>${project.build.directory}/generated-sources/jaxb</source>
+			                </sources>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
+	        
+			<!-- JAXB2 plugin to generate XML POJOs -->
+			<plugin>
+				<!-- There are multiple JAXB plugins... but only this one supports the use of extensions -->
+				<groupId>org.jvnet.jaxb2.maven2</groupId>
+       			<artifactId>maven-jaxb2-plugin</artifactId>
+			    <version>0.15.3</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<extension>true</extension>
+					<args>
+						<arg>-Xinheritance</arg>
+					</args>
+					<packageName>com.igsl.configmigration.workflow.mapper.generated</packageName>
+					<schemas>
+						<schema>
+							<fileset>
+								<directory>${project.basedir}/src/main/resources/schema</directory>
+								<includes>
+									<include>workflow_2_8.xsd</include>
+								</includes>
+							</fileset>
+						</schema>
+					</schemas>
+					<bindings>
+						<binding>
+							<fileset>
+								<directory>${project.basedir}/src/main/resources/schema</directory>
+								<includes>
+									<include>xsd_bindings.xjb</include>
+								</includes>
+							</fileset>
+						</binding>
+					</bindings>
+					<generateDirectory>${project.build.directory}/generated-sources/jaxb</generateDirectory>
+					<plugins>
+						<plugin>
+							<groupId>org.jvnet.jaxb2_commons</groupId>
+							<artifactId>jaxb2-basics</artifactId>
+							<version>0.6.4</version>
+						</plugin>
+					</plugins>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<groupId>com.atlassian.maven.plugins</groupId>
 				<artifactId>jira-maven-plugin</artifactId>

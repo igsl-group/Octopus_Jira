@@ -1,20 +1,12 @@
 package com.igsl.configmigration.workflow.mapper;
 
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.Source;
-import javax.xml.transform.sax.SAXSource;
 
 import org.apache.log4j.Logger;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 
@@ -23,9 +15,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.WorkflowManager;
-import com.atlassian.jira.workflow.WorkflowUtil;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.igsl.configmigration.workflow.mapper.nodes.Workflow;
 
 public class WorkflowMapper extends JiraWebActionSupport {
 
@@ -97,27 +87,27 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return MANAGER.getWorkflows();
 	}
 	
-	private Workflow parseWorkflow(JiraWorkflow wf) throws Exception {
-		String xml = WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
-		Source xmlSource = new SAXSource(saxParserFactory.newSAXParser().getXMLReader(),
-                new InputSource(new StringReader(xml)));
-		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
-		Unmarshaller parser = ctx.createUnmarshaller();
-		Workflow result = (Workflow) parser.unmarshal(xmlSource);
-		return result;
-	}
-	
-	private String serializeWorkflow(Workflow wf) throws Exception {
-		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
-		Marshaller marshaller = ctx.createMarshaller();
-		// Set XML header
-		marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
-		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-		StringWriter sw = new StringWriter();
-		sw.write(XML_HEADER);
-		marshaller.marshal(wf, sw);
-		return sw.toString();
-	}
+//	private Workflow parseWorkflow(JiraWorkflow wf) throws Exception {
+//		String xml = WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
+//		Source xmlSource = new SAXSource(saxParserFactory.newSAXParser().getXMLReader(),
+//                new InputSource(new StringReader(xml)));
+//		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
+//		Unmarshaller parser = ctx.createUnmarshaller();
+//		Workflow result = (Workflow) parser.unmarshal(xmlSource);
+//		return result;
+//	}
+//	
+//	private String serializeWorkflow(Workflow wf) throws Exception {
+//		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
+//		Marshaller marshaller = ctx.createMarshaller();
+//		// Set XML header
+//		marshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
+//		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+//		StringWriter sw = new StringWriter();
+//		sw.write(XML_HEADER);
+//		marshaller.marshal(wf, sw);
+//		return sw.toString();
+//	}
 	
 	@Override
 	protected void doValidation() {
@@ -134,8 +124,8 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			this.selectedWorkflow = req.getParameter(PARAM_WORKFLOW);
 			LOGGER.debug("Selecting workflow: " + selectedWorkflow);
 			JiraWorkflow workflow = MANAGER.getWorkflow(selectedWorkflow);
-			Workflow wf = parseWorkflow(workflow);
-			this.xml = serializeWorkflow(wf);
+//			Workflow wf = parseWorkflow(workflow);
+//			this.xml = serializeWorkflow(wf);
 			LOGGER.debug("Xml: " + xml);
 		}
 		return JiraWebActionSupport.INPUT;
