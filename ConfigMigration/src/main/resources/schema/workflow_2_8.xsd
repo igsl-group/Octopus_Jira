@@ -1,0 +1,339 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+	Converted from workflow_2_8.dtd using Microsoft Visual Studio  
+-->
+<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="workflow"> 
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1000" ref="meta" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="registers" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="trigger-functions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="global-conditions" />
+				<xs:element ref="initial-actions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="global-actions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="common-actions" />
+				<xs:element ref="steps" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="splits" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="joins" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="action">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="meta" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="restrict-to" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="validators" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="pre-functions" />
+				<xs:element ref="results" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="post-functions" />
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:string" use="required" />
+			<xs:attribute name="name" type="xs:string" use="required" />
+			<xs:attribute name="view" type="xs:string" />
+			<xs:attribute name="auto">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="TRUE" />
+						<xs:enumeration value="FALSE" />
+						<xs:enumeration value="true" />
+						<xs:enumeration value="false" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="finish">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="TRUE" />
+						<xs:enumeration value="FALSE" />
+						<xs:enumeration value="true" />
+						<xs:enumeration value="false" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="common-action">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="id" type="xs:string" use="required" />
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="actions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="common-action" />
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="action" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="arg">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="name" type="xs:string" use="required" />
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="conditions">
+		<xs:complexType>
+			<xs:choice minOccurs="0" maxOccurs="unbounded">
+				<xs:element ref="conditions" />
+				<xs:element ref="condition" />
+			</xs:choice>
+			<xs:attribute name="type">
+				<xs:simpleType>
+					<xs:restriction base="xs:NMTOKEN">
+						<xs:enumeration value="AND" />
+						<xs:enumeration value="OR" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="condition">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="arg" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" />
+			<xs:attribute name="negate" type="xs:string" />
+			<xs:attribute name="name" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="external-permissions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="permission" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="function">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="arg" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" />
+			<xs:attribute name="name" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="global-actions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="action" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="initial-actions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="action" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="common-actions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="action" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="join">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="conditions" />
+				<xs:element ref="unconditional-result" />
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="joins">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="join" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="meta">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="name" type="xs:string" use="required" />
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="permission">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="restrict-to" />
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="post-functions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="function" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="pre-functions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="function" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="register">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="arg" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" use="required" />
+			<xs:attribute name="variable-name" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="registers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="register" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="restrict-to">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="conditions" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="result">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="conditions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="validators" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="pre-functions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="post-functions" />
+			</xs:sequence>
+			<xs:attribute name="old-status" type="xs:string" use="required" />
+			<xs:attribute name="status" type="xs:string" />
+			<xs:attribute name="step" type="xs:string" />
+			<xs:attribute name="owner" type="xs:string" />
+			<xs:attribute name="split" type="xs:string" />
+			<xs:attribute name="join" type="xs:string" />
+			<xs:attribute name="due-date" type="xs:string" />
+			<xs:attribute name="id" type="xs:string" />
+			<xs:attribute name="display-name" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="results">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="result" />
+				<xs:element ref="unconditional-result" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="split">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="unconditional-result" />
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="splits">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="split" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="step">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="meta" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="pre-functions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="external-permissions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="actions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="post-functions" />
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:string" use="required" />
+			<xs:attribute name="name" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="steps">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="step" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="unconditional-result">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="validators" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="pre-functions" />
+				<xs:element minOccurs="0" maxOccurs="1" ref="post-functions" />
+			</xs:sequence>
+			<xs:attribute name="old-status" type="xs:string" use="required" />
+			<xs:attribute name="status" type="xs:string" />
+			<xs:attribute name="step" type="xs:string" />
+			<xs:attribute name="owner" type="xs:string" />
+			<xs:attribute name="split" type="xs:string" />
+			<xs:attribute name="join" type="xs:string" />
+			<xs:attribute name="due-date" type="xs:string" />
+			<xs:attribute name="id" type="xs:string" />
+			<xs:attribute name="display-name" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="trigger-function">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="function" />
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="trigger-functions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="trigger-function" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="validator">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="arg" />
+			</xs:sequence>
+			<xs:attribute name="type" type="xs:string" use="required" />
+			<xs:attribute name="name" type="xs:string" />
+			<xs:attribute name="id" type="xs:string" />
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="validators">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="1" maxOccurs="unbounded" ref="validator" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="global-conditions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="1" ref="conditions" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
