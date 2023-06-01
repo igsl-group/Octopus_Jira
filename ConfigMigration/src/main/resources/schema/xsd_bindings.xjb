@@ -15,7 +15,7 @@
 
 		<!-- Make generated classes implement interface -->
 		<jxb:bindings multiple="true" node="//xs:element/xs:complexType">
-			<inheritance:implements>com.igsl.configmigration.workflow.mapper.Pojo
+			<inheritance:implements>com.igsl.configmigration.workflow.mapper.WorkflowPart
 			</inheritance:implements>
 		</jxb:bindings>
 	

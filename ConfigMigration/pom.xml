@@ -21,6 +21,26 @@
 	<artifactId>ConfigMigration</artifactId>
 	<version>2.3.0</version>
 
+	<profiles>
+		<profile>
+			<id>Default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+		</profile>
+		<profile>
+			<id>JiraSDK</id>
+			<activation>
+				<property>
+					<name>JiraSDK</name>
+				</property>
+			</activation>
+			<build>
+				<directory>target_JiraSDK</directory>
+			</build>
+		</profile>
+	</profiles>
+	
 	<organization>
 		<name>Integrated Global Solutions Limited</name>
 		<url>https://www.igsl-group.com/</url>
@@ -185,7 +205,7 @@
 
 	<build>
 		<plugins>
-			
+		
 			<!-- To programmatically add generated sources to sources path -->
 			<plugin>
 			    <groupId>org.codehaus.mojo</groupId>

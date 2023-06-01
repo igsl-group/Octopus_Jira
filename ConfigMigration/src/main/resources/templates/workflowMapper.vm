@@ -1,10 +1,10 @@
 #macro(displayPojo $pojo)
 	#if ($level > 0)
 		#foreach ($i in [1..$level])
-			<span>@</span>
+			&nbsp;&nbsp;&nbsp;
 		#end
 	#end
-	<label>${pojo.getPOJODisplayName()}: ${level}</label><br/>
+	<label>${pojo.getWorkflowPartDisplayName()}</label><br/>
 	#set ($level = $level + 1)
 	#foreach ($child in $pojo.getChildren())
 		#displayPojo($child)
