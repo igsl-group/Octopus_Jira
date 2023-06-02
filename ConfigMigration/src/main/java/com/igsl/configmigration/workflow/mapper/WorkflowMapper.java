@@ -2,7 +2,9 @@ package com.igsl.configmigration.workflow.mapper;
 
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBContext;
@@ -20,14 +22,29 @@ import org.xml.sax.SAXNotSupportedException;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.plugin.workflow.AbstractWorkflowModuleDescriptor;
+import com.atlassian.jira.plugin.workflow.UpdateIssueFieldFunctionPluginFactory;
+import com.atlassian.jira.plugin.workflow.WorkflowPluginFunctionFactory;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
+import com.atlassian.jira.web.util.PluginAccessorHelper;
 import com.atlassian.jira.workflow.JiraWorkflow;
 import com.atlassian.jira.workflow.WorkflowManager;
 import com.atlassian.jira.workflow.WorkflowUtil;
+import com.atlassian.plugin.ModuleDescriptor;
+import com.atlassian.plugin.ModuleDescriptorFactory;
+import com.atlassian.plugin.PluginAccessor;
+import com.atlassian.plugin.descriptors.AbstractModuleDescriptor;
+import com.atlassian.plugin.elements.ResourceDescriptor;
+import com.atlassian.plugin.factories.AbstractPluginFactory;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.igsl.configmigration.workflow.mapper.generated.Function;
 import com.igsl.configmigration.workflow.mapper.generated.Workflow;
 
 public class WorkflowMapper extends JiraWebActionSupport {
+
+	public static final PluginAccessor PLUGIN_ACCESSOR = ComponentAccessor.getPluginAccessor();
+	public static final ModuleDescriptorFactory MODULE_DESCRIPTOR_FACTORY = ComponentAccessor.getComponent(ModuleDescriptorFactory.class);
+	public static final String WORKFLOW_FUNCTION_DESCRIPTOR_TYPE = "workflow-function";
 
 	private static final String SESSION_DATA = WorkflowMapper.class.getCanonicalName() + ".SessionData";
 	static class SessionData {
@@ -138,6 +155,38 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		sw.write(XML_HEADER);
 		marshaller.marshal(wf, sw);
 		return sw.toString();
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public static String getFunctionDisplayName(String className) {
+		LOGGER.debug("FuncDesc looking up: " + className);
+		Collection<ModuleDescriptor> moduleDescriptors = 
+				PluginAccessorHelper.getEnabledModuleDescriptorsByType(PLUGIN_ACCESSOR, MODULE_DESCRIPTOR_FACTORY, WORKFLOW_FUNCTION_DESCRIPTOR_TYPE);
+		for (ModuleDescriptor desc : moduleDescriptors) {
+			/*
+			 * Note: 
+			 * Jira's API did NOT expose the function class anywhere from the ModuleDescriptor.
+			 * The function class is stored in a protected field AbstractWorkflowModuleDescriptor.implementationClass
+			 * 
+			 * So our only solution is to either read it with reflection, or go parse the plugin manifest.
+			 * We choose the former.
+			 */
+			try {
+				Field field = AbstractWorkflowModuleDescriptor.class.getDeclaredField("implementationClass");
+				if (field != null) {
+					field.setAccessible(true);
+					Class<?> functionClass = (Class<?>) field.get(desc);
+					LOGGER.debug("Plugin " + desc.getPlugin().getName() + " module " + desc.getName() + " implClass: " + functionClass.getCanonicalName());
+					if (functionClass.getCanonicalName().equals(className)) {
+						return desc.getDisplayName();
+					}
+					field.setAccessible(false);
+				}
+			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+				LOGGER.error("Failed to read function-class", e);
+			}
+		}
+		return className;
 	}
 	
 	@Override

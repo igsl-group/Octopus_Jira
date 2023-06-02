@@ -7,7 +7,11 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import org.apache.commons.jxpath.JXPathContext;
+import org.apache.log4j.Logger;
 
 import com.igsl.configmigration.workflow.mapper.generated.Action;
 import com.igsl.configmigration.workflow.mapper.generated.Actions;
@@ -45,134 +49,175 @@ import com.igsl.configmigration.workflow.mapper.generated.Validators;
 import com.igsl.configmigration.workflow.mapper.generated.Workflow;
 
 public interface WorkflowPart {
+
+	public static final Logger LOGGER = Logger.getLogger(WorkflowPart.class);
 	
-	/**
-	 * Get a human readable name for this WorkflowPart, that can identify what it is.
-	 * @return String
-	 */
-	public default String getWorkflowPartDisplayName() {
-		Class<?> cls = this.getClass();
-		if (Action.class.isAssignableFrom(cls)) {
-			Action a = (Action) this;
-			return "Action " + a.getName();
-		} else if (Actions.class.isAssignableFrom(cls)) {
-			return "Actions";
-		} else if (Arg.class.isAssignableFrom(cls)) {
-			Arg arg = (Arg) this;
-			return "Argument " + arg.getName() + " = " + arg.getValue();
-		} else if (CommonAction.class.isAssignableFrom(cls)) {
-			CommonAction ca = (CommonAction) this;
-			return "Common Action " + ca.getId();
-		} else if (CommonActions.class.isAssignableFrom(cls)) {
-			return "Common Actions";
-		} else if (Condition.class.isAssignableFrom(cls)) {
-			Condition con = (Condition) this;
-			return "Condition " + con.getNegate() + " " + con.getType();
-		} else if (Conditions.class.isAssignableFrom(cls)) {
-			Conditions cons = (Conditions) this;
-			return "Conditions " + cons.getType();
-		} else if (ExternalPermissions.class.isAssignableFrom(cls)) {
-			return "External Permissions";
-		} else if (Function.class.isAssignableFrom(cls)) {
-			Function func = (Function) this;
-			return "Function " + func.getId();	// TODO Extract class name from Args?
-		} else if (GlobalActions.class.isAssignableFrom(cls)) {
-			return "Global Actions";
-		} else if (GlobalConditions.class.isAssignableFrom(cls)) {
-			return "Global Conditions";
-		} else if (InitialActions.class.isAssignableFrom(cls)) {
-			return "Initial Actions"; 
-		} else if (Join.class.isAssignableFrom(cls)) {
-			return "Join";
-		} else if (Joins.class.isAssignableFrom(cls)) {
-			return "Joins";
-		} else if (Meta.class.isAssignableFrom(cls)) {
-			Meta m = (Meta) this;
-			return "Property " + m.getName() + " = " + m.getValue();
-		} else if (ObjectFactory.class.isAssignableFrom(cls)) {
-			return "Object Factory";
-		} else if (Permission.class.isAssignableFrom(cls)) {
-			Permission p = (Permission) this;
-			return "Permission " + p.getId();
-		} else if (PostFunctions.class.isAssignableFrom(cls)) {
-			return "Post Functions"; 
-		} else if (PreFunctions.class.isAssignableFrom(cls)) {	
-			return "Pre Functions"; 
-		} else if (Register.class.isAssignableFrom(cls)) {			
-			Register r = (Register) this;
-			return "Register " + r.getVariableName(); 
-		} else if (Registers.class.isAssignableFrom(cls)) {	
-			return "Registers";
-		} else if (RestrictTo.class.isAssignableFrom(cls)) {
-			return "Restriction";
-		} else if (Result.class.isAssignableFrom(cls)) {			
-			return "Result";
-		} else if (Results.class.isAssignableFrom(cls)) {
-			return "Results";
-		} else if (Split.class.isAssignableFrom(cls)) {	
-			return "Split";
-		} else if (Splits.class.isAssignableFrom(cls)) {	
-			return "Splits";
-		} else if (Step.class.isAssignableFrom(cls)) {		
-			Step s = (Step) this;
-			return "Step " + s.getName();
-		} else if (Steps.class.isAssignableFrom(cls)) {			
-			return "Steps";
-		} else if (TriggerFunction.class.isAssignableFrom(cls)) {		
-			return "Trigger Function";
-		} else if (TriggerFunctions.class.isAssignableFrom(cls)) {	
-			return "Trigger Functions";
-		} else if (UnconditionalResult.class.isAssignableFrom(cls)) {
-			return "Unconditional Result";
-		} else if (Validator.class.isAssignableFrom(cls)) {		
-			Validator v = (Validator) this;
-			return "Validator " + v.getId();	// TODO Extract name from class.name?
-		} else if (Validators.class.isAssignableFrom(cls)) {			
-			return "Validators";
-		} else if (Workflow.class.isAssignableFrom(cls)) {			
-			Workflow wf = (Workflow) this;
-			return "Workflow";
-		} 
-		// Return class name as default
-		return this.getClass().getSimpleName();
-	}
+	public static final String TYPE_CLASS = "class";
+	public static final String ARG_CLASS_NAME = "class.name";
+	public static final String ATTRIBUTE_ARG_CLASS_NAME = "NestedArgClassName";
 
 	/**
-	 * Get a list of children WorkflowPart that contains Meta or Arg to be mapped.
-	 * 
-	 * For Arg and Meta, ignore specific names.
-	 * 
-	 * @return
+	 * Settings related to JAXB generated classes
 	 */
-	public default List<WorkflowPart> getMappableChildren() {
-		List<WorkflowPart> result = new ArrayList<>();
-		try {
-			BeanInfo info = Introspector.getBeanInfo(this.getClass());
-			for (PropertyDescriptor desc : info.getPropertyDescriptors()) {
-				Method getter = desc.getReadMethod();
-				if (getter != null) {
-					Class<?> returnType = getter.getReturnType();
-					if (WorkflowPart.class.isAssignableFrom(returnType)) {
-						WorkflowPart part = (WorkflowPart) getter.invoke(this);
-						if (part != null) {
-							result.add(part);
-						}
-					} else if (List.class.isAssignableFrom(returnType)) {
-						List<?> list = (List<?>) getter.invoke(this);
-						if (list != null) {
-							for (Object item : list) {
-								if (item != null &&  item instanceof WorkflowPart) {
-									result.add((WorkflowPart) item);
-								}
-							}
-						}
+	public enum WorkflowPartType {
+		ACTION(Action.class, "name"),
+		ACTIONS(Actions.class),
+		ARG(Arg.class, "name"),
+		COMMON_ACTION(CommonAction.class),
+		COMMON_ACTIONS(CommonActions.class),
+		CONDITION(Condition.class, "negate", "type"),
+		CONDITIONS(Conditions.class, "type"),
+		EXTERNAL_PERMISSIONS(ExternalPermissions.class),
+		FUNCTION(Function.class, "type", ATTRIBUTE_ARG_CLASS_NAME),
+		GLOBAL_ACTIONS(GlobalActions.class),
+		GLOBAL_CONDITIONS(GlobalConditions.class),
+		INITIAL_ACTIONS(InitialActions.class),
+		JOIN(Join.class),
+		JOINS(Joins.class),
+		META(Meta.class, "name"),
+		OBJECT_FACTORY(ObjectFactory.class),
+		PERMISSION(Permission.class, "id", "name"),
+		POST_FUNCTIONS(PostFunctions.class),
+		PRE_FUNCTIONS(PreFunctions.class),
+		REGISTER(Register.class, "variableName"),
+		REGISTERS(Registers.class),
+		RESTRICT_TO(RestrictTo.class),
+		RESULT(Result.class),
+		RESULTS(Results.class),
+		SPLIT(Split.class),
+		SPLITS(Splits.class),
+		STEP(Step.class, "name"),
+		STEPS(Steps.class),
+		TRIGGER_FUNCTION(TriggerFunction.class),
+		TRIGGER_FUNCTIONS(TriggerFunctions.class),
+		UNCONDITIONAL_RESULT(UnconditionalResult.class),
+		VALIDATOR(Validator.class, "type", ATTRIBUTE_ARG_CLASS_NAME),
+		VALIDATORS(Validators.class),
+		WORKFLOW(Workflow.class);
+		private Class<?> cls;
+		private List<String> identifyingAttributes;
+		private WorkflowPartType(Class<?> cls) {
+			this.cls = cls;
+			this.identifyingAttributes = new ArrayList<>();
+		}
+		private WorkflowPartType(Class<?> cls, String... attributes) {
+			this.cls = cls;
+			this.identifyingAttributes = new ArrayList<>();
+			this.identifyingAttributes.addAll(Arrays.asList(attributes));
+		}
+		public static WorkflowPartType parse(WorkflowPart part) {
+			if (part != null) {
+				for (WorkflowPartType type : WorkflowPartType.values()) {
+					if (type.cls.equals(part.getClass())) {
+						return type;
 					}
 				}
 			}
-		} catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			// Ignore
+			return null;
 		}
-		return result;
+		public Class<?> getWorkflowPartClass() {
+			return this.cls;
+		}
+		public List<String> getIdentifyingAttributes() {
+			return this.identifyingAttributes;
+		}
+		public String getNodeName() {
+			switch (this) {
+			case WORKFLOW:
+				return "";
+			default:
+				String name = this.cls.getSimpleName();
+				return name.substring(0, 1).toLowerCase() + name.substring(1);
+			}
+		}
+		public static String getDisplayName(WorkflowPart part) {
+			WorkflowPartType partType = WorkflowPartType.parse(part);
+			switch (partType) {
+			case FUNCTION:
+				JXPathContext ctx = JXPathContext.newContext(part);
+				return "Function: " + WorkflowMapper.getFunctionDisplayName(part.getPartArgClassName(ctx));
+			default:
+				String name = partType.cls.getSimpleName().replaceAll("([A-Z])", " $1");
+				return name.trim();
+			}
+		}
+	}
+	
+	public default String getPartAttribute(JXPathContext ctx, String attr) {
+		String result = (String) ctx.getValue(attr, String.class);
+		if (result != null) {
+			return result;
+		}
+		return "";
+	}
+	
+	public default String getPartArgClassName(JXPathContext ctx) {
+		return getPartAttribute(ctx, "arg[name='" + ARG_CLASS_NAME + "']/@value");
+	}
+	
+	public default String getPartFilter(JXPathContext ctx) {
+		String argFilter = "";
+		String type = getPartAttribute(ctx, "type");
+		String className = getPartArgClassName(ctx);
+		if (TYPE_CLASS.equals(type) && className != null) {
+			argFilter = "[arg[name='" + ARG_CLASS_NAME + "'][value='" + className + "']";
+		}
+		return argFilter;
+	}
+	
+	public default String makeFilter() {
+		String filter = "";
+		WorkflowPartType partType = WorkflowPartType.parse(this);
+		List<String> attrList = partType.getIdentifyingAttributes();
+		JXPathContext ctx = JXPathContext.newContext(this);
+		ctx.setLenient(true);
+		for (String attr : attrList) {
+			if (ATTRIBUTE_ARG_CLASS_NAME.equals(attr)) {
+				filter += getPartFilter(ctx);
+			} else {
+				String value = (String) ctx.getValue(attr, String.class);
+				if (value != null) {
+					filter += "[" + attr + "='" + value + "']";
+				}
+			}
+		}
+		return filter;
+	}
+	
+	/**
+	 * Return relative XPath of this WorkflowPart, with selector to uniquely identify it.
+	 * @return String
+	 */
+	public default String getPartXPath() {
+		WorkflowPartType partType = getWorkflowPartType();
+		return partType.getNodeName() + makeFilter();
+	}
+
+	/**
+	 * Check if this WorkflowPart contains mappable attributes
+	 * @return boolean
+	 */
+	public default boolean isPartMappable() {
+		WorkflowPartType partType = getWorkflowPartType();
+		switch (partType) {
+		case ARG: // Fall
+		case META:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * Get display name of this WorkflowPart
+	 * @return String
+	 */
+	public default String getPartDisplayName() {
+		return WorkflowPartType.getDisplayName(this);
+	}
+	
+	public default WorkflowPartType getWorkflowPartType() {
+		return WorkflowPartType.parse(this);
 	}
 	
 	public default List<WorkflowPart> getChildren() {

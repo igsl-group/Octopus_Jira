@@ -4,7 +4,7 @@
 			&nbsp;&nbsp;&nbsp;
 		#end
 	#end
-	<label>${pojo.getWorkflowPartDisplayName()}</label><br/>
+	<label>${pojo.getPartDisplayName()}: ${pojo.getPartXPath()}: {$pojo.isPartMappable()}</label><br/>
 	#set ($level = $level + 1)
 	#foreach ($child in $pojo.getChildren())
 		#displayPojo($child)
