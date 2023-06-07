@@ -20,6 +20,11 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	private static final Logger LOGGER = Logger.getLogger(WorkflowMappingManager.class);
 	
 	private static final String PARAM_ACTION = "action";
+	private static final String PARAM_MAPPING = "mapping";
+	
+	private static final String ACTION_DELETE = "delete";
+	private static final String ACTION_ENABLE = "enable";
+	private static final String ACTION_DISABLE = "disable";
 	
 	public WorkflowMappingManager(@ComponentImport ActiveObjects ao) {
 		LOGGER.debug("Inject ActiveObjects: " + ao);
@@ -28,6 +33,10 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	
 	public Map<String, MapperConfigWrapper> getMappings() {
 		return MapperConfigUtil.getMapperConfigs(this.ao);
+	}
+
+	public String getEditLink(String id) {
+		return this.getServletContext().getContextPath() + "/secure/admin/plugins/handler/WorkflowMapper.jspa?action=loadMapping&mapping=" + id;
 	}
 	
 	@Override
@@ -42,6 +51,24 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 		
 		String action = req.getParameter(PARAM_ACTION);
 		LOGGER.debug("action: " + action);
+		
+		String[] mappingList = req.getParameterValues(PARAM_MAPPING);
+		if (mappingList != null) {
+			for (String mapping : mappingList) {
+				MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
+				if (wrapper != null) {
+					if (ACTION_DELETE.equals(action)) {
+						MapperConfigUtil.deleteMapperConfig(ao, wrapper);
+					} else if (ACTION_ENABLE.equals(action)) {
+						wrapper.setDisabled(false);
+						MapperConfigUtil.saveMapperConfig(ao, wrapper);
+					} else if (ACTION_DISABLE.equals(action)) {
+						wrapper.setDisabled(true);
+						MapperConfigUtil.saveMapperConfig(ao, wrapper);
+					}
+				}
+			}
+		}
 		
 		return JiraWebActionSupport.INPUT;
 	}

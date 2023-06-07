@@ -25,6 +25,12 @@ public class MapperConfigWrapper {
 		config.setObjectType(this.objectType);
 		config.setXPath(this.xPath);
 	}
+	public String getId() {
+		if (this.config != null) {
+			return Integer.toString(this.config.getID());
+		}
+		return null;
+	}
 	
 	public void setConfig(MapperConfig config) {
 		this.config = config;

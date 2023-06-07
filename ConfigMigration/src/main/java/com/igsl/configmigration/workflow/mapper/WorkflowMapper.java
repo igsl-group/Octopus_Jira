@@ -286,15 +286,25 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		String action = req.getParameter(PARAM_ACTION);
 		LOGGER.debug("action: " + action);
 		
-		// Update mapping data in session
+		// Check mapping data
 		if (this.sessionData.mapping != null) {
-			Boolean array = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_ARRAY));
-			this.sessionData.mapping.setArray(array);
-			Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
-			this.sessionData.mapping.setDisabled(disabled);
-			this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
-			this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
-			this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
+			// Double check mapping still exists
+			if (this.sessionData.mapping.getId() != null) {
+				// Not a new ID, check if it still exists
+				if (MapperConfigUtil.getMapperConfigById(this.ao, this.sessionData.mapping.getId()) == null) {
+					this.sessionData.mapping = null;
+				}
+			}
+			if (this.sessionData.mapping != null) {
+				// Update fields
+				Boolean array = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_ARRAY));
+				this.sessionData.mapping.setArray(array);
+				Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
+				this.sessionData.mapping.setDisabled(disabled);
+				this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
+				this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
+				this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
+			}
 		}
 		
 		if (ACTION_LOAD_WORKFLOW.equals(action)) {
