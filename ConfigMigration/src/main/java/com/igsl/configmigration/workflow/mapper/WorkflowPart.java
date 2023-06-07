@@ -174,12 +174,12 @@ public interface WorkflowPart {
 				return "Action: " + action.getName();
 			case ARG: 
 				Arg arg = (Arg) part;
-				return "Parameter: " + arg.getName();
+				return "Arg: " + arg.getName();
 			case FUNCTION:
 				return "Function: " + WorkflowMapper.getFunctionDisplayName(part.getPartArgClassName());
 			case META:
 				Meta meta = (Meta) part;
-				return "Property: " + meta.getName();
+				return "Meta: " + meta.getName();
 			case STEP:
 				Step step = (Step) part;
 				return "Step: " + step.getName();
