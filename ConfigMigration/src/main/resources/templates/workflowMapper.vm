@@ -51,6 +51,20 @@
 		<title>Workflow Mapper</title>
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
+			var mappingUpdatedFlag = false;
+			function mappingUpdated() {
+				mappingUpdatedFlag = true;
+			}
+			AJS.$(document).on('click', '#confirm-dialogOK', function (e) {
+			    e.preventDefault();
+			    mappingUpdatedFlag = false;
+			    loadMap();
+			});
+			AJS.$(document).on('click', '#confirm-dialogCancel', function (e) {
+			    e.preventDefault();
+			    AJS.dialog2('#confirm-dialog').hide();
+			    $('select#mapping').val(mapping);
+			});
 			var treeAll = true;
 			function toggleTreeAll() {
 				treeAll = !treeAll;
@@ -75,11 +89,15 @@
 				window.onbeforeunload = null;
 				document.forms['mainForm'].submit();
 			}
-			function loadMap(ctrl) {
-				document.getElementById('action').value = 'loadMapping';
-				document.getElementById('mapping').value = ctrl.value;
-				window.onbeforeunload = null;
-				document.forms['mainForm'].submit();
+			var mapping = '$!{action.getMapping().getConfig().getID()}';	// Store original value of mapping select
+			function loadMap() {
+				if (mappingUpdatedFlag) {
+					AJS.dialog2('#confirm-dialog').show();
+				} else {
+					document.getElementById('action').value = 'loadMapping';
+					window.onbeforeunload = null;
+					document.forms['mainForm'].submit();
+				}
 			}
 			function submitForm(action) {
 				document.getElementById('action').value = action;
@@ -95,6 +113,39 @@
 		</script>
 	</head>
 	<body>
+	
+		<!-- Confirm dialog -->
+		<section 	id="confirm-dialog" 
+					class="aui-dialog2 aui-dialog2-medium aui-layer" 
+					aria-hidden="true"
+					role="dialog">
+		    <!-- Dialog header -->
+		    <header class="aui-dialog2-header">
+		        <!-- The dialog's title -->
+		        <h2 class="aui-dialog2-header-main">You have unsaved changes in mapping</h2>
+		        <!-- Close icon -->
+		        <!-- 
+		        <a class="aui-dialog2-header-close">
+		            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+		        </a>
+		        -->
+		    </header>
+		    <!-- Main dialog content -->
+		    <div class="aui-dialog2-content">
+		    	<h4>Are you sure to discard them?</h4>
+		    </div>
+		    <!-- Dialog footer -->
+		    <footer class="aui-dialog2-footer">
+		        <!-- Actions to render on the right of the footer -->
+		        <div class="aui-dialog2-footer-actions">
+		            <button id="confirm-dialogOK" class="aui-button aui-button-primary">Discard Changes</button>
+		            <button id="confirm-dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		        </div>
+		        <!-- Hint text is rendered on the left of the footer -->
+		        <div class="aui-dialog2-footer-hint"></div>
+		    </footer>
+		</section>
+	
 		<!-- 
 			List of mappers:
 				Option to enable/disable
@@ -115,7 +166,7 @@
 			<table class="ConfigMigration">
 				<tr>
 					<td width="50%">
-						<label>Select Workflow: </label>
+						<label>Select Workflow as Template: </label>
 						<select name="workflow" onchange="submitForm('loadWorkflow')">
 							<option value="">Select a workflow</option>
 							#foreach ($item in $action.getWorkflows())
@@ -129,7 +180,7 @@
 					</td>
 					<td width="50%">
 						<label>Select Mapping: </label>
-						<select name="mapping" onchange="submitForm('loadMapping')">
+						<select id="mapping" name="mapping" onfocus="mapping = this.value;" onchange="loadMap()">
 							<option value="">Select a mapping</option>
 							#foreach ($item in $action.getMappings().entrySet())
 								#set ($selected = "")
@@ -187,7 +238,7 @@
 								<tr>
 									<th width="20%">Description</th>
 									<td width="80%">
-										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}"/>
+										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}" onchange="mappingUpdated()"/>
 									</td>
 								</tr>
 								<tr>
@@ -204,13 +255,13 @@
 										</div>
 									</th>
 									<td>
-										<textarea style="width: 95%" name="mappingXPath" rows="5">$!{action.getMapping().getxPath()}</textarea>
+										<textarea style="width: 95%" name="mappingXPath" rows="5" onchange="mappingUpdated()">$!{action.getMapping().getxPath()}</textarea>
 									</td>
 								</tr>
 								<tr>
 									<th>Is the value an array: </th>
 									<td>
-										<select name="mappingArray">
+										<select name="mappingArray" onchange="mappingUpdated()">
 											#if ($action.getMapping().isArray())
 												<option selected value="true">Yes</option>
 												<option value="false">No</option>
@@ -224,7 +275,7 @@
 								<tr>
 									<th>Value object type: </th>
 									<td>
-										<select name="mappingObjectType">
+										<select name="mappingObjectType" onchange="mappingUpdated()">
 											<option selected value="">Select an object type</option>
 											#foreach ($item in $action.getObjectTypes().entrySet())
 												#set ($selected = "")
@@ -239,7 +290,7 @@
 								<tr>
 									<th>Status: </th>
 									<td>
-										<select name="mappingDisabled">
+										<select name="mappingDisabled" onchange="mappingUpdated()">
 											#if ($action.getMapping().isDisabled())
 												<option selected value="true">Disabled</option>
 												<option value="false">Enabled</option>

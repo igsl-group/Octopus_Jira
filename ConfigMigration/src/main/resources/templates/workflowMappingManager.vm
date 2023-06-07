@@ -1,0 +1,42 @@
+<html>
+	<head>
+		<title>Worklow Mapping Manager</title>
+		<meta content="admin" name="decorator" />
+		<script type="text/javascript">
+		</script>
+	</head>
+	<body>
+		<form action="WorkflowMappingManager.jspa" method="post" id="mainForm">
+			<table class="ConfigMigration">
+				<thead>
+					<tr>
+						<th>
+							<input type="checkbox" onchange=""/>
+						</th>
+						<th>Description</th>
+						<th>Status</th>
+						<th>XPath</th>
+					</tr>
+				</thead>
+				<tbody>
+					#foreach ($item in $action.getMappings().entrySet())
+						<tr>
+							<td>
+								<input type="checkbox" onchange=""/>
+							</td>
+							<td>${item.getValue().getDescription()}</td>
+							<td>
+								#if ($item.getValue().isDisabled())
+									<span>Disabled</span>
+								#else
+									<span>Enabled</span>
+								#end
+							</td>
+							<td>${item.getValue().getxPath()}</td>
+						</tr>
+					#end
+				</tbody>
+			</table>
+		</form>
+	</body>
+</html>

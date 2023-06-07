@@ -66,7 +66,12 @@
 		location="ConfigMigrationSection">
 		<label key="Config Migration" />
 	</web-section>
-
+	
+	<web-section key="AdvancedSubSection"
+		location="ConfigMigrationSection">
+		<label key="Advanced" />
+	</web-section>
+	
 	<!-- Export -->
 	<web-item key="Export" name="Export" state="disabled"
 		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
@@ -167,18 +172,38 @@
 		</actions>
 	</webwork1>
 	
-	<!-- Mapper -->
-	<web-item key="WorkflowMapperItem" name="Workflow Mapper"
-		section="ConfigMigrationSection/ConfigMigrationSubSection" weight="10">
-		<description key="desc">Workflow Mapper
+	<!-- Mapping List -->
+	<web-item key="WorkflowMappingManagerItem" name="Workflow Mapping Manager"
+		section="ConfigMigrationSection/AdvancedSubSection" weight="10">
+		<description key="desc">Workflow Mapping Manager
 		</description>
-		<label key="Workflow Mapper" />
+		<label key="Workflow Mapping Manager" />
+		<link linkId="WorkflowMapperLink">/secure/admin/plugins/handler/WorkflowMappingManager.jspa
+		</link>
+	</web-item>
+	<webwork1 key="WorkflowMappingManager" name="Workflow Mapping Manager"
+		class="java.lang.Object">
+		<description>Workflow Mapping Manager</description>
+		<actions>
+			<action name="com.igsl.configmigration.workflow.mapper.WorkflowMappingManager"
+				alias="WorkflowMappingManager">
+				<view name="input">templates/workflowMappingManager.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	<!-- Mapping Editor -->
+	<web-item key="WorkflowMapperItem" name="Workflow Mapping Editor"
+		section="ConfigMigrationSection/AdvancedSubSection" weight="10">
+		<description key="desc">Workflow Mapping Editor
+		</description>
+		<label key="Workflow Mapping Editor" />
 		<link linkId="WorkflowMapperLink">/secure/admin/plugins/handler/WorkflowMapper.jspa
 		</link>
 	</web-item>
-	<webwork1 key="WorkflowMapper" name="Workflow Mapper"
+	<webwork1 key="WorkflowMapper" name="Workflow Mapping Editor"
 		class="java.lang.Object">
-		<description>Workflow Mapper</description>
+		<description>Workflow Mapping Editor</description>
 		<actions>
 			<action name="com.igsl.configmigration.workflow.mapper.WorkflowMapper"
 				alias="WorkflowMapper">
