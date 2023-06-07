@@ -25,3 +25,15 @@ table.ConfigMigration td.different {
 table.ConfigMigration tr.highlight td {
 	background-color: yellow;
 } 
+
+span.tableControl {
+	cursor: pointer;
+}
+
+span.tableControl.tableControlPlus::before {
+	content: '[+] ';
+}
+
+span.tableControl.tableControlMinus::before {
+	content: '[-] ';
+}

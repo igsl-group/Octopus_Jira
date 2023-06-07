@@ -1,15 +1,49 @@
 #macro(displayPojo $pojo)
-	#if ($level > 0)
-		#foreach ($i in [1..$level])
-			&nbsp;&nbsp;&nbsp;
+	<div class="treeDiv">
+		#if ($level > 0)
+			#foreach ($i in [1..$level])
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+			#end
 		#end
-	#end
-	<label>${pojo.getPartDisplayName()}: ${pojo.getPartXPath()}: {$pojo.isPartMappable()}</label><br/>
-	#set ($level = $level + 1)
-	#foreach ($child in $pojo.getChildren())
-		#displayPojo($child)
-	#end
-	#set ($level = $level - 1)
+		#if ($pojo.getChildren().size() != 0)
+			<span class="tableControl tableControlPlus" onclick="toggleTree(this)">
+		#else
+			<span>
+		#end
+		<label>
+			#if ($pojo.isPartMappable())
+				<a href="#" onclick="loadPart('${pojo.hashCode()}')">${pojo.getPartDisplayName()}</a>
+				#if ($pojo.hashCode() == $action.getEditingWorkflowPartWrapper().getWorkflowPart().hashCode())
+					<span style="font-weight: bold" class="scrollIntoView">[SELECTED]</span>
+				#end
+			#else
+				${pojo.getPartDisplayName()}
+				#if ($pojo.hashCode() == $action.getEditingWorkflowPartWrapper().getWorkflowPart().hashCode())
+					<span style="font-weight: bold" class="scrollIntoView">[SELECTED]</span>
+				#end
+			#end
+		</label>
+		</span>
+		<div class="treeChildDiv">
+			#if ($parentXPath != $null && $parentXPath.length() != 0)
+				#set ($parentXPath = $parentXPath + "/" + $pojo.getPartXPath())
+			#else
+				#set ($parentXPath = $pojo.getPartXPath())
+			#end
+			#set ($level = $level + 1)
+			#foreach ($child in $pojo.getChildren())
+				#displayPojo($child)
+			#end
+			#if ($parentXPath)
+				#set ($endIndex = $parentXPath.indexOf($pojo.getPartXPath()) - 1)
+				#if ($endIndex < 0) 
+					#set ($endIndex = 0)
+				#end
+				#set ($parentXPath = $parentXPath.substring(0, $endIndex))
+			#end
+			#set ($level = $level - 1)
+		</div>
+	</div>
 #end
 
 <html>
@@ -17,10 +51,46 @@
 		<title>Workflow Mapper</title>
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
+			var treeAll = true;
+			function toggleTreeAll() {
+				treeAll = !treeAll;
+				if (treeAll) {
+					$('div.treeChildDiv').show();
+					$('span.tableControl').addClass('tableControlPlus');
+					$('span.tableControl').removeClass('tableControlMinus');
+				} else {
+					$('div.treeChildDiv').hide();
+					$('span.tableControl').removeClass('tableControlPlus');
+					$('span.tableControl').addClass('tableControlMinus');
+				}
+			}
+			function toggleTree(ctrl) {
+				$(ctrl).next('div.treeChildDiv').slideToggle();
+				$(ctrl).toggleClass('tableControlPlus tableControlMinus');
+				treeAll = false;
+			}
+			function loadPart(partId) {
+				document.getElementById('action').value = 'loadPart';
+				document.getElementById('part').value = partId;
+				window.onbeforeunload = null;
+				document.forms['mainForm'].submit();
+			}
+			function loadMap(ctrl) {
+				document.getElementById('action').value = 'loadMapping';
+				document.getElementById('mapping').value = ctrl.value;
+				window.onbeforeunload = null;
+				document.forms['mainForm'].submit();
+			}
 			function submitForm(action) {
 				document.getElementById('action').value = action;
 				window.onbeforeunload = null;
 				document.forms['mainForm'].submit();
+			}
+			function scrollToSelectedPart() {
+				var ctrl = $('span.scrollIntoView')[0];
+				if (ctrl) {
+					ctrl.scrollIntoView();
+				}
 			}
 		</script>
 	</head>
@@ -41,26 +111,174 @@
 		-->
 		<form action="WorkflowMapper.jspa" method="post" id="mainForm">
 			<input type="hidden" id="action" name="action" value=""/>
-			<div>
-				<label>Select Workflow: </label>
-				<select name="workflow" onchange="submitForm('loadWorkflow')">
-					<option value="">Select a workflow</option>
-					#foreach ($item in $action.getWorkflows())
-						#set ($selected = "")
-						#if ($action.getSelectedWorkflow().equals($item.getName()))
-							#set ($selected = "selected")
+			<input type="hidden" id="part" name="part" value=""/>
+			<table class="ConfigMigration">
+				<tr>
+					<td width="50%">
+						<label>Select Workflow: </label>
+						<select name="workflow" onchange="submitForm('loadWorkflow')">
+							<option value="">Select a workflow</option>
+							#foreach ($item in $action.getWorkflows())
+								#set ($selected = "")
+								#if ($action.getSelectedWorkflow().equals($item.getName()))
+									#set ($selected = "selected")
+								#end
+								<option value="$!{item.getName()}" ${selected}>$!{item.getName()}</option>
+							#end
+						</select>
+					</td>
+					<td width="50%">
+						<label>Select Mapping: </label>
+						<select name="mapping" onchange="submitForm('loadMapping')">
+							<option value="">Select a mapping</option>
+							#foreach ($item in $action.getMappings().entrySet())
+								#set ($selected = "")
+								#if ($action.getMapping())
+									#if ($item.getValue().getxPath() == $action.getMapping().getxPath())
+										#set ($selected = "selected")
+									#end
+								#end
+								#set ($disabled = "")
+								#if ($item.getValue().isDisabled())
+									#set ($disabled = " [Disabled]")
+								#end
+								<option ${selected} value="${item.getKey()}">${item.getValue().getDescription()}${disabled}</option>
+							#end
+						</select>
+						<input type="button" onclick="submitForm('createMapping')" value="Create Mapping"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						#if ($action.getWorkflow())
+							<textarea rows="5" style="width: 95%">$!{action.getXml()}</textarea><br/>
+							<span onclick="toggleTreeAll()"><a href="#">(Toggle All Levels)</a></span><br/>
+							<div style="overflow: auto; width: 100%; height: 40vh;">
+								#set ($level = 0)
+								#set ($parentXPath = "")
+								#displayPojo($action.getWorkflow())
+							</div>
+							#set ($data = $action.getEditingWorkflowPartWrapper())
+							#if ($data)
+								<h3>${data.getWorkflowPart().getPartDisplayName()} <input type="button" onclick="scrollToSelectedPart()" value="Locate in Tree"/></h3>
+								<table class="ConfigMigration">
+									<tr>
+										<th>XPath</th>
+										<td>${data.getXPath()}</td>
+									</tr>
+									<tr>
+										<th>Name</th>
+										<td>${data.getWorkflowPart().getName()}</td>
+									</tr>
+									<tr>
+										<th>Value</th>
+										<td>${data.getWorkflowPart().getValue()}</td>
+									</tr>
+								</table>
+								<hr/>
+							#end
+						#else
+							<span>Select a workflow as template</span>
 						#end
-						<option value="$!{item.getName()}" ${selected}>$!{item.getName()}</option>
-					#end
-				</select>
-			</div>
-			<div>
-				<textarea rows="5" cols="200">$!{action.getXml()}</textarea>
-			</div>
-			#if ($action.getWorkflow())
-				#set ($level = 0)
-				#displayPojo($action.getWorkflow())
-			#end
+					</td>
+					<td style="vertical-align: top;">
+						#if ($action.getMapping())
+							<table class="ConfigMigration">
+								<tr>
+									<th width="20%">Description</th>
+									<td width="80%">
+										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}"/>
+									</td>
+								</tr>
+								<tr>
+									<th>
+										<span>XPath</span>
+										<div>
+											#set ($disabled = "disabled")
+											#if ($action.getWorkflow())
+												#set ($disabled = "")
+											#end
+											<input type="button" onclick="submitForm('resetPartSearch')" value="Reset Find" ${disabled} />
+											<input type="button" onclick="submitForm('nextPart')" value="Find Next" ${disabled} />
+											<span>$!{action.getSearchResult()}</span>
+										</div>
+									</th>
+									<td>
+										<textarea style="width: 95%" name="mappingXPath" rows="5">$!{action.getMapping().getxPath()}</textarea>
+									</td>
+								</tr>
+								<tr>
+									<th>Is the value an array: </th>
+									<td>
+										<select name="mappingArray">
+											#if ($action.getMapping().isArray())
+												<option selected value="true">Yes</option>
+												<option value="false">No</option>
+											#else
+												<option value="true">Yes</option>
+												<option selected value="false">No</option>
+											#end
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>Value object type: </th>
+									<td>
+										<select name="mappingObjectType">
+											<option selected value="">Select an object type</option>
+											#foreach ($item in $action.getObjectTypes().entrySet())
+												#set ($selected = "")
+												#if ($action.getMapping().getObjectType() == $item.getValue())
+													#set ($selected = "selected")
+												#end
+												<option ${selected} value="${item.getValue()}">${item.getKey()}</option>
+											#end
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>Status: </th>
+									<td>
+										<select name="mappingDisabled">
+											#if ($action.getMapping().isDisabled())
+												<option selected value="true">Disabled</option>
+												<option value="false">Enabled</option>
+											#else
+												<option value="true">Disabled</option>
+												<option selected value="false">Enabled</option>
+											#end
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<th>Lookup Test: </th>
+									<td>
+										Object info here
+									</td>
+								</tr>
+								<tr>
+									<td colspan="100%">
+										#if ($action.getMapping().getConfig())
+											<input type="button" onclick="submitForm('saveMapping')" value="Save"/>
+											<input type="button" onclick="submitForm('deleteMapping')" value="Delete"/>
+										#else
+											<input type="button" onclick="submitForm('saveMapping')" value="Create"/>
+											<input type="button" onclick="submitForm('deleteMapping')" value="Delete" disabled/>
+										#end
+										
+									</td>
+								</tr>
+							</table>
+							<hr/>
+						#else
+							<span>Please select an item in the tree or select a mapping above</span>
+						#end								
+					</td>
+				</tr>
+			</table>
 		</form>
+		<script type="text/javascript">
+			scrollToSelectedPart();
+		</script>
 	</body>
 </html>

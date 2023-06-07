@@ -20,6 +20,7 @@
 		<description>Active Objects</description>
 		<entity>com.igsl.configmigration.export.v1.ExportData</entity>
 		<entity>com.igsl.configmigration.report.v1.MergeReport</entity>
+		<entity>com.igsl.configmigration.workflow.mapper.v1.MapperConfig</entity>
 	</ao>
 
 	<resource type="i18n" name="i18n" location="ConfigMigration" />

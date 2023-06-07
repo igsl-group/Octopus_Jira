@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.jxpath.JXPathContext;
@@ -52,6 +53,7 @@ public interface WorkflowPart {
 
 	public static final Logger LOGGER = Logger.getLogger(WorkflowPart.class);
 	
+	public static final String ATTRIBUTE_ID = "id";
 	public static final String TYPE_CLASS = "class";
 	public static final String ARG_CLASS_NAME = "class.name";
 	public static final String ATTRIBUTE_ARG_CLASS_NAME = "NestedArgClassName";
@@ -65,7 +67,7 @@ public interface WorkflowPart {
 		ARG(Arg.class, "name"),
 		COMMON_ACTION(CommonAction.class),
 		COMMON_ACTIONS(CommonActions.class),
-		CONDITION(Condition.class, "negate", "type"),
+		CONDITION(Condition.class, "negate", "type", ATTRIBUTE_ARG_CLASS_NAME),
 		CONDITIONS(Conditions.class, "type"),
 		EXTERNAL_PERMISSIONS(ExternalPermissions.class),
 		FUNCTION(Function.class, "type", ATTRIBUTE_ARG_CLASS_NAME),
@@ -96,14 +98,46 @@ public interface WorkflowPart {
 		WORKFLOW(Workflow.class);
 		private Class<?> cls;
 		private List<String> identifyingAttributes;
-		private WorkflowPartType(Class<?> cls) {
-			this.cls = cls;
-			this.identifyingAttributes = new ArrayList<>();
-		}
 		private WorkflowPartType(Class<?> cls, String... attributes) {
 			this.cls = cls;
 			this.identifyingAttributes = new ArrayList<>();
-			this.identifyingAttributes.addAll(Arrays.asList(attributes));
+			if (attributes != null) {
+				this.identifyingAttributes.addAll(Arrays.asList(attributes));
+			}
+		}
+		public static Comparator<WorkflowPart> getComparator() {
+			return new Comparator<WorkflowPart>() {
+				private int getOrder(WorkflowPart part) {
+					if (part == null) {
+						return 0;
+					} else if (part instanceof Meta) {
+						return 1;
+					} else if (part instanceof Arg) {
+						return 2;
+					} else {
+						return 3;
+					}
+				}				
+				@Override
+				public int compare(WorkflowPart o1, WorkflowPart o2) {
+					int order1 = getOrder(o1);
+					int order2 = getOrder(o2);
+					if (order1 == order2) {
+						if (o1 == null && o2 == null) {
+							return 0;
+						} else if (o1 == null && o2 != null) {
+							return -1;
+						} else if (o1 != null && o2 == null) {
+							return 1;
+						} else if (o1 != null && o2 != null) {
+							return o1.getPartDisplayName().compareTo(o2.getPartDisplayName());
+						}
+					} else {
+						return Integer.compare(order1, order2);
+					}
+					return 0;
+				}
+			};
 		}
 		public static WorkflowPartType parse(WorkflowPart part) {
 			if (part != null) {
@@ -132,40 +166,101 @@ public interface WorkflowPart {
 		}
 		public static String getDisplayName(WorkflowPart part) {
 			WorkflowPartType partType = WorkflowPartType.parse(part);
+			JXPathContext ctx = JXPathContext.newContext(part);
+			ctx.setLenient(true);
 			switch (partType) {
+			case ACTION:
+				Action action = (Action) part;
+				return "Action: " + action.getName();
+			case ARG: 
+				Arg arg = (Arg) part;
+				return "Parameter: " + arg.getName();
 			case FUNCTION:
-				JXPathContext ctx = JXPathContext.newContext(part);
-				return "Function: " + WorkflowMapper.getFunctionDisplayName(part.getPartArgClassName(ctx));
+				return "Function: " + WorkflowMapper.getFunctionDisplayName(part.getPartArgClassName());
+			case META:
+				Meta meta = (Meta) part;
+				return "Property: " + meta.getName();
+			case STEP:
+				Step step = (Step) part;
+				return "Step: " + step.getName();
+			case VALIDATOR:
+				Validator validator = (Validator) part;
+				return "Validator: " + validator.getPartArgSimpleClassName();
 			default:
+				// Split camel class name, then capitalize first letter
 				String name = partType.cls.getSimpleName().replaceAll("([A-Z])", " $1");
-				return name.trim();
+				return name.substring(0, 1).toUpperCase() + name.substring(1);
 			}
 		}
 	}
 	
-	public default String getPartAttribute(JXPathContext ctx, String attr) {
-		String result = (String) ctx.getValue(attr, String.class);
+	/**
+	 * Create JXPathContext of this WorkflowPart. 
+	 * Preferrably cache this and reuse?
+	 * @return JXPathContext
+	 */
+	public default JXPathContext getJXPathContext() {
+		JXPathContext ctx = JXPathContext.newContext(this);
+		ctx.setLenient(true);
+		return ctx;
+	}
+
+	/**
+	 * Get XPath value relative to this WorkflowPart
+	 * @param ctx JXPathContext of this WorkflowPart
+	 * @param xPath XPath
+	 * @return String
+	 */
+	public default String getPartAttribute(String xPath) {
+		JXPathContext ctx = this.getJXPathContext();
+		String result = (String) ctx.getValue(xPath, String.class);
 		if (result != null) {
 			return result;
 		}
 		return "";
 	}
 	
-	public default String getPartArgClassName(JXPathContext ctx) {
-		return getPartAttribute(ctx, "arg[name='" + ARG_CLASS_NAME + "']/@value");
+	/**
+	 * Get Simple class name of class.name value in Arg contained by this WorkflowPart
+	 * @param ctx JXPathContext of this WorkflowPart
+	 * @return String
+	 */
+	public default String getPartArgSimpleClassName() {
+		String className = getPartArgClassName();
+		String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
+		return simpleClassName;
 	}
 	
-	public default String getPartFilter(JXPathContext ctx) {
+	/**
+	 * Get class.name value in Arg contained by this WorkflowPart
+	 * @param ctx JXPathContext of this WorkflowPart
+	 * @return String
+	 */
+	public default String getPartArgClassName() {
+		return getPartAttribute("arg[name='" + ARG_CLASS_NAME + "']/@value");
+	}
+	
+	/**
+	 * Get XPath selector of this WorkflowPart's Arg containing class.name, if this WorkflowPart has type attribute equal to TYPE_CLASS.
+	 * @param ctx JXPathContext of this WorkflowPart
+	 * @return String
+	 */
+	public default String getPartClassNameFilter(JXPathContext ctx) {
 		String argFilter = "";
-		String type = getPartAttribute(ctx, "type");
-		String className = getPartArgClassName(ctx);
+		String type = getPartAttribute("type");
+		String className = getPartArgClassName();
 		if (TYPE_CLASS.equals(type) && className != null) {
-			argFilter = "[arg[name='" + ARG_CLASS_NAME + "'][value='" + className + "']";
+			argFilter = "[arg[name='" + ARG_CLASS_NAME + "'][value='" + className + "']]";
 		}
 		return argFilter;
 	}
 	
-	public default String makeFilter() {
+	/**
+	 * Create XPath selector for this WorkflowPart.
+	 * The selectors used are based on WorkflowPartType.getIdentifyingAttributes().
+	 * @return String
+	 */
+	public default String makeXPathSelector() {
 		String filter = "";
 		WorkflowPartType partType = WorkflowPartType.parse(this);
 		List<String> attrList = partType.getIdentifyingAttributes();
@@ -173,7 +268,7 @@ public interface WorkflowPart {
 		ctx.setLenient(true);
 		for (String attr : attrList) {
 			if (ATTRIBUTE_ARG_CLASS_NAME.equals(attr)) {
-				filter += getPartFilter(ctx);
+				filter += getPartClassNameFilter(ctx);
 			} else {
 				String value = (String) ctx.getValue(attr, String.class);
 				if (value != null) {
@@ -185,12 +280,25 @@ public interface WorkflowPart {
 	}
 	
 	/**
+	 * Return absolute XPath of this WorkflowPart.
+	 * @param parentXPath Parent's XPath, empty or null if at top level
+	 * @return String
+	 */
+	public default String getAbsoluteXPath(String parentXPath) {
+		if (parentXPath != null && parentXPath.length() != 0) {
+			return parentXPath + "/" + getPartXPath();
+		} else {
+			return getPartXPath();
+		}
+	}
+	
+	/**
 	 * Return relative XPath of this WorkflowPart, with selector to uniquely identify it.
 	 * @return String
 	 */
 	public default String getPartXPath() {
 		WorkflowPartType partType = getWorkflowPartType();
-		return partType.getNodeName() + makeFilter();
+		return partType.getNodeName() + makeXPathSelector();
 	}
 
 	/**
@@ -200,7 +308,12 @@ public interface WorkflowPart {
 	public default boolean isPartMappable() {
 		WorkflowPartType partType = getWorkflowPartType();
 		switch (partType) {
-		case ARG: // Fall
+		case ARG: 
+			Arg arg = (Arg) this;
+			if (ARG_CLASS_NAME.equals(arg.getName())) {
+				return false;
+			}
+			return true;
 		case META:
 			return true;
 		default:
@@ -248,6 +361,7 @@ public interface WorkflowPart {
 		} catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			// Ignore
 		}
+		result.sort(WorkflowPartType.getComparator());
 		return result;
 	}
 }
