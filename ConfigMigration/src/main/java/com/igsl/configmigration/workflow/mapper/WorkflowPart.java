@@ -361,7 +361,8 @@ public interface WorkflowPart {
 		} catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			// Ignore
 		}
-		result.sort(WorkflowPartType.getComparator());
+		// Don't sort, leave items in natural order
+		//result.sort(WorkflowPartType.getComparator()); 
 		return result;
 	}
 }

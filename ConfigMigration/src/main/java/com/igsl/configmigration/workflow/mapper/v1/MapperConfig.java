@@ -10,13 +10,16 @@ import net.java.ao.schema.Table;
 @Table(value = "MapperConfig")
 public interface MapperConfig extends Entity {
 
-	// TODO Enhancement: Swap array to a list of formats? JSON? CSV? Regex for parsing items?
-	
 	void setDisabled(boolean disabled);
 	boolean isDisabled();
 
-	void setArray(boolean array);
-	boolean isArray();
+	@StringLength(value = StringLength.UNLIMITED)
+	void setRegex(String regex);
+	String getRegex();
+
+	@StringLength(value = StringLength.UNLIMITED)
+	void setCaptureGroups(String captureGroups);
+	String getCaptureGroups();
 	
 	@StringLength(value = StringLength.UNLIMITED)
 	void setXPath(String xPath);

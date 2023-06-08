@@ -52,13 +52,14 @@
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
 			var mappingUpdatedFlag = false;
-			function mappingUpdated() {
+			function markUpdated() {
 				mappingUpdatedFlag = true;
 			}
 			AJS.$(document).on('click', '#confirm-dialogOK', function (e) {
 			    e.preventDefault();
 			    mappingUpdatedFlag = false;
-			    loadMap();
+			    window.onbeforeunload = null;
+				document.forms['mainForm'].submit();
 			});
 			AJS.$(document).on('click', '#confirm-dialogCancel', function (e) {
 			    e.preventDefault();
@@ -86,15 +87,19 @@
 			function loadPart(partId) {
 				document.getElementById('action').value = 'loadPart';
 				document.getElementById('part').value = partId;
-				window.onbeforeunload = null;
-				document.forms['mainForm'].submit();
-			}
-			var mapping = '$!{action.getMapping().getConfig().getID()}';	// Store original value of mapping select
-			function loadMap() {
 				if (mappingUpdatedFlag) {
 					AJS.dialog2('#confirm-dialog').show();
 				} else {
-					document.getElementById('action').value = 'loadMapping';
+					window.onbeforeunload = null;
+					document.forms['mainForm'].submit();
+				}
+			}
+			var mapping = '$!{action.getMapping().getConfig().getID()}';	// Store original value of mapping select
+			function loadMap() {
+				document.getElementById('action').value = 'loadMapping';
+				if (mappingUpdatedFlag) {
+					AJS.dialog2('#confirm-dialog').show();
+				} else {
 					window.onbeforeunload = null;
 					document.forms['mainForm'].submit();
 				}
@@ -164,11 +169,11 @@
 		<form action="WorkflowMapper.jspa" method="post" id="mainForm">
 			<input type="hidden" id="action" name="action" value=""/>
 			<input type="hidden" id="part" name="part" value=""/>
-			<input type="hidden" id="mappingUpdated" value=""/>
+			<input type="hidden" id="mappingUpdated" name="mappingUpdated" value=""/>
 			<table class="ConfigMigration">
 				<tr>
 					<td width="50%">
-						<label>Select Workflow as Template: </label>
+						<label style="font-weight: bold">Select Workflow as Template: </label>
 						<select name="workflow" onchange="submitForm('loadWorkflow')">
 							<option value="">Select a workflow</option>
 							#foreach ($item in $action.getWorkflows())
@@ -181,7 +186,7 @@
 						</select>
 					</td>
 					<td width="50%">
-						<label>Select Mapping: </label>
+						<label style="font-weight: bold">Select Mapping: </label>
 						<select id="mapping" name="mapping" onfocus="mapping = this.value;" onchange="loadMap()">
 							<option value="">Select a mapping</option>
 							#foreach ($item in $action.getMappings().entrySet())
@@ -228,7 +233,6 @@
 										<td>${data.getWorkflowPart().getValue()}</td>
 									</tr>
 								</table>
-								<hr/>
 							#end
 						#else
 							<span>Select a workflow as template</span>
@@ -240,44 +244,42 @@
 								<tr>
 									<th width="20%">Description</th>
 									<td width="80%">
-										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}" onchange="mappingUpdated()"/>
+										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}" onchange="markUpdated()"/>
 									</td>
 								</tr>
 								<tr>
 									<th>
-										<span>XPath</span>
+										<div>XPath</div>
 										<div>
 											#set ($disabled = "disabled")
 											#if ($action.getWorkflow())
 												#set ($disabled = "")
 											#end
-											<input type="button" onclick="submitForm('resetPartSearch')" value="Reset Find" ${disabled} />
 											<input type="button" onclick="submitForm('nextPart')" value="Find Next" ${disabled} />
-											<span>$!{action.getSearchResult()}</span>
 										</div>
+										<div>$!{action.getSearchResult()}</div>
 									</th>
 									<td>
-										<textarea style="width: 95%" name="mappingXPath" rows="5" onchange="mappingUpdated()">$!{action.getMapping().getxPath()}</textarea>
+										<textarea style="width: 95%" name="mappingXPath" rows="5" onchange="markUpdated()">$!{action.getMapping().getxPath()}</textarea>
 									</td>
 								</tr>
 								<tr>
-									<th>Is the value an array</th>
+									<th>Value Format</th>
 									<td>
-										<select name="mappingArray" onchange="mappingUpdated()">
-											#if ($action.getMapping().isArray())
-												<option selected value="true">Yes</option>
-												<option value="false">No</option>
-											#else
-												<option value="true">Yes</option>
-												<option selected value="false">No</option>
-											#end
-										</select>
+										<div>
+											<label>Regular Expression</label>
+											<input type="text" name="mappingRegex" value="$!{action.getMapping().getRegex()}" onchange="markUpdated()" />
+										</div>
+										<div>
+											<label>Capturing Groups (comma-delimited indexes, starts at 1, empty for all groups)</label>
+											<input type="text" name="mappingCaptureGroups" value="$!{action.getMapping().getCaptureGroups()}" onchange="markUpdated()" />
+										</div>										
 									</td>
 								</tr>
 								<tr>
 									<th>Value object type</th>
 									<td>
-										<select name="mappingObjectType" onchange="mappingUpdated()">
+										<select name="mappingObjectType" onchange="markUpdated()">
 											<option selected value="">Select an object type</option>
 											#foreach ($item in $action.getObjectTypes().entrySet())
 												#set ($selected = "")
@@ -292,7 +294,7 @@
 								<tr>
 									<th>Status</th>
 									<td>
-										<select name="mappingDisabled" onchange="mappingUpdated()">
+										<select name="mappingDisabled" onchange="markUpdated()">
 											#if ($action.getMapping().isDisabled())
 												<option selected value="true">Disabled</option>
 												<option value="false">Enabled</option>
@@ -316,24 +318,25 @@
 								</tr>
 								<tr>
 									<th>
-										<span>Lookup Test</span>
+										<div>Lookup Test</div>
+										#set ($disabled = "disabled")
 										#if ($action.getEditingWorkflowPartWrapper())
-											<input type="button" onclick="submitForm('lookup')" value="Lookup Object" />
-										#else
-											<input type="button" onclick="submitForm('lookup')" value="Lookup Object" disabled />
+											#set ($disabled = "")
 										#end
+										<input type="button" onclick="submitForm('lookup')" value="Refresh" ${disabled} />
 									</th>
 									<td>
+										<table class="ConfigMigration">
+											
+										</table>
 										#if ($action.getLookupResult())
 											#foreach ($valueData in $action.getLookupResult().entrySet())
 												<table class="ConfigMigration">
-													<thead>
-														<tr style="background-color: yellow">
-															<th>Lookup Value</th>
-															<th>${valueData.getKey()}</th>
-														</tr>
-													</thead>
 													<tbody>
+														<tr style="background-color: yellow">
+															<th width="30%">Lookup Value</th>
+															<th width="70%">$!{valueData.getKey()}</th>
+														</tr>
 														#if ($valueData.getValue())
 															#foreach ($item in $valueData.getValue().entrySet())
 																<tr>
@@ -409,7 +412,6 @@
 									</td>
 								</tr>
 							</table>
-							<hr/>
 						#else
 							<span>Please select an item in the tree or select a mapping above</span>
 						#end								

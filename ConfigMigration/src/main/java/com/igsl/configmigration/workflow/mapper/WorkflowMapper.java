@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.JAXBContext;
@@ -105,12 +107,12 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final String PARAM_MAPPING = "mapping";
 	private static final String PARAM_MAPPING_DESCRIPTION = "mappingDesc";
 	private static final String PARAM_MAPPING_OBJECT_TYPE = "mappingObjectType";
-	private static final String PARAM_MAPPING_ARRAY = "mappingArray";
+	private static final String PARAM_MAPPING_REGEX = "mappingRegex";
+	private static final String PARAM_MAPPING_CAPTURE_GROUPS = "mappingCaptureGroups";
 	private static final String PARAM_MAPPING_DISABLED = "mappingDisabled";
 	private static final String PARAM_MAPPING_XPATH = "mappingXPath";
 	
 	// Part matching
-	private static final String ACTION_RESET_PART = "resetPartSearch";
 	private static final String ACTION_NEXT_PART = "nextPart";
 	
 	// Lookup test
@@ -287,8 +289,26 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return className;
 	}
 	
+	private List<Integer> parseCaptureGroups(String captureGroups) {
+		List<Integer> result = null;
+		if (captureGroups != null && !captureGroups.isEmpty()) {
+			result = new ArrayList<>();
+			String[] list = captureGroups.split(",");
+			for (String s : list) {
+				s = s.trim();
+				try {
+					int i = Integer.parseInt(s);
+					result.add(i);
+				} catch (NumberFormatException e) {
+					// Ignore
+				}
+			}
+		}
+		return result;
+	}
+	
 	private void refreshLookupResult() {
-		this.sessionData.lookupResult = new TreeMap<String, Map<String, JiraConfigProperty>>();
+		this.sessionData.lookupResult = null;
 		if (this.sessionData.part != null && this.sessionData.mapping != null) {
 			WorkflowPart part = this.sessionData.part.getWorkflowPart();
 			String value = null;
@@ -304,25 +324,36 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				break;
 			}
 			if (value != null) {
-				List<String> valueList;
-				if (this.sessionData.mapping.isArray()) {
-					valueList = MapperConfigUtil.parseArrayValue(value);
-				} else {
-					valueList = new ArrayList<>();
-					valueList.add(value);
-				}
-				for (String v : valueList) {
-					if (v != null && v.length() != 0) {
-						JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
-						if (dto != null) {
-							this.sessionData.lookupResult.put(v, dto.getConfigProperties());
+				List<String> valueList = new ArrayList<>();
+				Pattern pattern = Pattern.compile(this.sessionData.mapping.getRegex());
+				Matcher matcher = pattern.matcher(value);
+				List<Integer> captureGroups = parseCaptureGroups(this.sessionData.mapping.getCaptureGroups());
+				while (matcher.find()) {
+					if (captureGroups == null) {
+						valueList.add(matcher.group());
+					} else {
+						for (int i : captureGroups) {
+							if (matcher.groupCount() >= i) {
+								valueList.add(matcher.group(i));
+							}
+						}
+					}
+				} 
+				if (valueList.size() != 0) {
+					this.sessionData.lookupResult = new TreeMap<String, Map<String, JiraConfigProperty>>();
+					for (String v : valueList) {
+						if (v != null && v.length() != 0) {
+							JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
+							if (dto != null) {
+								this.sessionData.lookupResult.put(v, dto.getConfigProperties());
+							} else {
+								this.sessionData.lookupResult.put(v, null);
+							}
 						} else {
 							this.sessionData.lookupResult.put(v, null);
 						}
-					} else {
-						this.sessionData.lookupResult.put(v, null);
 					}
-				}					
+				}
 			} 
 		}
 	}
@@ -356,8 +387,8 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				Boolean mappingUpdated = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_UPDATED));
 				if (mappingUpdated) {
 					// Update fields
-					Boolean array = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_ARRAY));
-					this.sessionData.mapping.setArray(array);
+					this.sessionData.mapping.setRegex(req.getParameter(PARAM_MAPPING_REGEX));
+					this.sessionData.mapping.setCaptureGroups(req.getParameter(PARAM_MAPPING_CAPTURE_GROUPS));
 					Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
 					this.sessionData.mapping.setDisabled(disabled);
 					this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
@@ -384,7 +415,6 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					registerWorkflowParts(this.sessionData.workflow);
 				}
 			}
-			refreshLookupResult();
 		} else if (ACTION_LOAD_PART.equals(action)) {
 			WorkflowPartWrapper part = this.sessionData.workflowPartsRegistry.get(req.getParameter(PARAM_PART));
 			if (part != null) {
@@ -396,7 +426,6 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					this.sessionData.mapping.setxPath(this.sessionData.part.getXPath());
 				}
 			}
-			refreshLookupResult();
 		} else if (ACTION_LOAD_MAPPING.equals(action)) {
 			String mappingId = req.getParameter(PARAM_MAPPING);
 			if (mappingId != null && mappingId.length() != 0) {
@@ -407,12 +436,10 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			this.sessionData.part = null;
 			this.sessionData.partIterator = null;
 			this.sessionData.partIteratorXPath = null;
-			refreshLookupResult();
 		} else if (ACTION_CREATE_MAPPING.equals(action)) {
 			this.sessionData.mapping = new MapperConfigWrapper();
 			this.sessionData.partIterator = null;
 			this.sessionData.partIteratorXPath = null;
-			refreshLookupResult();
 		} else if (ACTION_SAVE_MAPPING.equals(action)) {
 			if (this.sessionData.mapping != null) {
 				MapperConfigUtil.saveMapperConfig(this.ao, this.sessionData.mapping);
@@ -424,12 +451,6 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				this.sessionData.partIterator = null;
 				this.sessionData.partIteratorXPath = null;
 			}
-			refreshLookupResult();
-		} else if (ACTION_RESET_PART.equals(action)) {
-			this.sessionData.partIterator = null;
-			this.sessionData.partIteratorXPath = null;
-			this.sessionData.lookupResult = null;
-			refreshLookupResult();
 		} else if (ACTION_NEXT_PART.equals(action)) {
 			this.searchResult = "";
 			String xPath = req.getParameter(PARAM_MAPPING_XPATH);
@@ -454,6 +475,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 						this.searchResult = "Next match located";
 					} else {
 						// No more result
+						this.sessionData.part = null;
 						this.sessionData.partIterator = null;
 						this.searchResult = "No match found";
 					}
@@ -463,10 +485,10 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			} else {
 				this.searchResult = "Please select a workflow";
 			}
-			refreshLookupResult();
 		} else if (ACTION_LOOKUP.equals(action)) {
-			refreshLookupResult();
+			// Do nothing
 		}
+		refreshLookupResult(); // Lookup is always refreshed, all actions impact it
 		
 		return JiraWebActionSupport.INPUT;
 	}

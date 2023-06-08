@@ -32,6 +32,8 @@
 						<th>Description</th>
 						<th>Status</th>
 						<th>XPath</th>
+						<th>Regex</th>
+						<th>Capture Groups</th>
 						<th></th>
 					</tr>
 				</thead>
@@ -50,6 +52,8 @@
 								#end
 							</td>
 							<td>${item.getValue().getxPath()}</td>
+							<td>${item.getValue().getRegex()}</td>
+							<td>${item.getValue().getCaptureGroups()}</td>
 							<td><a href="${action.getEditLink($item.getValue().getId())}">Edit</a></td>
 						</tr>
 					#end
