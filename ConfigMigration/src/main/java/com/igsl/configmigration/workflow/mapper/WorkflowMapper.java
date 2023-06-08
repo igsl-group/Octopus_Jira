@@ -3,9 +3,11 @@ package com.igsl.configmigration.workflow.mapper;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -36,8 +38,12 @@ import com.atlassian.plugin.ModuleDescriptor;
 import com.atlassian.plugin.ModuleDescriptorFactory;
 import com.atlassian.plugin.PluginAccessor;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.workflow.mapper.generated.Arg;
+import com.igsl.configmigration.workflow.mapper.generated.Meta;
 import com.igsl.configmigration.workflow.mapper.generated.Workflow;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfigWrapper;
 
@@ -58,6 +64,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		public MapperConfigWrapper mapping;	// Mapping being edited
 		public Iterator<?> partIterator;	// Matches for mapping
 		public String partIteratorXPath;	// XPath used for search
+		public Map<String, Map<String, JiraConfigProperty>> lookupResult;
 	}
 	private SessionData sessionData;
 	
@@ -80,6 +87,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final WorkflowManager MANAGER = ComponentAccessor.getWorkflowManager();
 	
 	private static final String PARAM_ACTION = "action";
+	private static final String PARAM_MAPPING_UPDATED = "mappingUpdated";
 	
 	// Load workflow action
 	private static final String ACTION_LOAD_WORKFLOW = "loadWorkflow";
@@ -104,6 +112,9 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	// Part matching
 	private static final String ACTION_RESET_PART = "resetPartSearch";
 	private static final String ACTION_NEXT_PART = "nextPart";
+	
+	// Lookup test
+	private static final String ACTION_LOOKUP = "lookup";
 	
 	/**
 	 * Notes:
@@ -205,7 +216,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	public Map<String, String> getObjectTypes() {
 		Map<String, String> result = new TreeMap<>();
 		for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
-			result.put(util.getName(), util.getDTOClass().getCanonicalName());
+			result.put(util.getName(), util.getClass().getCanonicalName());
 		}
 		return result;
 	}
@@ -216,6 +227,10 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	
 	public MapperConfigWrapper getMapping() {
 		return this.sessionData.mapping;
+	}
+	
+	public Map<String, Map<String, JiraConfigProperty>> getLookupResult() {
+		return this.sessionData.lookupResult;
 	}
 	
 	private String serializeWorkflow(Workflow wf) throws Exception {
@@ -272,6 +287,46 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return className;
 	}
 	
+	private void refreshLookupResult() {
+		this.sessionData.lookupResult = new TreeMap<String, Map<String, JiraConfigProperty>>();
+		if (this.sessionData.part != null && this.sessionData.mapping != null) {
+			WorkflowPart part = this.sessionData.part.getWorkflowPart();
+			String value = null;
+			switch (part.getWorkflowPartType()) {
+			case ARG: 
+				value = ((Arg) part).getValue();
+				break;
+			case META:
+				value = ((Meta) part).getValue();
+				break;
+			default:
+				// Not supported
+				break;
+			}
+			if (value != null) {
+				List<String> valueList;
+				if (this.sessionData.mapping.isArray()) {
+					valueList = MapperConfigUtil.parseArrayValue(value);
+				} else {
+					valueList = new ArrayList<>();
+					valueList.add(value);
+				}
+				for (String v : valueList) {
+					if (v != null && v.length() != 0) {
+						JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
+						if (dto != null) {
+							this.sessionData.lookupResult.put(v, dto.getConfigProperties());
+						} else {
+							this.sessionData.lookupResult.put(v, null);
+						}
+					} else {
+						this.sessionData.lookupResult.put(v, null);
+					}
+				}					
+			} 
+		}
+	}
+	
 	@Override
 	protected void doValidation() {
 		LOGGER.debug("doValidation");
@@ -293,17 +348,22 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				// Not a new ID, check if it still exists
 				if (MapperConfigUtil.getMapperConfigById(this.ao, this.sessionData.mapping.getId()) == null) {
 					this.sessionData.mapping = null;
+				} else {
+					
 				}
 			}
 			if (this.sessionData.mapping != null) {
-				// Update fields
-				Boolean array = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_ARRAY));
-				this.sessionData.mapping.setArray(array);
-				Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
-				this.sessionData.mapping.setDisabled(disabled);
-				this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
-				this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
-				this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
+				Boolean mappingUpdated = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_UPDATED));
+				if (mappingUpdated) {
+					// Update fields
+					Boolean array = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_ARRAY));
+					this.sessionData.mapping.setArray(array);
+					Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
+					this.sessionData.mapping.setDisabled(disabled);
+					this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
+					this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
+					this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
+				}
 			}
 		}
 		
@@ -324,6 +384,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					registerWorkflowParts(this.sessionData.workflow);
 				}
 			}
+			refreshLookupResult();
 		} else if (ACTION_LOAD_PART.equals(action)) {
 			WorkflowPartWrapper part = this.sessionData.workflowPartsRegistry.get(req.getParameter(PARAM_PART));
 			if (part != null) {
@@ -335,6 +396,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					this.sessionData.mapping.setxPath(this.sessionData.part.getXPath());
 				}
 			}
+			refreshLookupResult();
 		} else if (ACTION_LOAD_MAPPING.equals(action)) {
 			String mappingId = req.getParameter(PARAM_MAPPING);
 			if (mappingId != null && mappingId.length() != 0) {
@@ -342,12 +404,15 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			} else {
 				this.sessionData.mapping = null;
 			}
+			this.sessionData.part = null;
 			this.sessionData.partIterator = null;
 			this.sessionData.partIteratorXPath = null;
+			refreshLookupResult();
 		} else if (ACTION_CREATE_MAPPING.equals(action)) {
 			this.sessionData.mapping = new MapperConfigWrapper();
 			this.sessionData.partIterator = null;
 			this.sessionData.partIteratorXPath = null;
+			refreshLookupResult();
 		} else if (ACTION_SAVE_MAPPING.equals(action)) {
 			if (this.sessionData.mapping != null) {
 				MapperConfigUtil.saveMapperConfig(this.ao, this.sessionData.mapping);
@@ -359,9 +424,12 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				this.sessionData.partIterator = null;
 				this.sessionData.partIteratorXPath = null;
 			}
+			refreshLookupResult();
 		} else if (ACTION_RESET_PART.equals(action)) {
 			this.sessionData.partIterator = null;
 			this.sessionData.partIteratorXPath = null;
+			this.sessionData.lookupResult = null;
+			refreshLookupResult();
 		} else if (ACTION_NEXT_PART.equals(action)) {
 			this.searchResult = "";
 			String xPath = req.getParameter(PARAM_MAPPING_XPATH);
@@ -395,6 +463,9 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			} else {
 				this.searchResult = "Please select a workflow";
 			}
+			refreshLookupResult();
+		} else if (ACTION_LOOKUP.equals(action)) {
+			refreshLookupResult();
 		}
 		
 		return JiraWebActionSupport.INPUT;

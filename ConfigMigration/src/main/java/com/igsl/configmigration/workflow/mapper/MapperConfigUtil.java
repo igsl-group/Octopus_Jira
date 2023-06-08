@@ -1,13 +1,22 @@
 package com.igsl.configmigration.workflow.mapper;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.sal.api.transaction.TransactionCallback;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigTypeRegistry;
+import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfig;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfigComparator;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfigWrapper;
@@ -17,6 +26,39 @@ import net.java.ao.Query;
 public class MapperConfigUtil {
 
 	private static final Logger LOGGER = Logger.getLogger(MapperConfigUtil.class);
+	private static final ObjectMapper OM = new ObjectMapper();
+	
+	public static JiraConfigDTO lookupDTO(String value, String objectType) {
+		JiraConfigDTO result = null;
+		if (value != null && objectType != null) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(objectType);
+			if (util != null) {
+				try {
+					result = util.findByInternalId(value);
+				} catch (Exception e) {
+					LOGGER.error("Unable to lookup item", e);
+				}
+			}
+		}
+		return result;
+	}
+	
+	public static List<String> parseArrayValue(String value) {
+		List<String> result = new ArrayList<>();
+		ObjectReader or = OM.readerFor(String.class);
+		MappingIterator<String> it;
+		try {
+			it = or.readValues(value);
+			if (it != null) {
+				while (it.hasNext()) {
+					result.add(it.next());
+				}
+			}
+		} catch (IOException e) {
+			LOGGER.error("Failed to parse value as array: " + value, e);
+		}
+		return result;
+	}
 	
 	public static Map<String, MapperConfigWrapper> getMapperConfigs(ActiveObjects ao) {
 		Map<String, MapperConfigWrapper> result = new LinkedHashMap<>();

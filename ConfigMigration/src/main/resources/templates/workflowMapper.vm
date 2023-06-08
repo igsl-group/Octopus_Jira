@@ -101,6 +101,7 @@
 			}
 			function submitForm(action) {
 				document.getElementById('action').value = action;
+				document.getElementById('mappingUpdated').value = mappingUpdatedFlag;
 				window.onbeforeunload = null;
 				document.forms['mainForm'].submit();
 			}
@@ -163,6 +164,7 @@
 		<form action="WorkflowMapper.jspa" method="post" id="mainForm">
 			<input type="hidden" id="action" name="action" value=""/>
 			<input type="hidden" id="part" name="part" value=""/>
+			<input type="hidden" id="mappingUpdated" value=""/>
 			<table class="ConfigMigration">
 				<tr>
 					<td width="50%">
@@ -185,7 +187,7 @@
 							#foreach ($item in $action.getMappings().entrySet())
 								#set ($selected = "")
 								#if ($action.getMapping())
-									#if ($item.getValue().getxPath() == $action.getMapping().getxPath())
+									#if ($item.getValue().getId() == $action.getMapping().getId())
 										#set ($selected = "selected")
 									#end
 								#end
@@ -259,7 +261,7 @@
 									</td>
 								</tr>
 								<tr>
-									<th>Is the value an array: </th>
+									<th>Is the value an array</th>
 									<td>
 										<select name="mappingArray" onchange="mappingUpdated()">
 											#if ($action.getMapping().isArray())
@@ -273,7 +275,7 @@
 									</td>
 								</tr>
 								<tr>
-									<th>Value object type: </th>
+									<th>Value object type</th>
 									<td>
 										<select name="mappingObjectType" onchange="mappingUpdated()">
 											<option selected value="">Select an object type</option>
@@ -288,7 +290,7 @@
 									</td>
 								</tr>
 								<tr>
-									<th>Status: </th>
+									<th>Status</th>
 									<td>
 										<select name="mappingDisabled" onchange="mappingUpdated()">
 											#if ($action.getMapping().isDisabled())
@@ -302,12 +304,6 @@
 									</td>
 								</tr>
 								<tr>
-									<th>Lookup Test: </th>
-									<td>
-										Object info here
-									</td>
-								</tr>
-								<tr>
 									<td colspan="100%">
 										#if ($action.getMapping().getConfig())
 											<input type="button" onclick="submitForm('saveMapping')" value="Save"/>
@@ -316,7 +312,100 @@
 											<input type="button" onclick="submitForm('saveMapping')" value="Create"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete" disabled/>
 										#end
-										
+									</td>
+								</tr>
+								<tr>
+									<th>
+										<span>Lookup Test</span>
+										#if ($action.getEditingWorkflowPartWrapper())
+											<input type="button" onclick="submitForm('lookup')" value="Lookup Object" />
+										#else
+											<input type="button" onclick="submitForm('lookup')" value="Lookup Object" disabled />
+										#end
+									</th>
+									<td>
+										#if ($action.getLookupResult())
+											#foreach ($valueData in $action.getLookupResult().entrySet())
+												<table class="ConfigMigration">
+													<thead>
+														<tr style="background-color: yellow">
+															<th>Lookup Value</th>
+															<th>${valueData.getKey()}</th>
+														</tr>
+													</thead>
+													<tbody>
+														#if ($valueData.getValue())
+															#foreach ($item in $valueData.getValue().entrySet())
+																<tr>
+																	<th width="30%">
+																		<div>$!{item.getKey()}</div>
+																		<div>
+																			#if ($item.getValue().getType() == "LIST")
+																				Size: ${item.getValue().getList().size()}
+																			#end
+																			#if ($item.getValue().getType() == "MAP")
+																				Size: ${item.getValue().getMap().size()}
+																			#end
+																			#if ($item.getValue().getType() == "TEXT_LIST")
+																				Size: ${item.getValue().getTextList().size()}
+																			#end
+																		</div>
+																	</th>
+																	#if ($item.getValue().getType() == "TEXT")
+																		<td width="70%">$!{item.getValue().getValue()}</td>
+																	#end
+																	#if ($item.getValue().getType() == "IMAGE")
+																		<td width="70%">
+																			<img width="48px" height="48px" src="$!{item.getValue().getImageData()}"/>
+																		</td>
+																	#end
+																	#if ($item.getValue().getType() == "COLOR")
+																		<td width="70%">
+																			<div style="display: inline-block; background-color: ${item.getValue().getValue()}; width: 1em; height: 1em"/>
+																			$!{item.getValue().getValue()}
+																		</td>
+																	#end
+																	#if ($item.getValue().getType() == "TEXT_LIST")
+																		<td width="70%">
+																			#foreach ($prop in $item.getValue().getTextList())
+																				<div>
+																					$!{prop}
+																				</div>
+																			#end
+																		</td>
+																	#end
+																	#if ($item.getValue().getType() == "LIST")
+																		<td width="70%">
+																			#foreach ($prop in $item.getValue().getList())
+																				<div>
+																					$!{prop.getDisplay()}
+																				</div>
+																			#end
+																		</td>
+																	#end
+																	#if ($item.getValue().getType() == "MAP")
+																		<td width="70%">
+																			#foreach ($prop in $item.getValue().getMap().entrySet())
+																				<div>
+																					$!{prop.getKey()}: 
+																					$!{prop.getValue().getDisplay()}
+																				</div>
+																			#end
+																		</td>
+																	#end
+																</tr>
+															#end
+														#else
+															<tr>
+																<td colspan="100%">No match is found</td>
+															</tr>
+														#end
+													</tbody>
+												</table>
+											#end
+										#else
+											<span>No result</span>
+										#end
 									</td>
 								</tr>
 							</table>

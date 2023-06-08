@@ -10,6 +10,8 @@ import net.java.ao.schema.Table;
 @Table(value = "MapperConfig")
 public interface MapperConfig extends Entity {
 
+	// TODO Enhancement: Swap array to a list of formats? JSON? CSV? Regex for parsing items?
+	
 	void setDisabled(boolean disabled);
 	boolean isDisabled();
 
