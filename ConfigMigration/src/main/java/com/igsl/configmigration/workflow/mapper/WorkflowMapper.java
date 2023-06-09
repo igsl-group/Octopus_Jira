@@ -109,6 +109,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final String PARAM_MAPPING_OBJECT_TYPE = "mappingObjectType";
 	private static final String PARAM_MAPPING_REGEX = "mappingRegex";
 	private static final String PARAM_MAPPING_CAPTURE_GROUPS = "mappingCaptureGroups";
+	private static final String PARAM_MAPPING_REPLACEMENT = "mappingReplacement";
 	private static final String PARAM_MAPPING_DISABLED = "mappingDisabled";
 	private static final String PARAM_MAPPING_XPATH = "mappingXPath";
 	
@@ -180,14 +181,18 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return MANAGER.getWorkflows();
 	}
 	
-	private Workflow parseWorkflow(JiraWorkflow wf) throws Exception {
-		String xml = WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
+	public static Workflow parseWorkflow(String xml) throws Exception {
 		Source xmlSource = new SAXSource(saxParserFactory.newSAXParser().getXMLReader(),
                 new InputSource(new StringReader(xml)));
 		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
 		Unmarshaller parser = ctx.createUnmarshaller();
 		Workflow result = (Workflow) parser.unmarshal(xmlSource);
 		return result;
+	}
+	
+	public static Workflow parseWorkflow(JiraWorkflow wf) throws Exception {
+		String xml = WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
+		return parseWorkflow(xml);
 	}
 
 	public Map<String, WorkflowPartWrapper> getMappableWorkflowParts() {
@@ -235,7 +240,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return this.sessionData.lookupResult;
 	}
 	
-	private String serializeWorkflow(Workflow wf) throws Exception {
+	public static String serializeWorkflow(Workflow wf) throws Exception {
 		JAXBContext ctx = JAXBContext.newInstance(Workflow.class);
 		Marshaller marshaller = ctx.createMarshaller();
 		// Set XML header
@@ -289,24 +294,6 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		return className;
 	}
 	
-	private List<Integer> parseCaptureGroups(String captureGroups) {
-		List<Integer> result = null;
-		if (captureGroups != null && !captureGroups.isEmpty()) {
-			result = new ArrayList<>();
-			String[] list = captureGroups.split(",");
-			for (String s : list) {
-				s = s.trim();
-				try {
-					int i = Integer.parseInt(s);
-					result.add(i);
-				} catch (NumberFormatException e) {
-					// Ignore
-				}
-			}
-		}
-		return result;
-	}
-	
 	private void refreshLookupResult() {
 		this.sessionData.lookupResult = null;
 		if (this.sessionData.part != null && this.sessionData.mapping != null) {
@@ -327,7 +314,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				List<String> valueList = new ArrayList<>();
 				Pattern pattern = Pattern.compile(this.sessionData.mapping.getRegex());
 				Matcher matcher = pattern.matcher(value);
-				List<Integer> captureGroups = parseCaptureGroups(this.sessionData.mapping.getCaptureGroups());
+				List<Integer> captureGroups = MapperConfigUtil.parseCaptureGroups(this.sessionData.mapping.getCaptureGroups());
 				while (matcher.find()) {
 					if (captureGroups == null) {
 						valueList.add(matcher.group());
@@ -342,15 +329,17 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				if (valueList.size() != 0) {
 					this.sessionData.lookupResult = new TreeMap<String, Map<String, JiraConfigProperty>>();
 					for (String v : valueList) {
-						if (v != null && v.length() != 0) {
-							JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
-							if (dto != null) {
-								this.sessionData.lookupResult.put(v, dto.getConfigProperties());
+						if (!this.sessionData.lookupResult.containsKey(v)) {
+							if (v != null && v.length() != 0) {
+								JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
+								if (dto != null) {
+									this.sessionData.lookupResult.put(v, dto.getConfigProperties());
+								} else {
+									this.sessionData.lookupResult.put(v, null);
+								}
 							} else {
 								this.sessionData.lookupResult.put(v, null);
 							}
-						} else {
-							this.sessionData.lookupResult.put(v, null);
 						}
 					}
 				}
@@ -389,6 +378,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					// Update fields
 					this.sessionData.mapping.setRegex(req.getParameter(PARAM_MAPPING_REGEX));
 					this.sessionData.mapping.setCaptureGroups(req.getParameter(PARAM_MAPPING_CAPTURE_GROUPS));
+					this.sessionData.mapping.setReplacement(req.getParameter(PARAM_MAPPING_REPLACEMENT));
 					Boolean disabled = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_DISABLED));
 					this.sessionData.mapping.setDisabled(disabled);
 					this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));

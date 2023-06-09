@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.log4j.Logger;
 
+import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.user.util.UserManager;
@@ -41,6 +42,33 @@ public abstract class JiraConfigUtil {
 												.setSerializationInclusion(Include.NON_NULL);
 	private static final String NEWLINE = "\r\n";
 
+	/**
+	 * To receive ActiveObjects from ExportAction2, to access data from MapperConfigUtil.		
+	 */
+	protected ActiveObjects ao;
+	public void setActiveObjects(ActiveObjects ao) {
+		this.ao = ao;
+	}
+	public ActiveObjects getActiveObjects() {
+		return this.ao;
+	}
+	
+	protected DTOStore importStore;
+	public void setImportStore(DTOStore importStore) {
+		this.importStore = importStore;
+	}
+	public DTOStore getImportStore() {
+		return this.importStore;
+	}
+	
+	protected DTOStore exportStore;
+	public void setExportStore(DTOStore exportStore) {
+		this.exportStore = exportStore;
+	}
+	public DTOStore getExportStore() {
+		return this.exportStore;
+	}
+	
 	/**
 	 * Get admin user.
 	 * @return ApplicationUser

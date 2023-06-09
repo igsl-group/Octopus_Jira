@@ -3,6 +3,7 @@ package com.igsl.configmigration.workflow.mapper.v1;
 public class MapperConfigWrapper {
 	private String regex = "^(.*)$";
 	private String captureGroups = "1";
+	private String replacement = "$1";
 	private boolean disabled;
 	private String description;
 	private String xPath;
@@ -15,6 +16,7 @@ public class MapperConfigWrapper {
 		this.config = config;
 		this.regex = config.getRegex();
 		this.captureGroups = config.getCaptureGroups();
+		this.replacement = config.getReplacement();
 		this.description = config.getDescription();
 		this.disabled = config.isDisabled();
 		this.objectType = config.getObjectType();
@@ -23,6 +25,7 @@ public class MapperConfigWrapper {
 	public void copyTo(MapperConfig config) {
 		config.setRegex(this.regex);
 		config.setCaptureGroups(this.captureGroups);
+		config.setReplacement(this.replacement);
 		config.setDescription(this.description);
 		config.setDisabled(this.disabled);
 		config.setObjectType(this.objectType);
@@ -76,5 +79,11 @@ public class MapperConfigWrapper {
 	}
 	public void setCaptureGroups(String captureGroups) {
 		this.captureGroups = captureGroups;
+	}
+	public String getReplacement() {
+		return replacement;
+	}
+	public void setReplacement(String replacement) {
+		this.replacement = replacement;
 	}
 }

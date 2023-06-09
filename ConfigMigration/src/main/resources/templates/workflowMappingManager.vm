@@ -9,20 +9,87 @@
 				document.forms['mainForm'].submit();
 			}
 			function selectAll(value) {
-				$('input[type="checkbox"]').attr('checked', value);
+				$('input[name="mapping"]').attr('checked', value);
+				checkButtons();
+			}
+			function confirmDelete() {
+				document.getElementById('delete-dialog-content').innerHTML = '';
+				$('input[name="mapping"]').each(function() {
+					if ($(this).attr('checked')) {
+						document.getElementById('delete-dialog-content').innerHTML += 
+							$(this).attr('desc') + '<br/>';
+					}
+				});
+				AJS.dialog2('#delete-dialog').show();
+			}
+			AJS.$(document).on('click', '#delete-dialogOK', function (e) {
+			    e.preventDefault();
+			    submitForm('delete');
+			});
+			AJS.$(document).on('click', '#delete-dialogCancel', function (e) {
+			    e.preventDefault();
+			    AJS.dialog2('#delete-dialog').hide();
+			});
+			function checkButtons() {
+				var itemSelected = false;
+				$('input[name="mapping"]').each(function() {
+					if ($(this).attr('checked')) {
+						itemSelected = true;
+					}
+				});
+				$('input#exportBtn').attr('disabled', !itemSelected);
+				$('input#enableBtn').attr('disabled', !itemSelected);
+				$('input#disableBtn').attr('disabled', !itemSelected);
+				$('input#deleteBtn').attr('disabled', !itemSelected);
 			}
 		</script>
 	</head>
 	<body>
+	
+		<!-- Confirm dialog -->
+		<section 	id="delete-dialog" 
+					class="aui-dialog2 aui-dialog2-medium aui-layer" 
+					aria-hidden="true"
+					role="dialog">
+		    <!-- Dialog header -->
+		    <header class="aui-dialog2-header">
+		        <!-- The dialog's title -->
+		        <h2 class="aui-dialog2-header-main">You are deleting the following mappings</h2>
+		        <!-- Close icon -->
+		        <!-- 
+		        <a class="aui-dialog2-header-close">
+		            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+		        </a>
+		        -->
+		    </header>
+		    <!-- Main dialog content -->
+		    <div class="aui-dialog2-content">
+		    	<div id="delete-dialog-content"/>
+		    	<h4>Are you sure to delete them?</h4>
+		    </div>
+		    <!-- Dialog footer -->
+		    <footer class="aui-dialog2-footer">
+		        <!-- Actions to render on the right of the footer -->
+		        <div class="aui-dialog2-footer-actions">
+		            <button id="delete-dialogOK" class="aui-button aui-button-primary">Delete</button>
+		            <button id="delete-dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		        </div>
+		        <!-- Hint text is rendered on the left of the footer -->
+		        <div class="aui-dialog2-footer-hint"></div>
+		    </footer>
+		</section>
+	
 		<form action="WorkflowMappingManager.jspa" method="post" id="mainForm">
 			<input type="hidden" id="action" name="action" value=""/>
 			<table class="ConfigMigration">
 				<thead>
 					<tr>
 						<td colspan="100%">
-							<input type="button" onclick="submitForm('enable')" value="Enable Selected" />
-							<input type="button" onclick="submitForm('disable')" value="Disable Selected" />
-							<input type="button" onclick="submitForm('delete')" value="Delete Selected" />
+							<input type="button" onclick="" value="Import" />
+							<input type="button" disabled id="exportBtn" onclick="submitForm('export')" value="Export Selected" />
+							<input type="button" disabled id="enableBtn" onclick="submitForm('enable')" value="Enable Selected" />
+							<input type="button" disabled id="disableBtn" onclick="submitForm('disable')" value="Disable Selected" />
+							<input type="button" disabled id="deleteBtn" onclick="confirmDelete()" value="Delete Selected" />
 						</td>
 					</tr>
 					<tr>
@@ -32,16 +99,19 @@
 						<th>Description</th>
 						<th>Status</th>
 						<th>XPath</th>
-						<th>Regex</th>
-						<th>Capture Groups</th>
-						<th></th>
+						<th>Edit</th>
 					</tr>
 				</thead>
 				<tbody>
 					#foreach ($item in $action.getMappings().entrySet())
 						<tr>
 							<td>
-								<input name="mapping" type="checkbox" value="${item.getValue().getId()}"/>
+								<input 	name="mapping"
+										desc="${item.getValue().getDescription()}" 
+										type="checkbox" 
+										value="${item.getValue().getId()}"
+										onchange="checkButtons()" 
+								/>
 							</td>
 							<td>${item.getValue().getDescription()}</td>
 							<td>
@@ -52,8 +122,6 @@
 								#end
 							</td>
 							<td>${item.getValue().getxPath()}</td>
-							<td>${item.getValue().getRegex()}</td>
-							<td>${item.getValue().getCaptureGroups()}</td>
 							<td><a href="${action.getEditLink($item.getValue().getId())}">Edit</a></td>
 						</tr>
 					#end

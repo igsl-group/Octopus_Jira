@@ -29,6 +29,7 @@ import com.igsl.configmigration.export.v1.ExportData;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.report.v1.MergeReport;
 import com.igsl.configmigration.report.v1.MergeReportData;
+import com.igsl.configmigration.workflow.WorkflowUtil;
 
 public class ExportAction2 extends JiraWebActionSupport {
 
@@ -268,6 +269,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 			// Initialize
 			this.data.exportStore.clear();
 			for (JiraConfigUtil util : JiraConfigTypeRegistry.getConfigUtilList(false)) {
+				util.setActiveObjects(this.ao);
+				util.setImportStore(this.data.importStore);
+				util.setExportStore(this.data.exportStore);
 				int count = 0;
 				try {
 					LOGGER.debug("Loading data for " + util.getName());
@@ -486,6 +490,10 @@ public class ExportAction2 extends JiraWebActionSupport {
 				if (util.isReadOnly()) {
 					// Skip read-only JiraConfigUtil
 					continue;
+				}
+				if (util instanceof WorkflowUtil) {
+					// Pass ActiveObjects along so WorkflowUtil can perform mapping
+					((WorkflowUtil) util).setActiveObjects(this.ao);
 				}
 				for (Map.Entry<String, JiraConfigDTO> entry : this.data.importStore.getTypeStore(util).entrySet()) {
 					JiraConfigDTO dto = entry.getValue();

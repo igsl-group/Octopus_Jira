@@ -22,6 +22,7 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	private static final String PARAM_ACTION = "action";
 	private static final String PARAM_MAPPING = "mapping";
 	
+	private static final String ACTION_EXPORT = "export";
 	private static final String ACTION_DELETE = "delete";
 	private static final String ACTION_ENABLE = "enable";
 	private static final String ACTION_DISABLE = "disable";
@@ -54,17 +55,33 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 		
 		String[] mappingList = req.getParameterValues(PARAM_MAPPING);
 		if (mappingList != null) {
-			for (String mapping : mappingList) {
-				MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
-				if (wrapper != null) {
-					if (ACTION_DELETE.equals(action)) {
+			if (ACTION_DELETE.equals(action)) {
+				for (String mapping : mappingList) {
+					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
+					if (wrapper != null) {
 						MapperConfigUtil.deleteMapperConfig(ao, wrapper);
-					} else if (ACTION_ENABLE.equals(action)) {
+					}
+				}
+			} else if (ACTION_ENABLE.equals(action)) {
+				for (String mapping : mappingList) {
+					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
+					if (wrapper != null) {
 						wrapper.setDisabled(false);
 						MapperConfigUtil.saveMapperConfig(ao, wrapper);
-					} else if (ACTION_DISABLE.equals(action)) {
+					}
+				}
+			} else if (ACTION_DISABLE.equals(action)) {
+				for (String mapping : mappingList) {
+					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
+					if (wrapper != null) {
 						wrapper.setDisabled(true);
 						MapperConfigUtil.saveMapperConfig(ao, wrapper);
+					}
+				}
+			} else if (ACTION_EXPORT.equals(action)) {
+				for (String mapping : mappingList) {
+					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
+					if (wrapper != null) {
 					}
 				}
 			}

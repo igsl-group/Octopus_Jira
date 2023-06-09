@@ -195,6 +195,27 @@ public class DTOStore {
 	}
 	
 	/**
+	 * Find item in store by internal id
+	 * @param utilName
+	 * @param id
+	 * @return JiraConfigDTO
+	 */
+	public final JiraConfigDTO findById(String utilName, String id) {
+		Map<String, JiraConfigDTO> typeStore = getTypeStore(utilName);
+		if (typeStore != null) {
+			for (JiraConfigDTO dto : typeStore.values()) {
+				if (dto.getInternalId().equals(id)) {
+					return dto;
+				}
+			}
+		}
+		return null;
+	}
+	public final JiraConfigDTO findById(JiraConfigUtil util, String id) {
+		return findById(util.getImplementation(), id);
+	}
+	
+	/**
 	 * Get list of registered JiraConfigUtil
 	 * @return Unmodifiable Collection of JiraConfigUtil
 	 */

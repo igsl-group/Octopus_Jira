@@ -17,6 +17,7 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
+import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.status.StatusDTO;
@@ -87,6 +88,12 @@ public class WorkflowDTO extends JiraConfigDTO {
 		r.put("Updated Date", new JiraConfigProperty(this.updatedDate));
 		r.put("Status", new JiraConfigProperty(StatusUtil.class, this.statuses));
 		r.put("XML", new JiraConfigProperty(this.xml));
+		WorkflowUtil util = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(this.getUtilClass());
+		if (util != null) {
+			MergeResult mr = new MergeResult();
+			String mappedXML = util.remapWorkflowMXML(this.xml, mr);
+			r.put("Mapped XML", new JiraConfigProperty(mappedXML));
+		}		
 		return r;
 	}
 	

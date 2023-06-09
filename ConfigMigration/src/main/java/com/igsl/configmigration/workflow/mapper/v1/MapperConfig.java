@@ -22,6 +22,10 @@ public interface MapperConfig extends Entity {
 	String getCaptureGroups();
 	
 	@StringLength(value = StringLength.UNLIMITED)
+	void setReplacement(String replacement);
+	String getReplacement();
+	
+	@StringLength(value = StringLength.UNLIMITED)
 	void setXPath(String xPath);
 	String getXPath();
 	

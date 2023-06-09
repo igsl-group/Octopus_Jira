@@ -3,8 +3,14 @@ package com.igsl.configmigration.workflow;
 import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -16,11 +22,13 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.jxpath.JXPathContext;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.ConfigurableJiraWorkflow;
@@ -36,6 +44,14 @@ import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.status.StatusDTO;
 import com.igsl.configmigration.status.StatusUtil;
+import com.igsl.configmigration.workflow.mapper.MapperConfigUtil;
+import com.igsl.configmigration.workflow.mapper.WorkflowMapper;
+import com.igsl.configmigration.workflow.mapper.WorkflowPart;
+import com.igsl.configmigration.workflow.mapper.generated.Arg;
+import com.igsl.configmigration.workflow.mapper.generated.Meta;
+import com.igsl.configmigration.workflow.mapper.generated.Workflow;
+import com.igsl.configmigration.workflow.mapper.v1.MapperConfig;
+import com.igsl.configmigration.workflow.mapper.v1.MapperConfigWrapper;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
@@ -104,6 +120,103 @@ public class WorkflowUtil extends JiraConfigUtil {
 		}
 		return null;
 	}
+	
+	public String remapWorkflowMXML(String xml, MergeResult result) {
+		String mappedXML = xml;
+		try {
+			Workflow jaxbWf = WorkflowMapper.parseWorkflow(xml);
+			if (jaxbWf != null) {
+				JXPathContext ctx = JXPathContext.newContext(jaxbWf);
+				for (MapperConfigWrapper wrapper : MapperConfigUtil.getMapperConfigs(this.ao).values()) {
+					if (!wrapper.isDisabled()) {
+						// Execute mapping
+						JiraConfigUtil util = MapperConfigUtil.lookupUtil(wrapper.getObjectType());
+						if (util == null) {
+							result.addWarning("Unrecognized object type [" + wrapper.getObjectType() + "]");
+							continue;
+						}
+						List<Integer> captureGroups = MapperConfigUtil.parseCaptureGroups(wrapper.getCaptureGroups());
+						// For all XPath matches
+						Iterator<?> it = ctx.iterate(wrapper.getxPath());
+						while (it.hasNext()) {
+							WorkflowPart part = (WorkflowPart) it.next();
+							if (part == null) {
+								continue;
+							}
+							String value = null;
+							switch (part.getWorkflowPartType()) {
+							case ARG:
+								value = ((Arg) part).getValue();
+								break;
+							case META:
+								value = ((Meta) part).getValue();
+								break;
+							default: 
+								// Do nothikng
+								 break;
+							}
+							if (value == null) {
+								continue;
+							}
+							Pattern pattern = Pattern.compile(wrapper.getRegex());
+							Matcher matcher = pattern.matcher(value);
+							StringBuffer newValue = new StringBuffer();
+							while (matcher.find()) {
+								if (captureGroups == null) {
+									String id = matcher.group();
+									JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+									if (mappedDTO != null) {
+										matcher.appendReplacement(newValue, Matcher.quoteReplacement(mappedDTO.getInternalId()));
+									} else {
+										result.addWarning("Unable to map " + util.getName() + " id " + id);
+									}
+								} else {
+									Map<Integer, String> replacementMap = new HashMap<>();
+									for (int i : captureGroups) {
+										if (matcher.groupCount() >= i) {
+											String id = matcher.group(i);
+											JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+											if (mappedDTO != null) {
+												replacementMap.put(i, Matcher.quoteReplacement(mappedDTO.getInternalId()));
+											} else {
+												result.addWarning("Unable to map " + util.getName() + " id " + id);
+											}
+										}
+									}
+									String replacementString = MapperConfigUtil.constructReplacement(wrapper.getReplacement(), matcher.groupCount(), replacementMap);
+									matcher.appendReplacement(newValue, replacementString);
+								}
+							}
+							matcher.appendTail(newValue);
+							value = newValue.toString();
+							// Relace value
+							switch (part.getWorkflowPartType()) {
+							case ARG:
+								((Arg) part).setValue(value);
+								break;
+							case META:
+								((Meta) part).setValue(value);
+								break;
+							default: 
+								// Do nothikng
+								 break;
+							}						
+						}	// For all XPath matches
+					} // Active mapping
+				} // For all mappings
+				// Serialize Workflow
+				mappedXML = WorkflowMapper.serializeWorkflow(jaxbWf);
+				if (mappedXML == null) {
+					result.addWarning("Failed to serialize mapped workflow XML, XML remains unchanged");
+					mappedXML = xml;
+				}
+			}
+		} catch (Exception ex) {
+			result.addWarning("Failed to serialize mapped workflow XML, XML remains unchanged");
+			mappedXML = xml;
+		}
+		return mappedXML;
+	}
 
 	@Override
 	public MergeResult merge(
@@ -121,66 +234,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 		}
 		WorkflowDTO src = (WorkflowDTO) newItem;
 		// Remap data in XML
-		// status
-		// //workflow/steps/step[name]
-		// //workflow/steps/step/meta[name='jira.status.id']
-		try {
-			LOGGER.debug("Workflow XML: " + src.getXml());
-			ByteArrayInputStream bais = new ByteArrayInputStream(src.getXml().getBytes());
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			// Ignore DTD
-			factory.setAttribute("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(bais);
-			LOGGER.debug("Workflow XML parsed");
-			XPath xpath = XPathFactory.newInstance().newXPath();
-			NodeList nodes = (NodeList) 
-				xpath.evaluate("/workflow/steps/step", doc, XPathConstants.NODESET);
-			LOGGER.debug("Step count: " + nodes.getLength());
-			for (int idx = 0; idx < nodes.getLength(); idx++) {
-				Node step = nodes.item(idx);
-				Node statusNameNode = (Node)
-					xpath.evaluate("@name", step, XPathConstants.NODE);
-				Node statusIdNode = (Node) 
-					xpath.evaluate("meta[@name='jira.status.id']", nodes.item(idx), XPathConstants.NODE);
-				if (statusNameNode != null && statusIdNode != null) {
-					String statusName = statusNameNode.getTextContent();
-					String statusId = statusIdNode.getTextContent();
-					LOGGER.debug("Status: " + statusName);
-					LOGGER.debug("Status ID: " + statusId);
-					StatusDTO statusFound = (StatusDTO) statusUtil.findByUniqueKey(statusName);
-					if (statusFound != null) {
-						LOGGER.debug("Remapping status " + statusName + " ID from " + statusId + " to " + statusFound.getId());
-						statusIdNode.setTextContent(statusFound.getId());
-					} else {
-						LOGGER.warn("Status " + statusName + " is not found on current instance");
-					}
-				} else {
-					LOGGER.error("Step is missing data");
-				}
-			}
-			// Convert back to string
-			DOMSource domSource = new DOMSource(doc);
-			StringWriter writer = new StringWriter();
-		    StreamResult r = new StreamResult(writer);
-		    TransformerFactory tf = TransformerFactory.newInstance();
-		    Transformer transformer = tf.newTransformer();
-		    transformer.transform(domSource, r);
-		    // Attach DTD
-		    String newXML = writer.toString();
-		    String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-		    String dtd = "<!DOCTYPE workflow PUBLIC \"-//OpenSymphony Group//DTD OSWorkflow 2.8//EN\" \"http://www.opensymphony.com/osworkflow/workflow_2_8.dtd\">";
-		    int index = newXML.indexOf(header);
-		    if (index != -1) {
-		    	newXML = newXML.substring(0, index + header.length()) + dtd + newXML.substring(index + header.length());
-		    }
-		    src.setXml(newXML);
-		    LOGGER.debug("Workflow XML updated: " + src.getXml());
-		} catch (Exception ex) {
-			LOGGER.error("Error updating Status in Workflow XML", ex);
-		}
-		// TODO custom fields?
-		// TODO Modify all data via configured XPath?
+		LOGGER.debug("Workflow XML: " + src.getXml());
+		src.setXml(remapWorkflowMXML(src.getXml(), result));
 		if (original != null) {
 			// Update
 			WorkflowDescriptor wfDesc = 
@@ -196,7 +251,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 				// Copy all data from wfDesc to draftDesc
 				// Unlike ConfigurableJiraWorkflow class
 				// JiraDraftWorkflow does NOT have .setDescriptor().
-				// Instead of waste time trying to figure out how to properly copy everything over
+				// Instead of trying to figure out how to properly copy everything over
 				// Modify it with reflection
 				Field descriptorField = JiraDraftWorkflow.class.getSuperclass().getDeclaredField("descriptor");
 				descriptorField.setAccessible(true);

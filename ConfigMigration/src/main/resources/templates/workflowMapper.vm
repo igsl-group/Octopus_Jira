@@ -145,7 +145,7 @@
 		        <!-- Actions to render on the right of the footer -->
 		        <div class="aui-dialog2-footer-actions">
 		            <button id="confirm-dialogOK" class="aui-button aui-button-primary">Discard Changes</button>
-		            <button id="confirm-dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		            <button id="confirm-dialogCancel" class="aui-button aui-button-link">Back to Edit</button>
 		        </div>
 		        <!-- Hint text is rendered on the left of the footer -->
 		        <div class="aui-dialog2-footer-hint"></div>
@@ -267,13 +267,17 @@
 									<th>Value Format</th>
 									<td>
 										<div>
-											<label>Regular Expression</label>
-											<input type="text" name="mappingRegex" value="$!{action.getMapping().getRegex()}" onchange="markUpdated()" />
+											<label style="font-weight: bold">Regular Expression</label>
+											<input style="width: 95%" type="text" name="mappingRegex" value="$!{action.getMapping().getRegex()}" onchange="markUpdated()" />
 										</div>
 										<div>
-											<label>Capturing Groups (comma-delimited indexes, starts at 1, empty for all groups)</label>
-											<input type="text" name="mappingCaptureGroups" value="$!{action.getMapping().getCaptureGroups()}" onchange="markUpdated()" />
-										</div>										
+											<label style="font-weight: bold">Convert these Capturing Groups (comma-delimited indexes, starts at 1, empty for whole expression)</label>
+											<input style="width: 95%" type="text" name="mappingCaptureGroups" value="$!{action.getMapping().getCaptureGroups()}" onchange="markUpdated()" />
+										</div>
+										<div>
+											<label style="font-weight: bold">Regular Expression Replcement (only applicable if Capturing Groups is not empty)</label>
+											<input style="width: 95%" type="text" name="mappingReplacement" value="$!{action.getMapping().getReplacement()}" onchange="markUpdated()" />
+										</div>
 									</td>
 								</tr>
 								<tr>
@@ -414,7 +418,7 @@
 							</table>
 						#else
 							<span>Please select an item in the tree or select a mapping above</span>
-						#end								
+						#end			
 					</td>
 				</tr>
 			</table>

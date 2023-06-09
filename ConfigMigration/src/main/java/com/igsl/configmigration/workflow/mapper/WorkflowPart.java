@@ -56,6 +56,10 @@ public interface WorkflowPart {
 	public static final String ATTRIBUTE_ID = "id";
 	public static final String TYPE_CLASS = "class";
 	public static final String ARG_CLASS_NAME = "class.name";
+	public static final String[] ARG_IGNORED_NAMES = {
+		ARG_CLASS_NAME,
+		"full.module.key"
+	};
 	public static final String ATTRIBUTE_ARG_CLASS_NAME = "NestedArgClassName";
 
 	/**
@@ -310,8 +314,10 @@ public interface WorkflowPart {
 		switch (partType) {
 		case ARG: 
 			Arg arg = (Arg) this;
-			if (ARG_CLASS_NAME.equals(arg.getName())) {
-				return false;
+			for (String s : ARG_IGNORED_NAMES) {
+				if (s.equals(arg.getName())) {
+					return false;
+				}
 			}
 			return true;
 		case META:

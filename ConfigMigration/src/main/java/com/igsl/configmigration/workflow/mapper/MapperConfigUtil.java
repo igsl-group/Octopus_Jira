@@ -1,6 +1,5 @@
 package com.igsl.configmigration.workflow.mapper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -11,9 +10,8 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.sal.api.transaction.TransactionCallback;
-import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
@@ -28,10 +26,15 @@ public class MapperConfigUtil {
 	private static final Logger LOGGER = Logger.getLogger(MapperConfigUtil.class);
 	private static final ObjectMapper OM = new ObjectMapper();
 	
+	public static JiraConfigUtil lookupUtil(String objectType) {
+		JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(objectType);
+		return util;
+	}
+	
 	public static JiraConfigDTO lookupDTO(String value, String objectType) {
 		JiraConfigDTO result = null;
 		if (value != null && objectType != null) {
-			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(objectType);
+			JiraConfigUtil util = lookupUtil(objectType);
 			if (util != null) {
 				try {
 					result = util.findByInternalId(value);
@@ -43,19 +46,67 @@ public class MapperConfigUtil {
 		return result;
 	}
 	
-	public static List<String> parseArrayValue(String value) {
-		List<String> result = new ArrayList<>();
-		ObjectReader or = OM.readerFor(String.class);
-		MappingIterator<String> it;
-		try {
-			it = or.readValues(value);
-			if (it != null) {
-				while (it.hasNext()) {
-					result.add(it.next());
+	/**
+	 * Find id in importStore, then locate a matching item in util according to objectType
+	 * @param id
+	 * @param objectType
+	 * @param importStore
+	 * @return JiraConfigDTO
+	 */
+	public static JiraConfigDTO resolveMapping(String id, String objectType, DTOStore importStore) {
+		JiraConfigDTO result = null;
+		JiraConfigUtil util = lookupUtil(objectType);
+		if (util != null) {
+			LOGGER.debug("Remapping " + objectType + ", id " + id);
+			Map<String, JiraConfigDTO> typeStore = importStore.getTypeStore(util);
+			if (typeStore != null) {
+				LOGGER.debug("Checking importStore...");
+				for (JiraConfigDTO dto : typeStore.values()) {
+					LOGGER.debug("Checking importStore item: " + dto.getInternalId() + " = " + dto.getUniqueKey());
+					if (dto.getInternalId().equals(id)) {
+						LOGGER.debug("Found " + objectType + ", id " + id + " in importStore, uniqueKey " + dto.getUniqueKey());
+						// Found import object referenced by id
+						// Look for matching name in util
+						try {
+							JiraConfigDTO mappedDTO = util.findByDTO(dto);
+							if (mappedDTO != null) {
+								LOGGER.debug("Found in current server, uniqueKey " + mappedDTO.getUniqueKey() + ", id " + mappedDTO.getInternalId());
+								result = mappedDTO;
+							}
+						} catch (Exception ex) {
+							LOGGER.error("Error resolving object mapping from id to exportStore item", ex);
+						}
+					}
 				}
 			}
-		} catch (IOException e) {
-			LOGGER.error("Failed to parse value as array: " + value, e);
+		}
+		return result;
+	}
+	
+	public static String constructReplacement(String replacement, int groupCount, Map<Integer, String> replacementData) {
+		String result = replacement;
+		for (int i = 1; i <= groupCount; i++) {
+			if (replacementData.containsKey(i)) {
+				result = result.replaceAll("\\$" + i, replacementData.get(i));
+			}
+		}
+		return result;
+	}
+	
+	public static List<Integer> parseCaptureGroups(String captureGroups) {
+		List<Integer> result = null;
+		if (captureGroups != null && !captureGroups.isEmpty()) {
+			result = new ArrayList<>();
+			String[] list = captureGroups.split(",");
+			for (String s : list) {
+				s = s.trim();
+				try {
+					int i = Integer.parseInt(s);
+					result.add(i);
+				} catch (NumberFormatException e) {
+					// Ignore
+				}
+			}
 		}
 		return result;
 	}
