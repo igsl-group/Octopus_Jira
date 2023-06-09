@@ -1,8 +1,9 @@
 package com.igsl.configmigration.workflow.mapper;
 
-import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -20,6 +21,9 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 
 	private static final long serialVersionUID = 1L;
 	private static final Logger LOGGER = Logger.getLogger(WorkflowMappingManager.class);
+	
+	public static final String PAGE_URL = "/secure/admin/plugins/handler/WorkflowMappingManager.jspa";
+	private static final String SERVLET_URL = "/plugins/servlet/configmigrationmapping";
 	
 	private static final String PARAM_ACTION = "action";
 	private static final String PARAM_MAPPING = "mapping";
@@ -39,7 +43,18 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	}
 
 	public String getEditLink(String id) {
-		return this.getServletContext().getContextPath() + "/secure/admin/plugins/handler/WorkflowMapper.jspa?action=loadMapping&mapping=" + id;
+		return this.getServletContext().getContextPath() + 
+				"/secure/admin/plugins/handler/WorkflowMapper.jspa?action=loadMapping&mapping=" + id;
+	}
+	
+	private String downloadURL;
+	public String getDownloadURL() {
+		return downloadURL;
+	}
+	
+	private List<String> downloadParameters;
+	public List<String> getDownloadParameters() {
+		return downloadParameters;
 	}
 	
 	@Override
@@ -51,6 +66,10 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	protected String doExecute() throws Exception {
 		LOGGER.debug("doExecute");
 		HttpServletRequest req = this.getHttpRequest();
+		
+		// Clear download
+		this.downloadURL = null;
+		this.downloadParameters = null;
 		
 		String action = req.getParameter(PARAM_ACTION);
 		LOGGER.debug("action: " + action);
@@ -81,13 +100,11 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 					}
 				}
 			} else if (ACTION_EXPORT.equals(action)) {
-				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ZipOutputStream out = new ZipOutputStream(baos);
-				for (String mapping : mappingList) {
-					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
-					if (wrapper != null) {
-						
-					}
+				this.downloadURL = this.getServletContext().getContextPath() + SERVLET_URL;
+				this.downloadParameters = new ArrayList<>();
+				String[] idList = req.getParameterValues(PARAM_MAPPING);
+				for (String id : idList) {
+					downloadParameters.add(id);
 				}
 			}
 		}

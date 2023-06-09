@@ -46,6 +46,53 @@
 	</head>
 	<body>
 	
+		<form id="downloadForm" action="" method="GET">
+		</form>
+		
+		<!-- Import dialog -->
+		<section 	id="import-dialog" 
+					class="aui-dialog2 aui-dialog2-medium aui-layer" 
+					aria-hidden="true"
+					role="dialog">
+		    <!-- Dialog header -->
+		    <header class="aui-dialog2-header">
+		        <!-- The dialog's title -->
+		        <h2 class="aui-dialog2-header-main">Please select file to import</h2>
+		        <!-- Close icon -->
+		        <!-- 
+		        <a class="aui-dialog2-header-close">
+		            <span class="aui-icon aui-icon-small aui-iconfont-close-dialog">Close</span>
+		        </a>
+		        -->
+		    </header>
+		    <!-- Main dialog content -->
+		    <!-- action="/jira/plugins/servlet/configmigrationupload" -->
+		    <!-- action="ExportAction2.jspa" -->
+		    <div class="aui-dialog2-content">
+				<form 	id="importForm" 
+						method="post" 
+						action="${action.getUploadServlet()}"
+						encType="multipart/form-data">
+					<span>Select File: </span>
+					<input 	type="file" 
+							id="importFile" 
+							name="importFile" 
+							accept=".json,.zip"
+							value=""/>
+				</form>
+		    </div>
+		    <!-- Dialog footer -->
+		    <footer class="aui-dialog2-footer">
+		        <!-- Actions to render on the right of the footer -->
+		        <div class="aui-dialog2-footer-actions">
+		            <button id="import-dialogOK" class="aui-button aui-button-primary">OK</button>
+		            <button id="import-dialogCancel" class="aui-button aui-button-link">Cancel</button>
+		        </div>
+		        <!-- Hint text is rendered on the left of the footer -->
+		        <div class="aui-dialog2-footer-hint"></div>
+		    </footer>
+		</section>
+	
 		<!-- Confirm dialog -->
 		<section 	id="delete-dialog" 
 					class="aui-dialog2 aui-dialog2-medium aui-layer" 
@@ -98,6 +145,7 @@
 						</th>
 						<th>Description</th>
 						<th>Status</th>
+						<th>Target Workflow</th>
 						<th>XPath</th>
 						<th>Edit</th>
 					</tr>
@@ -121,6 +169,13 @@
 									<span>Enabled</span>
 								#end
 							</td>
+							<td>
+								#if ($item.getValue().getWorkflowName() && !$item.getValue().getWorkflowName().isEmpty())
+									<span>${item.getValue().getWorkflowName()}</span>
+								#else
+									<span>All workflows</span>
+								#end
+							</td>
 							<td>${item.getValue().getxPath()}</td>
 							<td><a href="${action.getEditLink($item.getValue().getId())}">Edit</a></td>
 						</tr>
@@ -128,5 +183,20 @@
 				</tbody>
 			</table>
 		</form>
+		<script type="text/javascript">
+			// Check if download is pending
+			#if ($action.getDownloadURL())
+				var downloadForm = $('form#downloadForm');
+				downloadForm.attr('action', '${action.getDownloadURL()}');
+				#foreach ($item in $action.getDownloadParameters())
+					var input = $("<input>")
+	           						.attr("type", "hidden")
+	          						.attr("name", "id").val("${item}");
+					downloadForm.append(input);
+				#end
+				window.onbeforeunload = null;
+				downloadForm.submit();
+			#end	
+		</script>
 	</body>
 </html>

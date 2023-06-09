@@ -121,6 +121,15 @@ public class MapperConfigUtil {
 		return result;
 	}
 	
+	public static MapperConfigWrapper getMapperConfigByName(ActiveObjects ao, String name) {
+		MapperConfig[] list = ao.find(MapperConfig.class, Query.select().where("NAME = ?", name));
+		if (list != null && list.length == 1) {
+			MapperConfigWrapper wrapper = new MapperConfigWrapper(list[0]);
+			return wrapper;
+		}
+		return null;
+	}
+	
 	public static MapperConfigWrapper getMapperConfigByXPath(ActiveObjects ao, String xPath) {
 		MapperConfig[] list = ao.find(MapperConfig.class, Query.select().where("XPATH = ?", xPath));
 		if (list != null && list.length == 1) {

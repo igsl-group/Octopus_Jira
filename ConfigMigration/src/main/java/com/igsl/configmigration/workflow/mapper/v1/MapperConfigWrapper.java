@@ -1,5 +1,7 @@
 package com.igsl.configmigration.workflow.mapper.v1;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class MapperConfigWrapper {
 	private String regex = "^(.*)$";
 	private String captureGroups = "1";
@@ -9,10 +11,9 @@ public class MapperConfigWrapper {
 	private String description;
 	private String xPath;
 	private String objectType;	
+	@JsonIgnore
 	private MapperConfig config;
-	public MapperConfigWrapper() {
-		// Do nothing
-	}
+	public MapperConfigWrapper() {}
 	public MapperConfigWrapper(MapperConfig config) {
 		this.config = config;
 		this.regex = config.getRegex();

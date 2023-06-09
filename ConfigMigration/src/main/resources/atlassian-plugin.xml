@@ -212,6 +212,18 @@
 		</actions>
 	</webwork1>
 	
+	<!-- Import Mapping servlet -->
+	<servlet name="Import Mapping Servlet" key="importMappingServlet" class="com.igsl.configmigration.ImportMappingServlet">
+		<description>ConfigMigration Import Mapping Servlet</description>
+		<url-pattern>/configmigrationimportmapping</url-pattern>
+	</servlet> 
+	
+	<!-- Mapping servlet -->
+	<servlet name="Mapping Servlet" key="mappingServlet" class="com.igsl.configmigration.MappingServlet">
+		<description>ConfigMigration Mapping Servlet</description>
+		<url-pattern>/configmigrationmapping</url-pattern>
+	</servlet> 
+ 
 	<!-- Download servlet -->
 	<servlet name="Download Servlet" key="downloadServlet" class="com.igsl.configmigration.DownloadServlet">
 		<description>ConfigMigration Download Servlet</description>

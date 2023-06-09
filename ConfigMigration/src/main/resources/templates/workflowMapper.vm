@@ -51,9 +51,55 @@
 		<title>Workflow Mapper</title>
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
+			var existingMappingNames = {};
+			#foreach ($item in $action.getMappings().entrySet())
+				existingMappingNames['${item.getKey()}'] = '${item.getValue().getDescription()}';
+			#end
+			function validateForm() {
+				var editingName = $('#mappingDesc').val();
+				if (editingName == null || editingName.length == 0) {
+					return 'Name must be specified';
+				}
+				var editingId = $('#mappingId').val();
+				console.log('Editing ' + editingId + ' = ' + editingName);
+				var keys = Object.keys(existingMappingNames);
+				for (var key in keys) {
+					console.log('vs ' + keys[key] + ' = ' + existingMappingNames[keys[key]]);
+					if (keys[key] != editingId) {
+						if (existingMappingNames[keys[key]] == editingName) {
+							console.log('Clash!');
+							return 'Name must be unique';
+						}
+					}				
+				}
+				var xPath = $('#mappingXPath').val();
+				if (xPath == null || xPath.length == 0) {
+					return 'XPath must be specified';
+				}
+				var regex = $('#mappingRegex').val();
+				if (regex == null || regex.length == 0) {
+					return 'Regular expression must be specified';
+				}
+				var ot = $('#mappingObjectType').val();
+				if (ot == null || ot.length == 0) {
+					return 'Object type must be specified';
+				}
+				return null;
+			}
+			
+			function saveMapping() {
+				var msg = validateForm();
+				if (msg == null) {
+					$('#saveBtn').attr("disabled", true);
+					submitForm('saveMapping');
+				}
+				$('#errorMessage').html(msg);
+			}
+			
 			var mappingUpdatedFlag = false;
 			function markUpdated() {
 				mappingUpdatedFlag = true;
+				$('#saveBtn').attr("disabled", false);
 			}
 			AJS.$(document).on('click', '#confirm-dialogOK', function (e) {
 			    e.preventDefault();
@@ -152,20 +198,6 @@
 		    </footer>
 		</section>
 	
-		<!-- 
-			List of mappers:
-				Option to enable/disable
-				Export/import
-				
-			Each mapper:
-				Name/Description
-				Target type? Validator/Function/etc?
-				XPath from selecting item from workflow/XML?
-				Replace items
-				Item type... which object?
-				Item reference type... unique key or internal ID?
-				Lookup interface to check settings
-		-->
 		<form action="WorkflowMapper.jspa" method="post" id="mainForm">
 			<input type="hidden" id="action" name="action" value=""/>
 			<input type="hidden" id="part" name="part" value=""/>
@@ -245,11 +277,16 @@
 					</td>
 					<td style="vertical-align: top;">
 						#if ($action.getMapping())
+							<input type="hidden" id="mappingId" name="mappingId" value="${action.getMapping().getId()}"/>
+							<div style="color: red; font-weight: bold;" id="errorMessage"></div>
 							<table class="ConfigMigration">
 								<tr>
-									<th width="20%">Description</th>
+									<th width="20%">Name</th>
 									<td width="80%">
-										<input style="width: 95%" type="text" name="mappingDesc" value="$!{action.getMapping().getDescription()}" onchange="markUpdated()"/>
+										<input style="width: 95%" type="text" 
+												id="mappingDesc" name="mappingDesc" 
+												value="$!{action.getMapping().getDescription()}" 
+												onchange="markUpdated()"/>
 									</td>
 								</tr>
 								<tr>
@@ -265,7 +302,9 @@
 										<div>$!{action.getSearchResult()}</div>
 									</th>
 									<td>
-										<textarea style="width: 95%" name="mappingXPath" rows="5" onchange="markUpdated()">$!{action.getMapping().getxPath()}</textarea>
+										<textarea style="width: 95%" 
+											id="mappingXPath" name="mappingXPath" 
+											rows="5" onchange="markUpdated()">$!{action.getMapping().getxPath()}</textarea>
 									</td>
 								</tr>
 								<tr>
@@ -273,22 +312,32 @@
 									<td>
 										<div>
 											<label style="font-weight: bold">Regular Expression</label>
-											<input style="width: 95%" type="text" name="mappingRegex" value="$!{action.getMapping().getRegex()}" onchange="markUpdated()" />
+											<input style="width: 95%" type="text" 
+												id="mappingRegex" name="mappingRegex" 
+												value="$!{action.getMapping().getRegex()}" 
+												onchange="markUpdated()" />
 										</div>
 										<div>
 											<label style="font-weight: bold">Convert these Capturing Groups (comma-delimited indexes, starts at 1, empty for whole expression)</label>
-											<input style="width: 95%" type="text" name="mappingCaptureGroups" value="$!{action.getMapping().getCaptureGroups()}" onchange="markUpdated()" />
+											<input style="width: 95%" type="text" 
+												id="mappingCaptureGroups" name="mappingCaptureGroups" 
+												value="$!{action.getMapping().getCaptureGroups()}" 
+												onchange="markUpdated()" />
 										</div>
 										<div>
 											<label style="font-weight: bold">Regular Expression Replcement (only applicable if Capturing Groups is not empty)</label>
-											<input style="width: 95%" type="text" name="mappingReplacement" value="$!{action.getMapping().getReplacement()}" onchange="markUpdated()" />
+											<input style="width: 95%" type="text" 
+												id="mappingReplacement" name="mappingReplacement" 
+												value="$!{action.getMapping().getReplacement()}" 
+												onchange="markUpdated()" />
 										</div>
 									</td>
 								</tr>
 								<tr>
 									<th>Value object type</th>
 									<td>
-										<select name="mappingObjectType" onchange="markUpdated()">
+										<select id="mappingObjectType" name="mappingObjectType" 
+											onchange="markUpdated()">
 											<option selected value="">Select an object type</option>
 											#foreach ($item in $action.getObjectTypes().entrySet())
 												#set ($selected = "")
@@ -303,7 +352,7 @@
 								<tr>
 									<th>Status</th>
 									<td>
-										<select name="mappingDisabled" onchange="markUpdated()">
+										<select id="mappingDisabled" name="mappingDisabled" onchange="markUpdated()">
 											#if ($action.getMapping().isDisabled())
 												<option selected value="true">Disabled</option>
 												<option value="false">Enabled</option>
@@ -317,7 +366,9 @@
 								<tr>
 									<th>Only Apply to Workflow</th>
 									<td>
-										<select style="width: 95%" name="mappingWorkflowName" onchange="markUpdated()">
+										<select style="width: 95%" 
+											id="mappingWorkflowName" name="mappingWorkflowName" 
+											onchange="markUpdated()">
 											#set ($selected = "")
 											#if ($action.getMapping().getWorkflowName().isEmpty())
 												#set ($selected = "selected")
@@ -336,10 +387,10 @@
 								<tr>
 									<td colspan="100%">
 										#if ($action.getMapping().getConfig())
-											<input type="button" onclick="submitForm('saveMapping')" value="Save"/>
+											<input type="button" disabled id="saveBtn" onclick="saveMapping()" value="Save"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete"/>
 										#else
-											<input type="button" onclick="submitForm('saveMapping')" value="Create"/>
+											<input type="button" disabled id="saveBtn" onclick="saveMapping()" value="Create"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete" disabled/>
 										#end
 									</td>
