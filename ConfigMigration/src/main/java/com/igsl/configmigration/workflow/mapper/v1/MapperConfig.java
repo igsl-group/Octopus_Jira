@@ -10,9 +10,13 @@ import net.java.ao.schema.Table;
 @Table(value = "MapperConfig")
 public interface MapperConfig extends Entity {
 
+	@StringLength(value = StringLength.UNLIMITED)
+	void setWorkflowName(String workflowName);
+	String getWorkflowName();
+
 	void setDisabled(boolean disabled);
 	boolean isDisabled();
-
+	
 	@StringLength(value = StringLength.UNLIMITED)
 	void setRegex(String regex);
 	String getRegex();

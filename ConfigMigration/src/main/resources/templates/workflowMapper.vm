@@ -174,7 +174,7 @@
 				<tr>
 					<td width="50%">
 						<label style="font-weight: bold">Select Workflow as Template: </label>
-						<select name="workflow" onchange="submitForm('loadWorkflow')">
+						<select style="width: 95%" name="workflow" onchange="submitForm('loadWorkflow')">
 							<option value="">Select a workflow</option>
 							#foreach ($item in $action.getWorkflows())
 								#set ($selected = "")
@@ -211,12 +211,17 @@
 						#if ($action.getWorkflow())
 							<textarea rows="5" style="width: 95%">$!{action.getXml()}</textarea><br/>
 							<span onclick="toggleTreeAll()"><a href="#">(Toggle All Levels)</a></span><br/>
-							<div style="overflow: auto; width: 100%; height: 40vh;">
+							#set ($data = $action.getEditingWorkflowPartWrapper())
+							#if ($data)
+								#set ($treeHeight = "40vh")
+							#else
+								#set ($treeHeight = "60vh")
+							#end
+							<div style="overflow: auto; width: 100%; height: ${treeHeight};">
 								#set ($level = 0)
 								#set ($parentXPath = "")
 								#displayPojo($action.getWorkflow())
 							</div>
-							#set ($data = $action.getEditingWorkflowPartWrapper())
 							#if ($data)
 								<h3>${data.getWorkflowPart().getPartDisplayName()} <input type="button" onclick="scrollToSelectedPart()" value="Locate in Tree"/></h3>
 								<table class="ConfigMigration">
@@ -310,6 +315,25 @@
 									</td>
 								</tr>
 								<tr>
+									<th>Only Apply to Workflow</th>
+									<td>
+										<select style="width: 95%" name="mappingWorkflowName" onchange="markUpdated()">
+											#set ($selected = "")
+											#if ($action.getMapping().getWorkflowName().isEmpty())
+												#set ($selected = "selected")
+											#end
+											<option ${selected} value="">Apply to All Workflows</option>
+											#foreach ($wf in $action.getWorkflows())
+												#set ($selected = "")
+												#if ($action.getMapping().getWorkflowName() == $wf.getName())
+													#set ($selected = "selected")
+												#end
+												<option ${selected} value="${wf.getName()}">${wf.getName()}</option>
+											#end
+										</select>
+									</td>
+								</tr>
+								<tr>
 									<td colspan="100%">
 										#if ($action.getMapping().getConfig())
 											<input type="button" onclick="submitForm('saveMapping')" value="Save"/>
@@ -322,7 +346,7 @@
 								</tr>
 								<tr>
 									<th>
-										<div>Lookup Test</div>
+										<div>Value Lookup Test</div>
 										#set ($disabled = "disabled")
 										#if ($action.getEditingWorkflowPartWrapper())
 											#set ($disabled = "")

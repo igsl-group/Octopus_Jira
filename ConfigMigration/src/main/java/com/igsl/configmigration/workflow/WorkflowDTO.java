@@ -91,7 +91,7 @@ public class WorkflowDTO extends JiraConfigDTO {
 		WorkflowUtil util = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(this.getUtilClass());
 		if (util != null) {
 			MergeResult mr = new MergeResult();
-			String mappedXML = util.remapWorkflowMXML(this.xml, mr);
+			String mappedXML = util.remapWorkflowMXML(this.name, this.xml, mr);
 			r.put("Mapped XML", new JiraConfigProperty(mappedXML));
 		}		
 		return r;

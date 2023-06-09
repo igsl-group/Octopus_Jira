@@ -112,6 +112,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final String PARAM_MAPPING_REPLACEMENT = "mappingReplacement";
 	private static final String PARAM_MAPPING_DISABLED = "mappingDisabled";
 	private static final String PARAM_MAPPING_XPATH = "mappingXPath";
+	private static final String PARAM_MAPPING_WORKFLOW_NAME = "mappingWorkflowName";
 	
 	// Part matching
 	private static final String ACTION_NEXT_PART = "nextPart";
@@ -384,6 +385,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
 					this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
 					this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
+					this.sessionData.mapping.setWorkflowName(req.getParameter(PARAM_MAPPING_WORKFLOW_NAME));
 				}
 			}
 		}

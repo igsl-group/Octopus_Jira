@@ -5,6 +5,7 @@ public class MapperConfigWrapper {
 	private String captureGroups = "1";
 	private String replacement = "$1";
 	private boolean disabled;
+	private String workflowName;
 	private String description;
 	private String xPath;
 	private String objectType;	
@@ -21,6 +22,7 @@ public class MapperConfigWrapper {
 		this.disabled = config.isDisabled();
 		this.objectType = config.getObjectType();
 		this.xPath = config.getXPath();
+		this.workflowName = config.getWorkflowName();
 	}
 	public void copyTo(MapperConfig config) {
 		config.setRegex(this.regex);
@@ -30,6 +32,7 @@ public class MapperConfigWrapper {
 		config.setDisabled(this.disabled);
 		config.setObjectType(this.objectType);
 		config.setXPath(this.xPath);
+		config.setWorkflowName(this.workflowName);
 	}
 	public String getId() {
 		if (this.config != null) {
@@ -85,5 +88,11 @@ public class MapperConfigWrapper {
 	}
 	public void setReplacement(String replacement) {
 		this.replacement = replacement;
+	}
+	public String getWorkflowName() {
+		return workflowName;
+	}
+	public void setWorkflowName(String workflowName) {
+		this.workflowName = workflowName;
 	}
 }

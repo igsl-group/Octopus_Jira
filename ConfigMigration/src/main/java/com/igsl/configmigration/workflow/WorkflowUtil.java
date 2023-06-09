@@ -121,88 +121,96 @@ public class WorkflowUtil extends JiraConfigUtil {
 		return null;
 	}
 	
-	public String remapWorkflowMXML(String xml, MergeResult result) {
+	public String remapWorkflowMXML(String originalWorkflowName, String xml, MergeResult result) {
 		String mappedXML = xml;
 		try {
 			Workflow jaxbWf = WorkflowMapper.parseWorkflow(xml);
 			if (jaxbWf != null) {
 				JXPathContext ctx = JXPathContext.newContext(jaxbWf);
 				for (MapperConfigWrapper wrapper : MapperConfigUtil.getMapperConfigs(this.ao).values()) {
-					if (!wrapper.isDisabled()) {
-						// Execute mapping
-						JiraConfigUtil util = MapperConfigUtil.lookupUtil(wrapper.getObjectType());
-						if (util == null) {
-							result.addWarning("Unrecognized object type [" + wrapper.getObjectType() + "]");
+					if (wrapper.isDisabled()) {
+						continue;
+					}
+					if (wrapper.getWorkflowName() != null && 
+						!wrapper.getWorkflowName().isEmpty() && 
+						originalWorkflowName != null) {
+						if (!wrapper.getWorkflowName().equals(originalWorkflowName)) {
 							continue;
 						}
-						List<Integer> captureGroups = MapperConfigUtil.parseCaptureGroups(wrapper.getCaptureGroups());
-						// For all XPath matches
-						Iterator<?> it = ctx.iterate(wrapper.getxPath());
-						while (it.hasNext()) {
-							WorkflowPart part = (WorkflowPart) it.next();
-							if (part == null) {
-								continue;
-							}
-							String value = null;
-							switch (part.getWorkflowPartType()) {
-							case ARG:
-								value = ((Arg) part).getValue();
-								break;
-							case META:
-								value = ((Meta) part).getValue();
-								break;
-							default: 
-								// Do nothikng
-								 break;
-							}
-							if (value == null) {
-								continue;
-							}
-							Pattern pattern = Pattern.compile(wrapper.getRegex());
-							Matcher matcher = pattern.matcher(value);
-							StringBuffer newValue = new StringBuffer();
-							while (matcher.find()) {
-								if (captureGroups == null) {
-									String id = matcher.group();
-									JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
-									if (mappedDTO != null) {
-										matcher.appendReplacement(newValue, Matcher.quoteReplacement(mappedDTO.getInternalId()));
-									} else {
-										result.addWarning("Unable to map " + util.getName() + " id " + id);
-									}
+					}
+					// Execute mapping
+					JiraConfigUtil util = MapperConfigUtil.lookupUtil(wrapper.getObjectType());
+					if (util == null) {
+						result.addWarning("Unrecognized object type [" + wrapper.getObjectType() + "]");
+						continue;
+					}
+					List<Integer> captureGroups = MapperConfigUtil.parseCaptureGroups(wrapper.getCaptureGroups());
+					// For all XPath matches
+					Iterator<?> it = ctx.iterate(wrapper.getxPath());
+					while (it.hasNext()) {
+						WorkflowPart part = (WorkflowPart) it.next();
+						if (part == null) {
+							continue;
+						}
+						String value = null;
+						switch (part.getWorkflowPartType()) {
+						case ARG:
+							value = ((Arg) part).getValue();
+							break;
+						case META:
+							value = ((Meta) part).getValue();
+							break;
+						default: 
+							// Do nothikng
+							 break;
+						}
+						if (value == null) {
+							continue;
+						}
+						Pattern pattern = Pattern.compile(wrapper.getRegex());
+						Matcher matcher = pattern.matcher(value);
+						StringBuffer newValue = new StringBuffer();
+						while (matcher.find()) {
+							if (captureGroups == null) {
+								String id = matcher.group();
+								JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+								if (mappedDTO != null) {
+									matcher.appendReplacement(newValue, Matcher.quoteReplacement(mappedDTO.getInternalId()));
 								} else {
-									Map<Integer, String> replacementMap = new HashMap<>();
-									for (int i : captureGroups) {
-										if (matcher.groupCount() >= i) {
-											String id = matcher.group(i);
-											JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
-											if (mappedDTO != null) {
-												replacementMap.put(i, Matcher.quoteReplacement(mappedDTO.getInternalId()));
-											} else {
-												result.addWarning("Unable to map " + util.getName() + " id " + id);
-											}
+									result.addWarning("Unable to map " + util.getName() + " id " + id);
+								}
+							} else {
+								Map<Integer, String> replacementMap = new HashMap<>();
+								for (int i : captureGroups) {
+									if (matcher.groupCount() >= i) {
+										String id = matcher.group(i);
+										JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+										if (mappedDTO != null) {
+											replacementMap.put(i, Matcher.quoteReplacement(mappedDTO.getInternalId()));
+										} else {
+											result.addWarning("Unable to map " + util.getName() + " id " + id);
 										}
 									}
-									String replacementString = MapperConfigUtil.constructReplacement(wrapper.getReplacement(), matcher.groupCount(), replacementMap);
-									matcher.appendReplacement(newValue, replacementString);
 								}
+								String replacementString = MapperConfigUtil.constructReplacement(wrapper.getReplacement(), matcher.groupCount(), replacementMap);
+								matcher.appendReplacement(newValue, replacementString);
 							}
-							matcher.appendTail(newValue);
-							value = newValue.toString();
-							// Relace value
-							switch (part.getWorkflowPartType()) {
-							case ARG:
-								((Arg) part).setValue(value);
-								break;
-							case META:
-								((Meta) part).setValue(value);
-								break;
-							default: 
-								// Do nothikng
-								 break;
-							}						
-						}	// For all XPath matches
-					} // Active mapping
+						}
+						matcher.appendTail(newValue);
+						value = newValue.toString();
+						// Relace value
+						switch (part.getWorkflowPartType()) {
+						case ARG:
+							((Arg) part).setValue(value);
+							break;
+						case META:
+							((Meta) part).setValue(value);
+							break;
+						default: 
+							// Do nothikng
+							 break;
+						}						
+					}	// For all XPath matches
 				} // For all mappings
 				// Serialize Workflow
 				mappedXML = WorkflowMapper.serializeWorkflow(jaxbWf);
@@ -235,7 +243,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 		WorkflowDTO src = (WorkflowDTO) newItem;
 		// Remap data in XML
 		LOGGER.debug("Workflow XML: " + src.getXml());
-		src.setXml(remapWorkflowMXML(src.getXml(), result));
+		src.setXml(remapWorkflowMXML((original == null? null : original.getName()), src.getXml(), result));
 		if (original != null) {
 			// Update
 			WorkflowDescriptor wfDesc = 

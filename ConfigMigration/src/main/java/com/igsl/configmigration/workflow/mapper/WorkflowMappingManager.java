@@ -1,6 +1,8 @@
 package com.igsl.configmigration.workflow.mapper;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -79,9 +81,12 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 					}
 				}
 			} else if (ACTION_EXPORT.equals(action)) {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				ZipOutputStream out = new ZipOutputStream(baos);
 				for (String mapping : mappingList) {
 					MapperConfigWrapper wrapper = MapperConfigUtil.getMapperConfigById(ao, mapping);
 					if (wrapper != null) {
+						
 					}
 				}
 			}
