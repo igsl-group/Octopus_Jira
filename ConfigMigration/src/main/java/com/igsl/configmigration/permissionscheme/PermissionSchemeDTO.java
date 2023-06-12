@@ -65,8 +65,8 @@ public class PermissionSchemeDTO extends JiraConfigDTO {
 	public void setupRelatedObjects() {
 		if (this.projects != null) {
 			for (ProjectDTO p : this.projects) {
-				this.addRelatedObject(p);
-				p.addReferencedObject(this);
+				p.addRelatedObject(this);
+				this.addReferencedObject(p);
 			}
 		}
 		if (this.entities != null) {
