@@ -77,8 +77,8 @@ public class FieldLayoutSchemeDTO extends JiraConfigDTO {
 	protected void setupRelatedObjects() throws Exception {
 		if (this.projects != null) {
 			for (ProjectDTO dto : this.projects) {
-				this.addRelatedObject(dto);
-				dto.addReferencedObject(this);
+				dto.addRelatedObject(this);
+				this.addReferencedObject(dto);
 			}
 		}
 	}

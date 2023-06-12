@@ -61,8 +61,8 @@ public class NotificationSchemeDTO extends JiraConfigDTO {
 	@Override
 	public void setupRelatedObjects() {
 		for (ProjectDTO dto : this.projects) {
-			this.addRelatedObject(dto);
-			dto.addReferencedObject(this);
+			dto.addRelatedObject(this);
+			this.addReferencedObject(dto);
 		}
 	}
 	
