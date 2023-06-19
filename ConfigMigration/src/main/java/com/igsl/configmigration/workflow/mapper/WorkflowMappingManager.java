@@ -23,7 +23,8 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	private static final Logger LOGGER = Logger.getLogger(WorkflowMappingManager.class);
 	
 	public static final String PAGE_URL = "/secure/admin/plugins/handler/WorkflowMappingManager.jspa";
-	private static final String SERVLET_URL = "/plugins/servlet/configmigrationmapping";
+	private static final String DOWNLOAD_URL = "/plugins/servlet/configmigrationmapping";
+	private static final String UPLOAD_URL = "/plugins/servlet/configmigrationimportmapping";
 	
 	private static final String PARAM_ACTION = "action";
 	private static final String PARAM_MAPPING = "mapping";
@@ -45,6 +46,10 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	public String getEditLink(String id) {
 		return this.getServletContext().getContextPath() + 
 				"/secure/admin/plugins/handler/WorkflowMapper.jspa?action=loadMapping&mapping=" + id;
+	}
+	
+	public String getUploadServlet() {
+		return this.getServletContext().getContextPath() + UPLOAD_URL;
 	}
 	
 	private String downloadURL;
@@ -100,7 +105,7 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 					}
 				}
 			} else if (ACTION_EXPORT.equals(action)) {
-				this.downloadURL = this.getServletContext().getContextPath() + SERVLET_URL;
+				this.downloadURL = this.getServletContext().getContextPath() + DOWNLOAD_URL;
 				this.downloadParameters = new ArrayList<>();
 				String[] idList = req.getParameterValues(PARAM_MAPPING);
 				for (String id : idList) {

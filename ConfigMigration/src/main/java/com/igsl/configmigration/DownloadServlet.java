@@ -1,12 +1,13 @@
 package com.igsl.configmigration;
 
-import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -55,38 +56,22 @@ public class DownloadServlet extends HttpServlet {
 			int idAsInt = Integer.parseInt(id);
 			ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", idAsInt));
 			if (data != null && data.length == 1) {
-				resp.setContentType("text/plain");
-				ApplicationUser exportUser = ComponentAccessor.getUserManager().getUserByName(data[0].getExportUser());
-				String baseFileName = 
-						"Export" + 
-						((exportUser != null)? " by " + exportUser.getDisplayName() : "") + 
-						" on " + SDF.format(data[0].getExportDate()) + 
-						((data[0].getDescription() == null || data[0].getDescription().length() == 0)? 
-								"" : 
-								" - " + data[0].getDescription());
-				String fileName = baseFileName + ".json";
-				String zipFileName = baseFileName + ".zip";
+				String filePath = data[0].getContent();
+				Path path = Paths.get(filePath);
+				if (!Files.exists(path) || Files.isDirectory(path)) {
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "File " + filePath + " not found");
+					return;
+				}				
 				resp.setContentType("application/zip");
-		        resp.setHeader("Content-disposition", "attachment; filename=\"" + zipFileName + "\"");
-		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes("UTF8")); 
-		        		ZipOutputStream zout = new ZipOutputStream(resp.getOutputStream())) {
-		        	ZipEntry entry = new ZipEntry(fileName);
-		        	zout.putNextEntry(entry);
+				resp.setHeader("Content-disposition", "attachment; filename=\"" + path.getFileName().toString() + "\"");
+		        try (	InputStream in = new FileInputStream(path.toFile()); 
+		        		OutputStream out = resp.getOutputStream()) {
 		        	byte[] buffer = new byte[BUFFER_SIZE];
 		            int numBytesRead;
 		            while ((numBytesRead = in.read(buffer)) > 0) {
-		            	zout.write(buffer, 0, numBytesRead);
+		            	out.write(buffer, 0, numBytesRead);
 		            }
-		            zout.closeEntry();
-		        }		        
-//		        try (	InputStream in = new ByteArrayInputStream(data[0].getContent().getBytes("UTF8")); 
-//		        		OutputStream out = resp.getOutputStream()) {
-//		        	byte[] buffer = new byte[BUFFER_SIZE];
-//		            int numBytesRead;
-//		            while ((numBytesRead = in.read(buffer)) > 0) {
-//		            	out.write(buffer, 0, numBytesRead);
-//		            }
-//		        }
+		        }
 			} else {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Requested download (" + id + ") not found");
 			}

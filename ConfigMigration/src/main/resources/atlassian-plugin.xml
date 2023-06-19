@@ -10,7 +10,11 @@
 		<vendor name="${project.organization.name}"
 			url="${project.organization.url}" />
 		<bundle-instructions>
-			<Import-Package>com.fasterxml.jackson,*;resolution:=optional
+			<Import-Package>
+				<!-- Import Jackson XML -->
+				com.fasterxml.jackson,
+				<!-- Import everything else -->
+				*;resolution:=optional
 			</Import-Package>
 		</bundle-instructions>
 	</plugin-info>

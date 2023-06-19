@@ -1,5 +1,8 @@
 package com.igsl.configmigration;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -66,6 +69,10 @@ public class ManageExport extends JiraWebActionSupport {
 					ExportData[] data = ao.find(ExportData.class, Query.select().where("ID = ?", idAsInt));
 					if (data != null && data.length == 1) {
 						if (ACTION_DELETE.equals(action)) {
+							Path p = Paths.get(data[0].getContent());
+							if (Files.exists(p) && !Files.isDirectory(p)) {
+								Files.delete(p);
+							}
 							ao.delete(data[0]);
 						}
 					}

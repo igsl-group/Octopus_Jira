@@ -1,5 +1,8 @@
 package com.igsl.configmigration;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -65,6 +68,14 @@ public class ManageReport extends JiraWebActionSupport {
 				MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", idAsInt));
 				if (data != null && data.length == 1) {
 					if (ACTION_DELETE.equals(action)) {
+						Path p = Paths.get(data[0].getReport());
+						if (Files.exists(p) && !Files.isDirectory(p)) {
+							Files.delete(p);
+						}
+						p = Paths.get(data[0].getImportData());
+						if (Files.exists(p) && !Files.isDirectory(p)) {
+							Files.delete(p);
+						}
 						ao.delete(data[0]);
 					}
 				}

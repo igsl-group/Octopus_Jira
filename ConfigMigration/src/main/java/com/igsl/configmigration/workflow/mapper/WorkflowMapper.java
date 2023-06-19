@@ -359,6 +359,15 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		HttpServletRequest req = this.getHttpRequest();
 		getSessionData(req);
 		
+//		QueryDslAccessor test = ComponentAccessor.getComponent(QueryDslAccessor.class);
+//		LOGGER.debug("Test: " + test);
+//		test.executeQuery(new QueryCallback<String>() {
+//			@Override
+//			public String runQuery(DbConnection con) {
+//				return null;
+//			}
+//		});
+		
 		String action = req.getParameter(PARAM_ACTION);
 		LOGGER.debug("action: " + action);
 		

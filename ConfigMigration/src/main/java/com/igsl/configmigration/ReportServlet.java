@@ -1,9 +1,12 @@
 package com.igsl.configmigration;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 
 import javax.servlet.http.HttpServlet;
@@ -57,33 +60,16 @@ public class ReportServlet extends HttpServlet {
 			int idAsInt = Integer.parseInt(id);
 			MergeReport[] data = ao.find(MergeReport.class, Query.select().where("ID = ?", idAsInt));
 			if (data != null && data.length == 1) {
-				resp.setContentType("text/plain");
-				ApplicationUser mergeUser = ComponentAccessor.getUserManager().getUserByName(data[0].getMergeUser());
-				String fileName;
-				byte[] content;
-				String desc = (data[0].getDescription() != null && data[0].getDescription().length() != 0)?
-						" - " + data[0].getDescription() : 
-						"";
-				if (PARAM_TYPE_REPORT.equals(type)) {
-					fileName = 
-						"Merge Report" + 
-						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
-						" on " + SDF.format(data[0].getMergeDate()) + 
-						desc + 
-						".json";
-					content = data[0].getReport().getBytes("UTF8");
-				} else {
-					fileName = 
-						"Merge Data" + 
-						((mergeUser != null)? " by " + mergeUser.getDisplayName() : "") + 
-						" on " + SDF.format(data[0].getMergeDate()) + 
-						desc + 
-						".json";
-					content = data[0].getImportData().getBytes("UTF8");
+				String fileName = "";
+				if (PARAM_TYPE_REPORT.equals(type)) {				
+					fileName = data[0].getReport();
+				} else if (PARAM_TYPE_IMPORT_DATA.equals(type)) {
+					fileName = data[0].getImportData();
 				}
-		        resp.setHeader("Content-disposition", "attachment; filename=\"" + fileName + "\"");
-		        resp.setContentType("application/json; charset=UTF-8");
-		        try (	InputStream in = new ByteArrayInputStream(content); 
+				Path p = Paths.get(fileName);;
+				resp.setHeader("Content-disposition", "attachment; filename=\"" + p.getFileName() + "\"");
+		        resp.setContentType("application/zip; charset=UTF-8");
+		        try (	InputStream in = new FileInputStream(p.toFile()); 
 		        		OutputStream out = resp.getOutputStream()) {
 		        	byte[] buffer = new byte[BUFFER_SIZE];
 		            int numBytesRead;

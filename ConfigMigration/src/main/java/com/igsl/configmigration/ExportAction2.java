@@ -1,5 +1,9 @@
 package com.igsl.configmigration;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -7,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -26,6 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.igsl.configmigration.export.v1.ExportData;
+import com.igsl.configmigration.filesystem.PathManager;
+import com.igsl.configmigration.filesystem.PathManager.Type;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.report.v1.MergeReport;
 import com.igsl.configmigration.report.v1.MergeReportData;
@@ -382,7 +390,6 @@ public class ExportAction2 extends JiraWebActionSupport {
 	@Override
 	protected String doExecute() throws Exception {
 		LOGGER.debug("doExecute");
-		
 		HttpServletRequest req = this.getHttpRequest();
 		loadData(req, false);
 		
@@ -475,8 +482,16 @@ public class ExportAction2 extends JiraWebActionSupport {
 					}
 				}
 			}
-			String importData = OM.writeValueAsString(importDataMap);
-			mr.setImportData(importData);
+			Path dataPath = PathManager.createZipFileName(Type.MERGE_DATA, mergeDesc);
+			try (	FileOutputStream fos = new FileOutputStream(dataPath.toFile()); 
+					ZipOutputStream zos = new ZipOutputStream(fos)) {
+				zos.putNextEntry(new ZipEntry("data.json"));
+				OM_INDENT.writeValue(zos, importDataMap);
+				zos.closeEntry();
+			} catch (IOException ex) {
+				LOGGER.error("Failed to write merge data", ex);
+			}
+			mr.setImportData(dataPath.toString());
 			mr.setMergeUser(ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getName());
 			long objCountTotal = 0;
 			long objCountSuccess = 0;
@@ -548,7 +563,16 @@ public class ExportAction2 extends JiraWebActionSupport {
 				}
 			}
 			// Save report
-			mr.setReport(OM_INDENT.writeValueAsString(reportData));
+			Path path = PathManager.createZipFileName(Type.MERGE_REPORT, mergeDesc);
+			try (	FileOutputStream fos = new FileOutputStream(path.toFile()); 
+					ZipOutputStream zos = new ZipOutputStream(fos)) {
+				zos.putNextEntry(new ZipEntry("report.json"));
+				OM_INDENT.writeValue(zos, reportData);
+				zos.closeEntry();
+			} catch (IOException ex) {
+				LOGGER.error("Failed to write merge report", ex);
+			}
+			mr.setReport(path.toString());
 			mr.setTotalObjectCount(objCountTotal);
 			mr.setSuccessObjectCount(objCountSuccess);
 			mr.setFailedObjectCount(objCountFailed);
@@ -633,14 +657,24 @@ public class ExportAction2 extends JiraWebActionSupport {
 			ExportData data = ao.executeInTransaction(new TransactionCallback<ExportData>() {
 				@Override
 				public ExportData doInTransaction() {
-					ExportData ed = ao.create(ExportData.class);
-					ed.setContent(out);
-					ed.setDescription(desc);
-					ed.setExportDate(new Date());
-					ed.setExportUser(ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getName());
-					ed.save();
-					LOGGER.debug("ExportData saved: " + ed.getID());
-					return ed;
+					Path fileName = PathManager.createZipFileName(Type.EXPORT, desc);
+					try (	FileOutputStream fos = new FileOutputStream(fileName.toFile()); 
+							ZipOutputStream zos = new ZipOutputStream(fos)) {
+						zos.putNextEntry(new ZipEntry("data.json"));
+						OM.writeValue(zos, output);
+						zos.closeEntry();
+						ExportData ed = ao.create(ExportData.class);
+						ed.setContent(fileName.toString());
+						ed.setDescription(desc);
+						ed.setExportDate(new Date());
+						ed.setExportUser(ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser().getName());
+						ed.save();
+						LOGGER.debug("ExportData saved: " + ed.getID());
+						return ed;
+					} catch (IOException ioex) {
+						LOGGER.error("Failed to write export content", ioex);
+					}
+					return null;
 				}
 			});
 			this.data.downloadAction = DOWNLOAD_URL;

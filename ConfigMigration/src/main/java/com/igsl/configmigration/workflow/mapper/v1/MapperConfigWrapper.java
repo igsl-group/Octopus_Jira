@@ -25,6 +25,17 @@ public class MapperConfigWrapper {
 		this.xPath = config.getXPath();
 		this.workflowName = config.getWorkflowName();
 	}
+	public void copyTo(MapperConfigWrapper config) {
+		config.setRegex(this.regex);
+		config.setCaptureGroups(this.captureGroups);
+		config.setReplacement(this.replacement);
+		config.setDescription(this.description);
+		config.setDisabled(this.disabled);
+		config.setObjectType(this.objectType);
+		config.setxPath(this.xPath);
+		config.setWorkflowName(this.workflowName);
+		config.copyTo(config.getConfig());
+	}
 	public void copyTo(MapperConfig config) {
 		config.setRegex(this.regex);
 		config.setCaptureGroups(this.captureGroups);
