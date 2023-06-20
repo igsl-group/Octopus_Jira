@@ -3,6 +3,18 @@
 		<title>Worklow Mapping Manager</title>
 		<meta content="admin" name="decorator" />
 		<script type="text/javascript">
+			function importMapping() {
+				AJS.dialog2('#import-dialog').show();
+			}
+			AJS.$(document).on('click', '#import-dialogOK', function (e) {
+			    e.preventDefault();
+			    $('#importForm').submit();
+			});
+			AJS.$(document).on('click', '#import-dialogCancel', function (e) {
+			    e.preventDefault();
+			    AJS.dialog2('#import-dialog').hide();
+			});
+			
 			function submitForm(action) {
 				document.getElementById('action').value = action;
 				window.onbeforeunload = null;
@@ -80,6 +92,7 @@
 							accept=".json,.zip"
 							value=""/>
 				</form>
+				<span style="font-weight: bold; color: red">Note: Mappings will be overwritten if they have the same name.</span>
 		    </div>
 		    <!-- Dialog footer -->
 		    <footer class="aui-dialog2-footer">
@@ -93,7 +106,7 @@
 		    </footer>
 		</section>
 	
-		<!-- Confirm dialog -->
+		<!-- Delete confirmation dialog -->
 		<section 	id="delete-dialog" 
 					class="aui-dialog2 aui-dialog2-medium aui-layer" 
 					aria-hidden="true"
@@ -132,7 +145,7 @@
 				<thead>
 					<tr>
 						<td colspan="100%">
-							<input type="button" onclick="" value="Import" />
+							<input type="button" onclick="importMapping()" value="Import" />
 							<input type="button" disabled id="exportBtn" onclick="submitForm('export')" value="Export Selected" />
 							<input type="button" disabled id="enableBtn" onclick="submitForm('enable')" value="Enable Selected" />
 							<input type="button" disabled id="disableBtn" onclick="submitForm('disable')" value="Disable Selected" />

@@ -122,7 +122,7 @@ public class MapperConfigUtil {
 	}
 	
 	public static MapperConfigWrapper getMapperConfigByName(ActiveObjects ao, String name) {
-		MapperConfig[] list = ao.find(MapperConfig.class, Query.select().where("NAME = ?", name));
+		MapperConfig[] list = ao.find(MapperConfig.class, Query.select().where("DESCRIPTION = ?", name));
 		if (list != null && list.length == 1) {
 			MapperConfigWrapper wrapper = new MapperConfigWrapper(list[0]);
 			return wrapper;

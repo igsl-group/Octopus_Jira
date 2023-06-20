@@ -3,6 +3,8 @@ package com.igsl.configmigration.workflow.mapper.v1;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class MapperConfigWrapper {
+	@JsonIgnore
+	private boolean updated = false;
 	private String regex = "^(.*)$";
 	private String captureGroups = "1";
 	private String replacement = "$1";
@@ -10,7 +12,7 @@ public class MapperConfigWrapper {
 	private String workflowName;
 	private String description;
 	private String xPath;
-	private String objectType;	
+	private String objectType;
 	@JsonIgnore
 	private MapperConfig config;
 	public MapperConfigWrapper() {}
@@ -46,6 +48,7 @@ public class MapperConfigWrapper {
 		config.setXPath(this.xPath);
 		config.setWorkflowName(this.workflowName);
 	}
+	@JsonIgnore
 	public String getId() {
 		if (this.config != null) {
 			return Integer.toString(this.config.getID());
@@ -106,5 +109,11 @@ public class MapperConfigWrapper {
 	}
 	public void setWorkflowName(String workflowName) {
 		this.workflowName = workflowName;
+	}
+	public boolean isUpdated() {
+		return updated;
+	}
+	public void setUpdated(boolean updated) {
+		this.updated = updated;
 	}
 }

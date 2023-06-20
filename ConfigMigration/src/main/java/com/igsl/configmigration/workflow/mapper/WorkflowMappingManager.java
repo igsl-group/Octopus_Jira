@@ -33,6 +33,7 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 	private static final String ACTION_DELETE = "delete";
 	private static final String ACTION_ENABLE = "enable";
 	private static final String ACTION_DISABLE = "disable";
+	private static final String ACTION_IMPORT = "import";
 	
 	public WorkflowMappingManager(@ComponentImport ActiveObjects ao) {
 		LOGGER.debug("Inject ActiveObjects: " + ao);
@@ -111,6 +112,8 @@ public class WorkflowMappingManager extends JiraWebActionSupport {
 				for (String id : idList) {
 					downloadParameters.add(id);
 				}
+			} else if (ACTION_IMPORT.equals(action)) {
+				// 
 			}
 		}
 		

@@ -1,6 +1,5 @@
 package com.igsl.configmigration;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -19,6 +18,7 @@ import org.apache.log4j.Logger;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.igsl.configmigration.workflow.mapper.MapperConfigUtil;
@@ -31,7 +31,8 @@ public class ImportMappingServlet extends HttpServlet {
 	private static final Logger LOGGER = Logger.getLogger(ImportMappingServlet.class);
 	private static final long MAX_SIZE = 100L * 1024 * 1024 * 1024;
 	private static final int BUFFER_SIZE = 10240;
-	private static final ObjectMapper OM = new ObjectMapper();
+	private static final ObjectMapper OM = new ObjectMapper()
+			.disable(Feature.AUTO_CLOSE_SOURCE);	// Do not automatically close source stream since we may be reading a ZipInputStream
 	
 	private ActiveObjects ao;
 	
@@ -66,6 +67,7 @@ public class ImportMappingServlet extends HttpServlet {
 	}
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		LOGGER.debug("Import mapping starts");
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		upload.setSizeMax(MAX_SIZE);
@@ -96,6 +98,7 @@ public class ImportMappingServlet extends HttpServlet {
 		} catch (Exception ex) {
 			LOGGER.error("ApacheCommons FileUpload Error", ex);
 		}
+		// TODO Provide results to be displayed
 		// Redirect back 
 		resp.sendRedirect(req.getContextPath() + WorkflowMappingManager.PAGE_URL);
 	}

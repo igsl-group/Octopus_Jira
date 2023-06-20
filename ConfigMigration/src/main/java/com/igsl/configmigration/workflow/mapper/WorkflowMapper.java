@@ -386,6 +386,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				Boolean mappingUpdated = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_UPDATED));
 				if (mappingUpdated) {
 					// Update fields
+					this.sessionData.mapping.setUpdated(true);
 					this.sessionData.mapping.setRegex(req.getParameter(PARAM_MAPPING_REGEX));
 					this.sessionData.mapping.setCaptureGroups(req.getParameter(PARAM_MAPPING_CAPTURE_GROUPS));
 					this.sessionData.mapping.setReplacement(req.getParameter(PARAM_MAPPING_REPLACEMENT));
@@ -444,6 +445,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		} else if (ACTION_SAVE_MAPPING.equals(action)) {
 			if (this.sessionData.mapping != null) {
 				MapperConfigUtil.saveMapperConfig(this.ao, this.sessionData.mapping);
+				this.sessionData.mapping.setUpdated(false);
 			}
 		} else if (ACTION_DELETE_MAPPING.equals(action)) {
 			if (this.sessionData.mapping != null) {

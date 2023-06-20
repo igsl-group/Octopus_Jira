@@ -97,6 +97,12 @@
 			}
 			
 			var mappingUpdatedFlag = false;
+			#if ($action.getMapping())
+				#if ($action.getMapping().isUpdated())
+					mappingUpdatedFlag = true;
+				#end
+			#end
+			
 			function markUpdated() {
 				mappingUpdatedFlag = true;
 				$('#saveBtn').attr("disabled", false);
@@ -143,6 +149,15 @@
 			var mapping = '$!{action.getMapping().getConfig().getID()}';	// Store original value of mapping select
 			function loadMap() {
 				document.getElementById('action').value = 'loadMapping';
+				if (mappingUpdatedFlag) {
+					AJS.dialog2('#confirm-dialog').show();
+				} else {
+					window.onbeforeunload = null;
+					document.forms['mainForm'].submit();
+				}
+			}
+			function createMap() {
+				document.getElementById('action').value = 'createMapping';
 				if (mappingUpdatedFlag) {
 					AJS.dialog2('#confirm-dialog').show();
 				} else {
@@ -235,7 +250,7 @@
 								<option ${selected} value="${item.getKey()}">${item.getValue().getDescription()}${disabled}</option>
 							#end
 						</select>
-						<input type="button" onclick="submitForm('createMapping')" value="Create Mapping"/>
+						<input type="button" onclick="createMap()" value="Create Mapping"/>
 					</td>
 				</tr>
 				<tr>
@@ -386,11 +401,15 @@
 								</tr>
 								<tr>
 									<td colspan="100%">
+										#set ($disabled = "disabled")
+										#if ($action.getMapping() && $action.getMapping().isUpdated())
+											#set ($disabled = "")
+										#end
 										#if ($action.getMapping().getConfig())
-											<input type="button" disabled id="saveBtn" onclick="saveMapping()" value="Save"/>
+											<input type="button" ${disabled} id="saveBtn" onclick="saveMapping()" value="Save"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete"/>
 										#else
-											<input type="button" disabled id="saveBtn" onclick="saveMapping()" value="Create"/>
+											<input type="button" ${disabled} id="saveBtn" onclick="saveMapping()" value="Create"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete" disabled/>
 										#end
 									</td>
