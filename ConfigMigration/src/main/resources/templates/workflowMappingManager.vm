@@ -156,7 +156,7 @@
 						<th>
 							<input type="checkbox" onchange="selectAll(this.checked)"/>
 						</th>
-						<th>Description</th>
+						<th>Name</th>
 						<th>Status</th>
 						<th>Target Workflow</th>
 						<th>XPath</th>

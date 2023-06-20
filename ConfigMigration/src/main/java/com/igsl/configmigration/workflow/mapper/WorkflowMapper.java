@@ -467,9 +467,12 @@ public class WorkflowMapper extends JiraWebActionSupport {
 				if (this.sessionData.partIteratorXPath != null && 
 					this.sessionData.partIteratorXPath.length() != 0) {
 					if (this.sessionData.partIterator == null) {
+						LOGGER.debug("starting new search: " + this.sessionData.partIteratorXPath);
 						// Start new search
 						JXPathContext ctx = JXPathContext.newContext(this.sessionData.workflow);
 						this.sessionData.partIterator = ctx.iterate(this.sessionData.partIteratorXPath);
+					} else {
+						LOGGER.debug("continuing search: " + this.sessionData.partIteratorXPath);
 					}
 					// Find next result
 					if (this.sessionData.partIterator.hasNext()) {

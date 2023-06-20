@@ -26,6 +26,7 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -111,7 +112,9 @@ public class ExportAction2 extends JiraWebActionSupport {
 	private ExportAction2SessionData data = new ExportAction2SessionData();
 
 	static {
-		OM = new ObjectMapper().setSerializationInclusion(Include.NON_NULL);
+		OM = new ObjectMapper()
+				.setSerializationInclusion(Include.NON_NULL)
+				.disable(Feature.AUTO_CLOSE_SOURCE);
 		OM_INDENT = new ObjectMapper()
 							.setSerializationInclusion(Include.NON_NULL)
 							.enable(SerializationFeature.INDENT_OUTPUT);
@@ -486,7 +489,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 			try (	FileOutputStream fos = new FileOutputStream(dataPath.toFile()); 
 					ZipOutputStream zos = new ZipOutputStream(fos)) {
 				zos.putNextEntry(new ZipEntry("data.json"));
-				OM_INDENT.writeValue(zos, importDataMap);
+				byte[] data = OM_INDENT.writeValueAsBytes(importDataMap);
+				zos.write(data);
 				zos.closeEntry();
 			} catch (IOException ex) {
 				LOGGER.error("Failed to write merge data", ex);
@@ -567,7 +571,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 			try (	FileOutputStream fos = new FileOutputStream(path.toFile()); 
 					ZipOutputStream zos = new ZipOutputStream(fos)) {
 				zos.putNextEntry(new ZipEntry("report.json"));
-				OM_INDENT.writeValue(zos, reportData);
+				byte[] data = OM_INDENT.writeValueAsBytes(reportData);
+				zos.write(data);
 				zos.closeEntry();
 			} catch (IOException ex) {
 				LOGGER.error("Failed to write merge report", ex);
@@ -661,7 +666,8 @@ public class ExportAction2 extends JiraWebActionSupport {
 					try (	FileOutputStream fos = new FileOutputStream(fileName.toFile()); 
 							ZipOutputStream zos = new ZipOutputStream(fos)) {
 						zos.putNextEntry(new ZipEntry("data.json"));
-						OM.writeValue(zos, output);
+						byte[] data = OM.writeValueAsBytes(output);
+						zos.write(data);
 						zos.closeEntry();
 						ExportData ed = ao.create(ExportData.class);
 						ed.setContent(fileName.toString());

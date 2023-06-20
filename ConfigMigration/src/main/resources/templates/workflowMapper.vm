@@ -270,7 +270,7 @@
 								#displayPojo($action.getWorkflow())
 							</div>
 							#if ($data)
-								<h3>${data.getWorkflowPart().getPartDisplayName()} <input type="button" onclick="scrollToSelectedPart()" value="Locate in Tree"/></h3>
+								<h3>$!{data.getWorkflowPart().getPartDisplayName()} <input type="button" onclick="scrollToSelectedPart()" value="Locate in Tree"/></h3>
 								<table class="ConfigMigration">
 									<tr>
 										<th>XPath</th>
@@ -278,11 +278,11 @@
 									</tr>
 									<tr>
 										<th>Name</th>
-										<td>${data.getWorkflowPart().getName()}</td>
+										<td>$!{data.getWorkflowPart().getName()}</td>
 									</tr>
 									<tr>
 										<th>Value</th>
-										<td>${data.getWorkflowPart().getValue()}</td>
+										<td>$!{data.getWorkflowPart().getValue()}</td>
 									</tr>
 								</table>
 							#end

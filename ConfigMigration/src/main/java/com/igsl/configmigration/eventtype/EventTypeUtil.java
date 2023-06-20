@@ -2,7 +2,6 @@ package com.igsl.configmigration.eventtype;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -10,8 +9,6 @@ import org.apache.log4j.Logger;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.event.type.EventType;
 import com.atlassian.jira.event.type.EventTypeManager;
-import com.atlassian.jira.scheme.Scheme;
-import com.atlassian.jira.scheme.SchemeEntity;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
@@ -60,7 +57,28 @@ public class EventTypeUtil extends JiraConfigUtil {
 	public MergeResult merge(
 			DTOStore exportStore, JiraConfigDTO oldItem, 
 			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
-		throw new Exception("Event Type is read only");
+		MergeResult result = new MergeResult();
+		EventTypeDTO original;
+		if (oldItem != null) {
+			original = (EventTypeDTO) oldItem;
+		} else {
+			original = (EventTypeDTO) findByDTO(newItem);
+		}
+		EventTypeDTO src = (EventTypeDTO) newItem;
+		if (original != null) {
+			MANAGER.editEventType(original.getId(), src.getName(), src.getDescription(), src.getTemplateId());
+			// Reload
+			EventTypeDTO updated = (EventTypeDTO) findByDTO(src);
+			result.setNewDTO(updated);
+		} else {
+			// Create event type
+			EventType ev = new EventType(src.getName(), src.getDescription(), src.getTemplateId());
+			MANAGER.addEventType(ev);
+			// Reload
+			EventTypeDTO created = (EventTypeDTO) findByDTO(src);
+			result.setNewDTO(created);
+		}
+		return result;
 	}
 
 	@Override
@@ -70,12 +88,12 @@ public class EventTypeUtil extends JiraConfigUtil {
 
 	@Override
 	public boolean isVisible() {
-		return false;
+		return true;
 	}
 
 	@Override
 	public boolean isReadOnly() {
-		return true;
+		return false;
 	}
 
 	@Override
