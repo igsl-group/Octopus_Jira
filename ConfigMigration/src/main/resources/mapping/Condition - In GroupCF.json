@@ -1,0 +1,10 @@
+{
+	"regex": "^(.*)$",
+	"captureGroups": "1",
+	"replacement": "$1",
+	"disabled": false,
+	"workflowName": "",
+	"description": "Condition - In GroupCF",
+	"xPath": "//conditions//arg[name='class.name'][value='com.atlassian.jira.workflow.condition.InGroupCFCondition']/../arg[name='groupcf']",
+	"objectType": "com.igsl.configmigration.customfield.CustomFieldUtil"
+}

@@ -158,7 +158,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 							// Do nothikng
 							 break;
 						}
-						if (value == null) {
+						if (value == null || value.isEmpty()) {
 							continue;
 						}
 						Pattern pattern = Pattern.compile(wrapper.getRegex());

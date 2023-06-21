@@ -1,0 +1,10 @@
+{
+	"regex": "\"([0-9]+)\"",
+	"captureGroups": "1",
+	"replacement": "\"$1\"",
+	"disabled": false,
+	"workflowName": "",
+	"description": "CustomApproval - approvedStatus",
+	"xPath": "//function[type='class'][arg[name='class.name'][value='com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction']]/arg[name='approvedStatus']",
+	"objectType": "com.igsl.configmigration.status.StatusUtil"
+}

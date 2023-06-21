@@ -1,0 +1,10 @@
+{
+	"regex": "\"([^,\"]+)\"",
+	"captureGroups": "1",
+	"replacement": "\"$1\"",
+	"disabled": false,
+	"workflowName": "",
+	"description": "CustomApproval - approverUsersField",
+	"xPath": "//function[type='class'][arg[name='class.name'][value='com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction']]/arg[name='approverUsersField']",
+	"objectType": "com.igsl.configmigration.customfield.CustomFieldUtil"
+}

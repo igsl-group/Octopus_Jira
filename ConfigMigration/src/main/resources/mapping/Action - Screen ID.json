@@ -1,0 +1,10 @@
+{
+	"regex": "^(.*)$",
+	"captureGroups": "1",
+	"replacement": "$1",
+	"disabled": false,
+	"workflowName": "",
+	"description": "Action - Screen ID",
+	"xPath": "//action/meta[name='jira.fieldscreen.id']",
+	"objectType": "com.igsl.configmigration.fieldscreen.FieldScreenUtil"
+}

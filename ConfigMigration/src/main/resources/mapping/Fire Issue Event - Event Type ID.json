@@ -1,0 +1,10 @@
+{
+	"regex": "^(.*)$",
+	"captureGroups": "1",
+	"replacement": "$1",
+	"disabled": false,
+	"workflowName": "",
+	"description": "Fire Issue Event - Event Type ID",
+	"xPath": "//function[type='class'][arg[name='class.name'][value='com.atlassian.jira.workflow.function.event.FireIssueEventFunction']]/arg[name='eventTypeId']",
+	"objectType": "com.igsl.configmigration.eventtype.EventTypeUtil"
+}
