@@ -1,9 +1,11 @@
 package com.igsl.configmigration.workflow;
 
-import java.io.ByteArrayInputStream;
-import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.security.MessageDigest;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,24 +14,16 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
-
 import org.apache.commons.jxpath.JXPathContext;
 import org.apache.log4j.Logger;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import com.atlassian.activeobjects.external.ActiveObjects;
+import com.atlassian.core.ofbiz.util.OFBizPropertyUtils;
+import com.atlassian.event.api.EventPublisher;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.database.ConnectionFunction;
+import com.atlassian.jira.database.DatabaseAccessor;
+import com.atlassian.jira.database.DatabaseConnection;
+import com.atlassian.jira.event.WorkflowImportedFromXmlEvent;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.workflow.ConfigurableJiraWorkflow;
 import com.atlassian.jira.workflow.JiraDraftWorkflow;
@@ -42,7 +36,6 @@ import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
-import com.igsl.configmigration.status.StatusDTO;
 import com.igsl.configmigration.status.StatusUtil;
 import com.igsl.configmigration.workflow.mapper.MapperConfigUtil;
 import com.igsl.configmigration.workflow.mapper.WorkflowMapper;
@@ -50,8 +43,8 @@ import com.igsl.configmigration.workflow.mapper.WorkflowPart;
 import com.igsl.configmigration.workflow.mapper.generated.Arg;
 import com.igsl.configmigration.workflow.mapper.generated.Meta;
 import com.igsl.configmigration.workflow.mapper.generated.Workflow;
-import com.igsl.configmigration.workflow.mapper.v1.MapperConfig;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfigWrapper;
+import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
@@ -61,6 +54,7 @@ public class WorkflowUtil extends JiraConfigUtil {
 	private static final Logger LOGGER = Logger.getLogger(WorkflowUtil.class);
 	private static final WorkflowManager WORKFLOW_MANAGER = ComponentAccessor.getWorkflowManager();
 	private static final String DEFAULT_WORKFLOW = "jira";
+	private static final DatabaseAccessor DATABASE_ACCESSOR = ComponentAccessor.getComponent(DatabaseAccessor.class);
 	
 	@Override
 	public boolean isDefaultObject(JiraConfigDTO dto) {
@@ -225,6 +219,63 @@ public class WorkflowUtil extends JiraConfigUtil {
 		}
 		return mappedXML;
 	}
+	
+	private String generateWorkflowHash(WorkflowDTO workflow) throws Exception {
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		byte[] hash = md.digest(workflow.getName().getBytes("UTF8"));
+		StringBuilder tag = new StringBuilder();
+		for (byte b : hash) {
+			tag.append(String.format("%02x", b));
+		}
+		LOGGER.debug("WorkflowName: " + workflow.getName() + " => " + tag);
+		return tag.toString();
+	}
+	
+	private static final String WORKFLOW_DESIGNER_PROPERTY_SET = "com.atlassian.jira.plugins.jira-workflow-designer";
+	private static final long WORKFLOW_DESIGNER_PROPERTY_SET_ID = 1L;
+	
+	public void setLayoutXML(WorkflowDTO workflow) throws Exception {
+		PropertySet ps = OFBizPropertyUtils.getPropertySet(WORKFLOW_DESIGNER_PROPERTY_SET, WORKFLOW_DESIGNER_PROPERTY_SET_ID);
+		if (ps != null) {
+			LOGGER.debug("Setting layout for workflow: " + workflow.getName());
+			LOGGER.debug("Layout size: " + workflow.getLayoutXml().size());
+			for (Map.Entry<String, String> entry : workflow.getLayoutXml().entrySet()) {
+				ps.setText(entry.getKey(), entry.getValue());
+				LOGGER.debug("Set " + entry.getKey() + " = " + entry.getValue());
+			}
+		}
+		// PropertySet is cached... how to flush it? Just update it too?
+		PropertySet cachedPS = OFBizPropertyUtils.getCachingPropertySet(WORKFLOW_DESIGNER_PROPERTY_SET, WORKFLOW_DESIGNER_PROPERTY_SET_ID);
+		if (cachedPS != null) {
+			for (Map.Entry<String, String> entry : workflow.getLayoutXml().entrySet()) {
+				cachedPS.setText(entry.getKey(), entry.getValue());
+				LOGGER.debug("Cache Set " + entry.getKey() + " = " + entry.getValue());
+			}
+		}
+	}
+	
+	public Map<String, String> getLayoutXML(WorkflowDTO workflow) {
+		Map<String, String> result = new HashMap<>();
+		try {
+			String hash = generateWorkflowHash(workflow);
+			PropertySet ps = OFBizPropertyUtils.getPropertySet(WORKFLOW_DESIGNER_PROPERTY_SET, WORKFLOW_DESIGNER_PROPERTY_SET_ID);
+			if (ps != null) {
+				LOGGER.debug("PropertySet found");
+				for (Object item : ps.getKeys(PropertySet.TEXT)) {
+					String key = String.valueOf(item);
+					if (key.endsWith(hash)) {
+						String value = ps.getText(key);
+						result.put(key, value);
+					}
+				}
+			} else {
+				LOGGER.debug("PropertySet not found");
+			}
+		} catch (Exception ex) {
+			LOGGER.error("Failed to lookup workflow layout XML", ex);
+		}
+		return result;
+	}
 
 	@Override
 	public MergeResult merge(
@@ -286,6 +337,11 @@ public class WorkflowUtil extends JiraConfigUtil {
 			created.setJiraObject(wf);
 			result.setNewDTO(created);
 		}
+		// Trigger event that workflow layout has been updated
+		EventPublisher publisher = ComponentAccessor.getComponent(EventPublisher.class);
+		publisher.publish(new WorkflowImportedFromXmlEvent((JiraWorkflow) result.getNewDTO().getJiraObject()));
+		// Apply layout
+		setLayoutXML(src);
 		return result;
 	}
 	

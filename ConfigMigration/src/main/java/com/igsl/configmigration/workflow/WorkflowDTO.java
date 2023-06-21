@@ -3,6 +3,7 @@ package com.igsl.configmigration.workflow;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -42,6 +43,7 @@ public class WorkflowDTO extends JiraConfigDTO {
 	private String xml;
 	@JsonIgnore
 	private List<StatusDTO> statuses = new ArrayList<>();
+	private Map<String, String> layoutXml = new HashMap<>();
 	
 	@Override
 	public void fromJiraObject(Object obj) throws Exception {
@@ -65,6 +67,8 @@ public class WorkflowDTO extends JiraConfigDTO {
 				this.statuses.add(status);
 			}
 		}
+		WorkflowUtil workflowUtil = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(WorkflowUtil.class);
+		this.layoutXml = workflowUtil.getLayoutXML(this);
 	}
 	
 	@Override
@@ -88,6 +92,7 @@ public class WorkflowDTO extends JiraConfigDTO {
 		r.put("Updated Date", new JiraConfigProperty(this.updatedDate));
 		r.put("Status", new JiraConfigProperty(StatusUtil.class, this.statuses));
 		r.put("XML", new JiraConfigProperty(this.xml));
+		r.put("Layout", new JiraConfigProperty(this.layoutXml));
 		WorkflowUtil util = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(this.getUtilClass());
 		if (util != null) {
 			MergeResult mr = new MergeResult();
@@ -189,6 +194,14 @@ public class WorkflowDTO extends JiraConfigDTO {
 
 	public void setStatuses(List<StatusDTO> statuses) {
 		this.statuses = statuses;
+	}
+
+	public Map<String, String> getLayoutXml() {
+		return layoutXml;
+	}
+
+	public void setLayoutXml(Map<String, String> layoutXml) {
+		this.layoutXml = layoutXml;
 	}
 
 }

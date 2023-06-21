@@ -6,11 +6,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.util.JiraHome;
+import com.atlassian.jira.util.system.ExtendedSystemInfoUtils;
+import com.atlassian.jira.util.system.ExtendedSystemInfoUtilsImpl;
 
 /**
  * Utility class for writing/reading files from Jira data folder.
@@ -46,7 +49,12 @@ public class PathManager {
 	
 	static {
 		// Initialize
-		String homeFolder = System.getProperty("jira.home");
+		// Note: jira.home is not reliable, can be missing
+		// String homeFolder = System.getProperty("jira.home");
+		ExtendedSystemInfoUtils utils = new ExtendedSystemInfoUtilsImpl(ComponentAccessor.getI18nHelperFactory().getInstance(Locale.getDefault()));
+		String homeFolder = utils.getJiraHomeLocation();
+		LOGGER.debug("Jira Home Folder: \"" + homeFolder + "\"");
+		
 		jiraDataFolder = Paths.get(homeFolder).resolve(JiraHome.DATA);
 		dataFolder = jiraDataFolder.resolve(ROOT_DIRECTORY);
 		try {

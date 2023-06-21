@@ -47,29 +47,6 @@
 
 	<dependencies>
 	
-		<!--
-		<dependency>
-			<groupId>com.atlassian.pocketknife</groupId>
-			<artifactId>atlassian-pocketknife-querydsl</artifactId>
-			<version>5.1.0</version>
-			<scope>compile</scope>
-			<exclusions>
-				<exclusion>
-					<groupId>com.atlassian.annotations</groupId>
-					<artifactId>atlassian-annotations</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.google.code.findbugs</groupId>
-					<artifactId>jsr305</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>javax.validation</groupId>
-					<artifactId>validation-api</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		-->
-
 		<!-- JXPath library -->
 		<dependency>
 			<groupId>commons-jxpath</groupId>
