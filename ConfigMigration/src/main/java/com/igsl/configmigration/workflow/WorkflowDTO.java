@@ -4,10 +4,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.commons.jxpath.JXPathContext;
 import org.apache.log4j.Logger;
 
 import com.atlassian.jira.workflow.JiraWorkflow;
@@ -16,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigRef;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
@@ -23,6 +28,13 @@ import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
 import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.status.StatusDTO;
 import com.igsl.configmigration.status.StatusUtil;
+import com.igsl.configmigration.workflow.mapper.MapperConfigUtil;
+import com.igsl.configmigration.workflow.mapper.WorkflowMapper;
+import com.igsl.configmigration.workflow.mapper.WorkflowPart;
+import com.igsl.configmigration.workflow.mapper.generated.Arg;
+import com.igsl.configmigration.workflow.mapper.generated.Meta;
+import com.igsl.configmigration.workflow.mapper.generated.Workflow;
+import com.igsl.configmigration.workflow.mapper.v1.MapperConfigWrapper;
 import com.opensymphony.workflow.loader.StepDescriptor;
 
 /**
@@ -41,8 +53,6 @@ public class WorkflowDTO extends JiraConfigDTO {
 	private ApplicationUserDTO updateAuthor;
 	private Date updatedDate;
 	private String xml;
-	@JsonIgnore
-	private List<StatusDTO> statuses = new ArrayList<>();
 	private Map<String, String> layoutXml = new HashMap<>();
 	
 	@Override
@@ -58,25 +68,99 @@ public class WorkflowDTO extends JiraConfigDTO {
 		this.updatedDate = wf.getUpdatedDate();
 		this.xml = com.atlassian.jira.workflow.WorkflowUtil.convertDescriptorToXML(wf.getDescriptor());
 		this.uniqueKey = this.name;
-		StatusUtil statusUtil = (StatusUtil) JiraConfigTypeRegistry.getConfigUtil(StatusUtil.class);
-		for (Object step : wf.getDescriptor().getSteps()) {
-			StepDescriptor sd = (StepDescriptor) step;
-			String statusId = (String) sd.getMetaAttributes().get("jira.status.id");
-			StatusDTO status = (StatusDTO) statusUtil.findByInternalId(statusId);
-			if (status != null) {
-				this.statuses.add(status);
-			}
-		}
 		WorkflowUtil workflowUtil = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(WorkflowUtil.class);
 		this.layoutXml = workflowUtil.getLayoutXML(this);
 	}
 	
 	@Override
 	protected void setupRelatedObjects() throws Exception {
-		// Link to status
-		for (StatusDTO status : this.statuses) {
-			this.addRelatedObject(status);
-			status.addReferencedObject(this);
+		// Locate workflow related objects by using the mappings
+		WorkflowUtil workflowUtil = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(WorkflowUtil.class);
+		LOGGER.debug("Parsing workflow XML: " + this.name);
+		Workflow jaxbWf = WorkflowMapper.parseWorkflow(this.xml);
+		if (jaxbWf != null) {
+			LOGGER.debug("Workflow XML parsed: " + this.name);
+			for (MapperConfigWrapper wrapper : MapperConfigUtil.getMapperConfigs(workflowUtil.getActiveObjects()).values()) {
+				LOGGER.debug("Processing mapping: " + wrapper.getDescription());
+				if (wrapper.isDisabled()) {
+					// Mapper disabled
+					LOGGER.debug("Mapping disabled");
+					continue;
+				}
+				if (wrapper.getWorkflowName() != null && !wrapper.getWorkflowName().isEmpty() && !wrapper.getWorkflowName().equals(this.getName())) {
+					// Not mapper's target workflow
+					LOGGER.debug("Mapping not targeting workflow: " + this.getName());
+					continue;
+				}
+				JXPathContext ctx = JXPathContext.newContext(jaxbWf);
+				List<Integer> captureGroups = MapperConfigUtil.parseCaptureGroups(wrapper.getCaptureGroups());
+				// For all XPath matches
+				LOGGER.debug("XPath: " + wrapper.getxPath() + " in " + this.name);
+				Iterator<?> it = ctx.iterate(wrapper.getxPath());
+				if (!it.hasNext()) {
+					LOGGER.debug("No match for: " + this.name);
+					continue;
+				}
+				LOGGER.debug("Found matches for: " + this.name);
+				while (it.hasNext()) {
+					WorkflowPart part = (WorkflowPart) it.next();
+					if (part == null) {
+						LOGGER.debug("WorkflowPart is null");
+						continue;
+					}
+					LOGGER.debug("WorkflowPart found: " + part.getPartDisplayName());
+					String value = null;
+					switch (part.getWorkflowPartType()) {
+					case ARG:
+						value = ((Arg) part).getValue();
+						break;
+					case META:
+						value = ((Meta) part).getValue();
+						break;
+					default: 
+						// Do nothikng
+						 break;
+					}
+					if (value == null || value.isEmpty()) {
+						LOGGER.debug("Value is null or empty");
+						continue;
+					}
+					LOGGER.debug("Value: " + value);
+					Pattern pattern = Pattern.compile(wrapper.getRegex());
+					Matcher matcher = pattern.matcher(value);
+					while (matcher.find()) {
+						if (captureGroups == null) {
+							// The whole expression 
+							String id = matcher.group();
+							LOGGER.debug("Whole value is ID: " + id);
+							JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), workflowUtil.getExportStore());
+							if (mappedDTO != null) {
+								LOGGER.debug("DTO: " + mappedDTO.getUniqueKey());
+								LOGGER.debug("Result: " + this.addRelatedObject(mappedDTO));
+								mappedDTO.addReferencedObject(this);
+							}
+						} else {
+							// Just the specified groups
+							for (int i : captureGroups) {
+								if (matcher.groupCount() >= i) {
+									String id = matcher.group(i);
+									LOGGER.debug("Value ID: " + id);
+									JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), workflowUtil.getExportStore());
+									if (mappedDTO != null) {
+										LOGGER.debug("DTO: " + mappedDTO.getUniqueKey());
+										LOGGER.debug("Result: " + this.addRelatedObject(mappedDTO));
+										mappedDTO.addReferencedObject(this);
+									}
+								}
+							}
+						} // Capture group options
+					} // For all regex matches
+				} // For all XPath matches
+			} // For all mappings
+		} // If workflow can be parsed
+		LOGGER.debug(this.name + " relatedObjects size: " + this.relatedObjects.size());
+		for (JiraConfigRef ref : this.relatedObjects.values()) {
+			LOGGER.debug(ref.getUtil() + " => " + ref.getUniqueKey());
 		}
 	}
 
@@ -90,7 +174,6 @@ public class WorkflowDTO extends JiraConfigDTO {
 		r.put("Update Author", new JiraConfigProperty(ApplicationUserUtil.class, this.updateAuthor));
 		r.put("Update Author Name", new JiraConfigProperty(this.updateAuthorName));
 		r.put("Updated Date", new JiraConfigProperty(this.updatedDate));
-		r.put("Status", new JiraConfigProperty(StatusUtil.class, this.statuses));
 		r.put("XML", new JiraConfigProperty(this.xml));
 		r.put("Layout", new JiraConfigProperty(this.layoutXml));
 		WorkflowUtil util = (WorkflowUtil) JiraConfigTypeRegistry.getConfigUtil(this.getUtilClass());
@@ -186,14 +269,6 @@ public class WorkflowDTO extends JiraConfigDTO {
 
 	public void setXml(String xml) {
 		this.xml = xml;
-	}
-
-	public List<StatusDTO> getStatuses() {
-		return statuses;
-	}
-
-	public void setStatuses(List<StatusDTO> statuses) {
-		this.statuses = statuses;
 	}
 
 	public Map<String, String> getLayoutXml() {

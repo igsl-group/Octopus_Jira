@@ -20,25 +20,44 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.log4j.Logger;
 
+import com.atlassian.mail.server.MailServer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.igsl.configmigration.applicationrole.ApplicationRoleUtil;
+import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
+import com.igsl.configmigration.avatar.AvatarUtil;
 import com.igsl.configmigration.customfield.CustomFieldUtil;
+import com.igsl.configmigration.customfieldsearcher.CustomFieldSearcherUtil;
+import com.igsl.configmigration.customfieldtype.CustomFieldTypeUtil;
+import com.igsl.configmigration.defaultvalueoperations.DefaultValueOperationsUtil;
+import com.igsl.configmigration.eventtype.EventTypeUtil;
+import com.igsl.configmigration.field.FieldUtil;
+import com.igsl.configmigration.fieldconfig.FieldConfigUtil;
+import com.igsl.configmigration.fieldconfigscheme.FieldConfigSchemeUtil;
 import com.igsl.configmigration.fieldlayout.FieldLayoutUtil;
 import com.igsl.configmigration.fieldlayoutscheme.FieldLayoutSchemeUtil;
 import com.igsl.configmigration.fieldscreen.FieldScreenUtil;
+import com.igsl.configmigration.globalpermission.GlobalPermissionsUtil;
 import com.igsl.configmigration.group.GroupUtil;
+import com.igsl.configmigration.insight.ObjectBeanUtil;
+import com.igsl.configmigration.insight.ObjectSchemaBeanUtil;
 import com.igsl.configmigration.issuesecuritylevelscheme.IssueSecurityLevelSchemeUtil;
 import com.igsl.configmigration.issuetype.IssueTypeUtil;
 import com.igsl.configmigration.issuetypescheme.IssueTypeSchemeUtil;
+import com.igsl.configmigration.issuetypescreencheme.IssueTypeScreenSchemeUtil;
+import com.igsl.configmigration.mailserver.MailServerUtil;
 import com.igsl.configmigration.notificationscheme.NotificationSchemeUtil;
 import com.igsl.configmigration.permissionscheme.PermissionSchemeUtil;
 import com.igsl.configmigration.plugin.PluginUtil;
 import com.igsl.configmigration.priority.PriorityUtil;
+import com.igsl.configmigration.priorityscheme.PrioritySchemeUtil;
 import com.igsl.configmigration.project.ProjectUtil;
 import com.igsl.configmigration.projectcategory.ProjectCategoryUtil;
+import com.igsl.configmigration.projectcomponent.ProjectComponentUtil;
 import com.igsl.configmigration.projectrole.ProjectRoleUtil;
 import com.igsl.configmigration.resolution.ResolutionUtil;
 import com.igsl.configmigration.status.StatusUtil;
+import com.igsl.configmigration.version.VersionUtil;
 import com.igsl.configmigration.workflow.WorkflowUtil;
 import com.igsl.configmigration.workflowscheme.WorkflowSchemeUtil;
 
@@ -52,25 +71,58 @@ public class JiraConfigTypeRegistry {
 	 * Any Util class not listed here will be sorted to the bottom of the list in ascending alphabetical order.
 	 */
 	private static List<Class<? extends JiraConfigUtil>> UTIL_ORDER = Arrays.asList(
+			// Simpler objects
 			GroupUtil.class,
+			AvatarUtil.class,
 			StatusUtil.class,
 			IssueTypeUtil.class,
 			PriorityUtil.class,
 			ResolutionUtil.class,
+			GlobalPermissionsUtil.class,
+			MailServerUtil.class,
+			
+			// Insight
+			ObjectBeanUtil.class,
+			ObjectSchemaBeanUtil.class,
+			
+			// Plugin
 			PluginUtil.class,
+
+			// Role and User - later than Group
+			ApplicationRoleUtil.class,
+			ApplicationUserUtil.class,
+			
+			// Custom field
 			CustomFieldUtil.class,
+			
+			EventTypeUtil.class,
+			FieldUtil.class,
+			FieldConfigUtil.class,
+			
+			// Screen - later then fields and custom fields
 			FieldScreenUtil.class,
 			FieldLayoutUtil.class, 
-			WorkflowUtil.class,
+			
+			// Project - later than most
+			VersionUtil.class,
 			ProjectRoleUtil.class,
 			ProjectCategoryUtil.class,
+			ProjectComponentUtil.class,
 			ProjectUtil.class,
+
+			// Schemes - come last
+			FieldConfigSchemeUtil.class,
 			IssueSecurityLevelSchemeUtil.class,
 			FieldLayoutSchemeUtil.class,
 			IssueTypeSchemeUtil.class,
-			WorkflowSchemeUtil.class,
+			IssueTypeScreenSchemeUtil.class,
 			NotificationSchemeUtil.class,
-			PermissionSchemeUtil.class
+			PermissionSchemeUtil.class,
+			PrioritySchemeUtil.class,
+			
+			// Workflow - after most, before workflow scheme
+			WorkflowUtil.class,
+			WorkflowSchemeUtil.class
 			);
 	private static List<String> orderedList = new ArrayList<>();
 	private static List<String> unorderedList = new ArrayList<>();
