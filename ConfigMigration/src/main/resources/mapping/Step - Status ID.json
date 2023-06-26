@@ -1,10 +1,1 @@
-{
-	"regex": "^(.*)$",
-	"captureGroups": "1",
-	"replacement": "$1",
-	"disabled": false,
-	"workflowName": "",
-	"description": "Step - Status ID",
-	"xPath": "//step/meta[name='jira.status.id']",
-	"objectType": "com.igsl.configmigration.status.StatusUtil"
-}
+{"regex":"^(.*)$","captureGroups":"1","replacement":"$1","disabled":false,"workflowName":"","description":"Step - Status ID","xPath":"//step/meta[name='jira.status.id']","objectType":"com.igsl.configmigration.status.StatusUtil","searchType":null}

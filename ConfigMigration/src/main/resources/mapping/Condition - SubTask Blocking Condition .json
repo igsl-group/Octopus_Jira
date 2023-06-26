@@ -1,10 +1,1 @@
-{
-	"regex": "[0-9]+",
-	"captureGroups": "",
-	"replacement": "",
-	"disabled": false,
-	"workflowName": "",
-	"description": "Condition - SubTask Blocking Condition ",
-	"xPath": "//conditions//arg[name='class.name'][value='com.atlassian.jira.workflow.condition.SubTaskBlockingCondition']/../arg[name='statuses']",
-	"objectType": "com.igsl.configmigration.status.StatusUtil"
-}
+{"regex":"[0-9]+","captureGroups":"","replacement":"","disabled":false,"workflowName":"","description":"Condition - SubTask Blocking Condition ","xPath":"//conditions//arg[name='class.name'][value='com.atlassian.jira.workflow.condition.SubTaskBlockingCondition']/../arg[name='statuses']","objectType":"com.igsl.configmigration.status.StatusUtil","searchType":null}

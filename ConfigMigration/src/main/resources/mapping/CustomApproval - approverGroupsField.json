@@ -1,10 +1,1 @@
-{
-	"regex": "\"([^,\"]+)\"",
-	"captureGroups": "1",
-	"replacement": "\"$1\"",
-	"disabled": false,
-	"workflowName": "",
-	"description": "CustomApproval - approverGroupsField",
-	"xPath": "//function[type='class'][arg[name='class.name'][value='com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction']]/arg[name='approverGroupsField']",
-	"objectType": "com.igsl.configmigration.customfield.CustomFieldUtil"
-}
+{"regex":"\"([^,\"]+)\"","captureGroups":"1","replacement":"\"$1\"","disabled":false,"workflowName":"","description":"CustomApproval - approverGroupsField","xPath":"//function[type='class'][arg[name='class.name'][value='com.igsl.customapproval.workflow.postfunction.InitializeApprovalPostFunction']]/arg[name='approverGroupsField']","objectType":"com.igsl.configmigration.customfield.CustomFieldUtil","searchType":null}
