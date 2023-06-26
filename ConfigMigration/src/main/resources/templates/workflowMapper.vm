@@ -221,7 +221,7 @@
 				<tr>
 					<td width="50%">
 						<label style="font-weight: bold">Select Workflow as Template: </label>
-						<select style="width: 95%" name="workflow" onchange="submitForm('loadWorkflow')">
+						<select style="width: 80%" name="workflow" onchange="submitForm('loadWorkflow')">
 							<option value="">Select a workflow</option>
 							#foreach ($item in $action.getWorkflows())
 								#set ($selected = "")
