@@ -40,4 +40,8 @@ public interface MapperConfig extends Entity {
 	@StringLength(value = StringLength.UNLIMITED)
 	void setObjectType(String objectType);
 	String getObjectType();
+
+	@StringLength(value = StringLength.UNLIMITED)
+	void setSearchType(String searchType);
+	String getSearchType();
 }

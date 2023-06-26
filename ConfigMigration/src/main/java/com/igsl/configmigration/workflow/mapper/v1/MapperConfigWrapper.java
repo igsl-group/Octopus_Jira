@@ -1,6 +1,7 @@
 package com.igsl.configmigration.workflow.mapper.v1;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.igsl.configmigration.JiraConfigSearchType;
 
 public class MapperConfigWrapper {
 	@JsonIgnore
@@ -13,6 +14,7 @@ public class MapperConfigWrapper {
 	private String description;
 	private String xPath;
 	private String objectType;
+	private String searchType;
 	@JsonIgnore
 	private MapperConfig config;
 	public MapperConfigWrapper() {}
@@ -24,6 +26,7 @@ public class MapperConfigWrapper {
 		this.description = config.getDescription();
 		this.disabled = config.isDisabled();
 		this.objectType = config.getObjectType();
+		this.searchType = config.getSearchType();
 		this.xPath = config.getXPath();
 		this.workflowName = config.getWorkflowName();
 	}
@@ -34,6 +37,7 @@ public class MapperConfigWrapper {
 		config.setDescription(this.description);
 		config.setDisabled(this.disabled);
 		config.setObjectType(this.objectType);
+		config.setSearchType(this.searchType);
 		config.setxPath(this.xPath);
 		config.setWorkflowName(this.workflowName);
 		config.copyTo(config.getConfig());
@@ -45,6 +49,7 @@ public class MapperConfigWrapper {
 		config.setDescription(this.description);
 		config.setDisabled(this.disabled);
 		config.setObjectType(this.objectType);
+		config.setSearchType(this.searchType);
 		config.setXPath(this.xPath);
 		config.setWorkflowName(this.workflowName);
 	}
@@ -115,5 +120,11 @@ public class MapperConfigWrapper {
 	}
 	public void setUpdated(boolean updated) {
 		this.updated = updated;
+	}
+	public String getSearchType() {
+		return searchType;
+	}
+	public void setSearchType(String searchType) {
+		this.searchType = searchType;
 	}
 }

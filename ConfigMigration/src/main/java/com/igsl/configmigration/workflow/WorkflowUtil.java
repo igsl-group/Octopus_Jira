@@ -167,7 +167,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 						while (matcher.find()) {
 							if (captureGroups == null) {
 								String id = matcher.group();
-								JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+								JiraConfigDTO mappedDTO = MapperConfigUtil
+										.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), this.importStore);
 								if (mappedDTO != null) {
 									matcher.appendReplacement(newValue, Matcher.quoteReplacement(mappedDTO.getInternalId()));
 								} else {
@@ -178,7 +179,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 								for (int i : captureGroups) {
 									if (matcher.groupCount() >= i) {
 										String id = matcher.group(i);
-										JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), this.importStore);
+										JiraConfigDTO mappedDTO = MapperConfigUtil
+												.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), this.importStore);
 										if (mappedDTO != null) {
 											replacementMap.put(i, Matcher.quoteReplacement(mappedDTO.getInternalId()));
 										} else {

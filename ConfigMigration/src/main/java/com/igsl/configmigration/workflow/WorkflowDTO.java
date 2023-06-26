@@ -133,7 +133,8 @@ public class WorkflowDTO extends JiraConfigDTO {
 							// The whole expression 
 							String id = matcher.group();
 							LOGGER.debug("Whole value is ID: " + id);
-							JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), workflowUtil.getExportStore());
+							JiraConfigDTO mappedDTO = MapperConfigUtil
+									.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), workflowUtil.getExportStore());
 							if (mappedDTO != null) {
 								LOGGER.debug("DTO: " + mappedDTO.getUniqueKey());
 								LOGGER.debug("Result: " + this.addRelatedObject(mappedDTO));
@@ -145,7 +146,8 @@ public class WorkflowDTO extends JiraConfigDTO {
 								if (matcher.groupCount() >= i) {
 									String id = matcher.group(i);
 									LOGGER.debug("Value ID: " + id);
-									JiraConfigDTO mappedDTO = MapperConfigUtil.resolveMapping(id, wrapper.getObjectType(), workflowUtil.getExportStore());
+									JiraConfigDTO mappedDTO = MapperConfigUtil
+											.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), workflowUtil.getExportStore());
 									if (mappedDTO != null) {
 										LOGGER.debug("DTO: " + mappedDTO.getUniqueKey());
 										LOGGER.debug("Result: " + this.addRelatedObject(mappedDTO));

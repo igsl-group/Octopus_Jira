@@ -1,5 +1,9 @@
 package com.igsl.configmigration.workflow.mapper;
 
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -13,6 +17,7 @@ import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigSearchType;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.workflow.mapper.v1.MapperConfig;
@@ -31,13 +36,39 @@ public class MapperConfigUtil {
 		return util;
 	}
 	
-	public static JiraConfigDTO lookupDTO(String value, String objectType) {
+	public static JiraConfigDTO lookupDTO(String value, String objectType, String searchType) {
 		JiraConfigDTO result = null;
 		if (value != null && objectType != null) {
 			JiraConfigUtil util = lookupUtil(objectType);
 			if (util != null) {
+				JiraConfigSearchType st = util.parseSearchType(searchType);
 				try {
-					result = util.findByInternalId(value);
+					if (st != null) {
+						try {
+							String fieldName = st.getFieldName();
+							LOGGER.debug("Looking for fieldName: " + fieldName);
+							BeanInfo info = Introspector.getBeanInfo(util.getDTOClass());
+							for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {
+								if (fieldName.equals(propDesc.getName())) {
+									LOGGER.debug("Found fieldName: " + fieldName);
+									Method getter = propDesc.getReadMethod();
+									if (getter != null) {
+										for (JiraConfigDTO dto : util.search(null).values()) {
+											Object v = getter.invoke(dto);
+											if (value.equals(v)) {
+												return dto;
+											}
+										}
+									}
+									break;
+								}
+							}
+						} catch (Exception ex) {
+							LOGGER.error("Unable to process search type", ex);
+						}
+					} else {
+						result = util.findByInternalId(value);
+					}
 				} catch (Exception e) {
 					LOGGER.error("Unable to lookup item", e);
 				}
@@ -53,29 +84,66 @@ public class MapperConfigUtil {
 	 * @param importStore
 	 * @return JiraConfigDTO
 	 */
-	public static JiraConfigDTO resolveMapping(String id, String objectType, DTOStore importStore) {
+	public static JiraConfigDTO resolveMapping(String id, String objectType, String searchType, DTOStore importStore) {
 		JiraConfigDTO result = null;
 		JiraConfigUtil util = lookupUtil(objectType);
 		if (util != null) {
 			LOGGER.debug("Remapping " + objectType + ", id " + id);
+			JiraConfigSearchType st = util.parseSearchType(searchType);
+			LOGGER.debug("Search Type: " + st);
 			Map<String, JiraConfigDTO> typeStore = importStore.getTypeStore(util);
 			if (typeStore != null) {
 				LOGGER.debug("Checking importStore...");
 				for (JiraConfigDTO dto : typeStore.values()) {
-					LOGGER.debug("Checking importStore item: " + dto.getInternalId() + " = " + dto.getUniqueKey());
-					// Note: internal ID can be null for object types with a default object
-					if (dto.getInternalId() != null && dto.getInternalId().equals(id)) {
-						LOGGER.debug("Found " + objectType + ", id " + id + " in importStore, uniqueKey " + dto.getUniqueKey());
-						// Found import object referenced by id
-						// Look for matching name in util
+					if (st != null) {
 						try {
-							JiraConfigDTO mappedDTO = util.findByDTO(dto);
-							if (mappedDTO != null) {
-								LOGGER.debug("Found in current server, uniqueKey " + mappedDTO.getUniqueKey() + ", id " + mappedDTO.getInternalId());
-								result = mappedDTO;
+							String fieldName = st.getFieldName();
+							LOGGER.debug("Looking for fieldName: " + fieldName);
+							BeanInfo info = Introspector.getBeanInfo(dto.getClass());
+							for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {
+								if (fieldName.equals(propDesc.getName())) {
+									LOGGER.debug("Found fieldName: " + fieldName);
+									Method getter = propDesc.getReadMethod();
+									if (getter != null) {
+										Object value = getter.invoke(dto);
+										LOGGER.debug("Field value: [" + value + "]");
+										if (id != null && id.equals(value)) {
+											try {
+												JiraConfigDTO mappedDTO = util.findByDTO(dto);
+												if (mappedDTO != null) {
+													LOGGER.debug("Found in current server, uniqueKey " + mappedDTO.getUniqueKey() + ", id " + mappedDTO.getInternalId());
+													result = mappedDTO;
+												}
+											} catch (Exception ex) {
+												LOGGER.error("Error resolving object mapping from id to exportStore item", ex);
+											}
+										}
+									} else {
+										LOGGER.error("Getter method not found for field " + fieldName);
+									}
+									break;
+								}
 							}
 						} catch (Exception ex) {
-							LOGGER.error("Error resolving object mapping from id to exportStore item", ex);
+							LOGGER.error("Error resolving object mapping search type: " + searchType, ex);
+						}
+					} else {
+						// Default to using internalId for mapping
+						LOGGER.debug("Checking importStore item: " + dto.getInternalId() + " = " + dto.getUniqueKey());
+						// Note: internal ID can be null for object types with a default object
+						if (dto.getInternalId() != null && dto.getInternalId().equals(id)) {
+							LOGGER.debug("Found " + objectType + ", id " + id + " in importStore, uniqueKey " + dto.getUniqueKey());
+							// Found import object referenced by id
+							// Look for matching name in util
+							try {
+								JiraConfigDTO mappedDTO = util.findByDTO(dto);
+								if (mappedDTO != null) {
+									LOGGER.debug("Found in current server, uniqueKey " + mappedDTO.getUniqueKey() + ", id " + mappedDTO.getInternalId());
+									result = mappedDTO;
+								}
+							} catch (Exception ex) {
+								LOGGER.error("Error resolving object mapping from id to exportStore item", ex);
+							}
 						}
 					}
 				}

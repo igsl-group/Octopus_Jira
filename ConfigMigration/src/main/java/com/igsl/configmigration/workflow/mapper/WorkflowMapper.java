@@ -42,6 +42,7 @@ import com.atlassian.plugin.PluginAccessor;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.igsl.configmigration.JiraConfigDTO;
 import com.igsl.configmigration.JiraConfigProperty;
+import com.igsl.configmigration.JiraConfigSearchType;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.workflow.mapper.generated.Arg;
@@ -67,6 +68,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		public Iterator<?> partIterator;	// Matches for mapping
 		public String partIteratorXPath;	// XPath used for search
 		public Map<String, Map<String, JiraConfigProperty>> lookupResult;
+		public List<JiraConfigSearchType> searchTypes = new ArrayList<>();
 	}
 	private SessionData sessionData;
 	
@@ -107,6 +109,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final String PARAM_MAPPING = "mapping";
 	private static final String PARAM_MAPPING_DESCRIPTION = "mappingDesc";
 	private static final String PARAM_MAPPING_OBJECT_TYPE = "mappingObjectType";
+	private static final String PARAM_MAPPING_SEARCH_TYPE = "mappingSearchType";
 	private static final String PARAM_MAPPING_REGEX = "mappingRegex";
 	private static final String PARAM_MAPPING_CAPTURE_GROUPS = "mappingCaptureGroups";
 	private static final String PARAM_MAPPING_REPLACEMENT = "mappingReplacement";
@@ -145,6 +148,10 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		} catch (SAXNotRecognizedException | SAXNotSupportedException | ParserConfigurationException e) {
 			LOGGER.error("Error configuring SAX Parser", e);
 		}
+	}
+	
+	public List<JiraConfigSearchType> getSearchTypes() {
+		return this.sessionData.searchTypes;
 	}
 	
 	public String getSelectedWorkflow() {
@@ -332,7 +339,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					for (String v : valueList) {
 						if (!this.sessionData.lookupResult.containsKey(v)) {
 							if (v != null && v.length() != 0) {
-								JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType());
+								JiraConfigDTO dto = MapperConfigUtil.lookupDTO(v, this.sessionData.mapping.getObjectType(), this.sessionData.mapping.getSearchType());
 								if (dto != null) {
 									this.sessionData.lookupResult.put(v, dto.getConfigProperties());
 								} else {
@@ -375,12 +382,10 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		if (this.sessionData.mapping != null) {
 			// Double check mapping still exists
 			if (this.sessionData.mapping.getId() != null) {
-				// Not a new ID, check if it still exists
+				// Not a new ID, check if it still exists, if not, wipe it from memory
 				if (MapperConfigUtil.getMapperConfigById(this.ao, this.sessionData.mapping.getId()) == null) {
 					this.sessionData.mapping = null;
-				} else {
-					
-				}
+				} 
 			}
 			if (this.sessionData.mapping != null) {
 				Boolean mappingUpdated = Boolean.parseBoolean(req.getParameter(PARAM_MAPPING_UPDATED));
@@ -394,6 +399,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 					this.sessionData.mapping.setDisabled(disabled);
 					this.sessionData.mapping.setDescription(req.getParameter(PARAM_MAPPING_DESCRIPTION));
 					this.sessionData.mapping.setObjectType(req.getParameter(PARAM_MAPPING_OBJECT_TYPE));
+					this.sessionData.mapping.setSearchType(req.getParameter(PARAM_MAPPING_SEARCH_TYPE));
 					this.sessionData.mapping.setxPath(req.getParameter(PARAM_MAPPING_XPATH));
 					this.sessionData.mapping.setWorkflowName(req.getParameter(PARAM_MAPPING_WORKFLOW_NAME));
 				}
@@ -502,6 +508,18 @@ public class WorkflowMapper extends JiraWebActionSupport {
 		}
 		refreshLookupResult(); // Lookup is always refreshed, all actions impact it
 		
+		// Refresh search type list
+		if (this.sessionData.mapping != null) {
+			JiraConfigUtil util = JiraConfigTypeRegistry.getConfigUtil(this.sessionData.mapping.getObjectType());
+			if (util != null) {
+				this.sessionData.searchTypes = util.getSearchTypes();
+			} else {
+				this.sessionData.searchTypes = null;
+			}
+		} else {
+			this.sessionData.searchTypes = null;
+		}
+
 		return JiraWebActionSupport.INPUT;
 	}
 

@@ -4,7 +4,9 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -487,5 +489,13 @@ public abstract class JiraConfigUtil {
 			result.add(kg);
 		}
 		return result;
+	}
+
+	public List<JiraConfigSearchType> getSearchTypes() {
+		return null;
+	}
+	
+	public JiraConfigSearchType parseSearchType(String s) {
+		return null;
 	}
 }

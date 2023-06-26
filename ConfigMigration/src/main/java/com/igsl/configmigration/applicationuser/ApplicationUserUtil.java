@@ -1,6 +1,8 @@
 package com.igsl.configmigration.applicationuser;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +30,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigSearchType;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.general.GeneralDTO;
@@ -235,5 +238,19 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		}
 		return result;
 	}
+	
+	@Override
+	public List<JiraConfigSearchType> getSearchTypes() {
+		return ApplicationUserSearchType.values();
+	}
 
+	@Override
+	public JiraConfigSearchType parseSearchType(String s) {
+		for (JiraConfigSearchType type : getSearchTypes()) {
+			if (type.toString().equals(s)) {
+				return type;
+			}
+		}		
+		return null;
+	}
 }

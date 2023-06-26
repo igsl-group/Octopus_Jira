@@ -357,7 +357,7 @@
 									<th>Value object type</th>
 									<td>
 										<select id="mappingObjectType" name="mappingObjectType" 
-											onchange="markUpdated()">
+											onchange="markUpdated(); submitForm('');">
 											<option selected value="">Select an object type</option>
 											#foreach ($item in $action.getObjectTypes().entrySet())
 												#set ($selected = "")
@@ -367,6 +367,19 @@
 												<option ${selected} value="${item.getValue()}">${item.getKey()}</option>
 											#end
 										</select>
+										#if ($action.getSearchTypes())
+											<select id="mappingSearchType" name="mappingSearchType"
+												onchange="markUpdated(); submitForm('')">
+												<option selected value="">Select a mapping type</option>
+												#foreach ($item in $action.getSearchTypes())
+													#set ($selected = "")
+													#if ($action.getMapping().getSearchType() == $item.toString())
+														#set ($selected = "selected")
+													#end
+													<option ${selected} value="${item.toString()}">${item.getDisplayName()}</option>
+												#end
+											</select>
+										#end
 									</td>
 								</tr>
 								<tr>
