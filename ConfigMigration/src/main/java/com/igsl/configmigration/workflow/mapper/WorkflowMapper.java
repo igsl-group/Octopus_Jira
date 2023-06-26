@@ -470,7 +470,13 @@ public class WorkflowMapper extends JiraWebActionSupport {
 						LOGGER.debug("starting new search: " + this.sessionData.partIteratorXPath);
 						// Start new search
 						JXPathContext ctx = JXPathContext.newContext(this.sessionData.workflow);
-						this.sessionData.partIterator = ctx.iterate(this.sessionData.partIteratorXPath);
+						try { 
+							this.sessionData.partIterator = ctx.iterate(this.sessionData.partIteratorXPath);
+						} catch (Exception ex) {
+							this.sessionData.part = null;
+							this.sessionData.partIterator = null;
+							this.searchResult = "XPath is invalid";
+						}
 					} else {
 						LOGGER.debug("continuing search: " + this.sessionData.partIteratorXPath);
 					}

@@ -231,6 +231,7 @@
 								<option value="$!{item.getName()}" ${selected}>$!{item.getName()}</option>
 							#end
 						</select>
+						<input type="button" onclick="submitForm('loadWorkflow')" value="Reload Workflow"/>
 					</td>
 					<td width="50%">
 						<label style="font-weight: bold">Select Mapping: </label>
@@ -282,7 +283,11 @@
 									</tr>
 									<tr>
 										<th>Value</th>
-										<td>$!{data.getWorkflowPart().getValue()}</td>
+										<td>
+											<div>$!{data.getWorkflowPart().getValue()}</div>
+											<input type="button" onclick="$('#base64Decoded').html(atob('$!{data.getWorkflowPart().getValue()}'))" value="Base64 Decode"/>
+											<div id="base64Decoded"></div>
+										</td>
 									</tr>
 								</table>
 							#end

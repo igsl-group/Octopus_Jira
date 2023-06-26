@@ -63,7 +63,8 @@ public class MapperConfigUtil {
 				LOGGER.debug("Checking importStore...");
 				for (JiraConfigDTO dto : typeStore.values()) {
 					LOGGER.debug("Checking importStore item: " + dto.getInternalId() + " = " + dto.getUniqueKey());
-					if (dto.getInternalId().equals(id)) {
+					// Note: internal ID can be null for object types with a default object
+					if (dto.getInternalId() != null && dto.getInternalId().equals(id)) {
 						LOGGER.debug("Found " + objectType + ", id " + id + " in importStore, uniqueKey " + dto.getUniqueKey());
 						// Found import object referenced by id
 						// Look for matching name in util

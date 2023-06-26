@@ -94,7 +94,7 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		this.displayName = o.getDisplayName();
 		this.emailAddress = o.getEmailAddress();
 		this.userName = o.getUsername();
-		this.uniqueKey = o.getKey();
+		this.uniqueKey = o.getEmailAddress();
 		Directory dir = USER_MANAGER.getDirectory(o.getDirectoryId());
 		if (dir != null) {
 			jiraUser = dir.getName().equals(JIRA_INTERNAL_DIRECTORY);
@@ -146,7 +146,7 @@ public class ApplicationUserDTO extends JiraConfigDTO {
 		r.put("ID", new JiraConfigProperty(id));
 		r.put("Properties", new JiraConfigProperty(GeneralUtil.class, this.properties));
 		r.put("Groups", new JiraConfigProperty(GroupUtil.class, this.groups));
-		r.put("Jira Internal Directory User", new JiraConfigProperty(this.jiraUser));
+		r.put("Internal Directory User", new JiraConfigProperty(this.jiraUser));
 		return r;
 	}
 	
