@@ -1,6 +1,7 @@
 package com.igsl.configmigration.issuesecuritylevelscheme;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -9,6 +10,7 @@ import org.ofbiz.core.entity.GenericValue;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.security.IssueSecurityLevel;
+import com.atlassian.jira.issue.security.IssueSecurityLevelImpl;
 import com.atlassian.jira.issue.security.IssueSecurityLevelManager;
 import com.atlassian.jira.issue.security.IssueSecurityLevelScheme;
 import com.atlassian.jira.issue.security.IssueSecuritySchemeManager;
@@ -92,19 +94,28 @@ public class IssueSecurityLevelSchemeUtil extends JiraConfigUtil {
 			Long defaultLevel = null;
 			created = (IssueSecurityLevelSchemeDTO) findByInternalId(Long.toString(id));
 			result.setNewDTO(created);
-			// Recreate levels
-			for (IssueSecurityLevel lvl : LEVEL_MANAGER.getIssueSecurityLevels(id)) {
-				LEVEL_MANAGER.deleteSecurityLevel(lvl.getId());
-			}
-			// Merge levels
+			// Merge levels - match by name, update description
+			Map<String, String> targetMap = new HashMap<>();
 			for (IssueSecurityLevelDTO item : src.getIssueSecurityLevels()) {
-				item.setSchemeId(id);
-				item.setJiraObject(null, created);
-				MergeResult mr = LEVEL_UTIL.merge(exportStore, null, importStore, item);
-				IssueSecurityLevelDTO level = (IssueSecurityLevelDTO) mr.getNewDTO();
-				if (item.getId().equals(src.getDefaultSecurityLevelId())) {
-					defaultLevel = level.getId();
+				targetMap.put(item.getName(), item.getDescription());
+			}			
+			for (IssueSecurityLevel lvl : LEVEL_MANAGER.getIssueSecurityLevels(id)) {
+				String levelName = lvl.getName();
+				if (targetMap.containsKey(levelName)) {
+					// Update level description
+					IssueSecurityLevel updateLvl = new IssueSecurityLevelImpl(lvl.getId(), levelName, targetMap.get(levelName), id);
+					LEVEL_MANAGER.updateIssueSecurityLevel(updateLvl);
+					// Remove from targetMap
+					targetMap.remove(lvl.getName());
+				} else {
+					// Delete removed level
+					LEVEL_MANAGER.deleteSecurityLevel(lvl.getId());
 				}
+			}
+			// Add remaining items in targetMap
+			for (Map.Entry<String, String> entry : targetMap.entrySet()) {
+				IssueSecurityLevel newLvl = new IssueSecurityLevelImpl(null, entry.getKey(), entry.getValue(), id);
+				LEVEL_MANAGER.createIssueSecurityLevel(newLvl);
 			}
 			// Set default level, no choice but to use deprecated APIs
 			if (defaultLevel != null) {

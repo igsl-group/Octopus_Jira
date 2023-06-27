@@ -46,7 +46,7 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	@Override
 	public JiraConfigDTO findByUniqueKey(String uniqueKey, Object... params) throws Exception {
 		for (IssueSecurityLevel s : LEVEL_MANAGER.getAllIssueSecurityLevels()) {
-			if (s.getName().equals(uniqueKey)) {
+			if (Integer.toString(s.hashCode()).equals(uniqueKey)) {
 	 			IssueSecurityLevelDTO item = new IssueSecurityLevelDTO();
 				item.setJiraObject(s);
 				return item;
@@ -58,29 +58,7 @@ public class IssueSecurityLevelUtil extends JiraConfigUtil {
 	public MergeResult merge(
 			DTOStore exportStore, JiraConfigDTO oldItem, 
 			DTOStore importStore, JiraConfigDTO newItem) throws Exception {
-		MergeResult result = new MergeResult();
-		IssueSecurityLevelDTO original = null;
-		if (oldItem != null) {
-			original = (IssueSecurityLevelDTO) oldItem;
-		} else {
-			original = (IssueSecurityLevelDTO) findByDTO(newItem);
-		}
-		IssueSecurityLevelDTO src = (IssueSecurityLevelDTO) newItem;
-		if (original != null) {
-			// Update
-			IssueSecurityLevelImpl item = new IssueSecurityLevelImpl(
-					original.getId(), src.getName(), src.getDescription(), src.getSchemeId());
-			LEVEL_MANAGER.updateIssueSecurityLevel(item);
-			result.setNewDTO(findByInternalId(Long.toString(original.getId())));
-		} else {
-			// Create
-			IssueSecurityLevel createdJira = LEVEL_MANAGER.createIssueSecurityLevel(
-					src.getSchemeId(), src.getName(), src.getDescription());
-			IssueSecurityLevelDTO created = new IssueSecurityLevelDTO();
-			created.setJiraObject(createdJira, src.getObjectParameters());
-			result.setNewDTO(created);
-		}
-		return result;
+		throw new Exception("IssueSecurityLevelDTO is read only");
 	}
 
 	@Override
