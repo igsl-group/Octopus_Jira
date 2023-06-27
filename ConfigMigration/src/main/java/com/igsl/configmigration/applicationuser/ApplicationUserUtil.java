@@ -244,13 +244,4 @@ public class ApplicationUserUtil extends JiraConfigUtil {
 		return ApplicationUserSearchType.values();
 	}
 
-	@Override
-	public JiraConfigSearchType parseSearchType(String s) {
-		for (JiraConfigSearchType type : getSearchTypes()) {
-			if (type.toString().equals(s)) {
-				return type;
-			}
-		}		
-		return null;
-	}
 }

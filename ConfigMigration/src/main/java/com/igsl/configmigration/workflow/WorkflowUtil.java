@@ -170,7 +170,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 								JiraConfigDTO mappedDTO = MapperConfigUtil
 										.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), this.importStore);
 								if (mappedDTO != null) {
-									matcher.appendReplacement(newValue, Matcher.quoteReplacement(mappedDTO.getInternalId()));
+									String s = MapperConfigUtil.getResolvedValue(mappedDTO, wrapper.getSearchType());
+									matcher.appendReplacement(newValue, Matcher.quoteReplacement(s));
 								} else {
 									result.addWarning("Unable to map " + util.getName() + " id " + id);
 								}
@@ -182,7 +183,8 @@ public class WorkflowUtil extends JiraConfigUtil {
 										JiraConfigDTO mappedDTO = MapperConfigUtil
 												.resolveMapping(id, wrapper.getObjectType(), wrapper.getSearchType(), this.importStore);
 										if (mappedDTO != null) {
-											replacementMap.put(i, Matcher.quoteReplacement(mappedDTO.getInternalId()));
+											String s = MapperConfigUtil.getResolvedValue(mappedDTO, wrapper.getSearchType());
+											replacementMap.put(i, Matcher.quoteReplacement(s));
 										} else {
 											result.addWarning("Unable to map " + util.getName() + " id " + id);
 										}

@@ -496,6 +496,14 @@ public abstract class JiraConfigUtil {
 	}
 	
 	public JiraConfigSearchType parseSearchType(String s) {
+		List<JiraConfigSearchType> list = getSearchTypes();
+		if (list != null) {
+			for (JiraConfigSearchType type : list) {
+				if (type.toString().equals(s)) {
+					return type;
+				}
+			}		
+		}
 		return null;
 	}
 }

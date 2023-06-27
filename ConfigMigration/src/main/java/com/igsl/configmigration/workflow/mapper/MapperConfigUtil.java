@@ -77,18 +77,53 @@ public class MapperConfigUtil {
 		return result;
 	}
 	
+	public static String getResolvedValue(JiraConfigDTO dto, String searchType) {
+		if (dto != null) {
+			JiraConfigUtil util = lookupUtil(dto.getUtilClass().getCanonicalName());
+			JiraConfigSearchType st = util.parseSearchType(searchType);
+			if (st != null) {
+				try {
+					String fieldName = st.getFieldName();
+					BeanInfo info = Introspector.getBeanInfo(dto.getClass());
+					for (PropertyDescriptor propDesc : info.getPropertyDescriptors()) {
+						if (fieldName.equals(propDesc.getName())) {
+							Method getter = propDesc.getReadMethod();
+							if (getter != null) {
+								Object newValue = getter.invoke(dto);
+								if (newValue != null) {
+									return newValue.toString();
+								} else {
+									return null;
+								}
+							}
+						} else {
+							LOGGER.error("Getter method not found for field " + fieldName);
+						}
+						break;
+					}
+				} catch (Exception ex) {
+					LOGGER.error("Error resolving object mapping search type: " + searchType, ex);
+				}
+			} else {
+				// Defaults to internal ID
+				return dto.getInternalId();
+			}
+		}
+		return null;
+	}
+	
 	/**
 	 * Find id in importStore, then locate a matching item in util according to objectType
-	 * @param id
+	 * @param originalValue
 	 * @param objectType
 	 * @param importStore
 	 * @return JiraConfigDTO
 	 */
-	public static JiraConfigDTO resolveMapping(String id, String objectType, String searchType, DTOStore importStore) {
+	public static JiraConfigDTO resolveMapping(String originalValue, String objectType, String searchType, DTOStore importStore) {
 		JiraConfigDTO result = null;
 		JiraConfigUtil util = lookupUtil(objectType);
 		if (util != null) {
-			LOGGER.debug("Remapping " + objectType + ", id " + id);
+			LOGGER.debug("Remapping " + objectType + ", id " + originalValue);
 			JiraConfigSearchType st = util.parseSearchType(searchType);
 			LOGGER.debug("Search Type: " + st);
 			Map<String, JiraConfigDTO> typeStore = importStore.getTypeStore(util);
@@ -107,7 +142,7 @@ public class MapperConfigUtil {
 									if (getter != null) {
 										Object value = getter.invoke(dto);
 										LOGGER.debug("Field value: [" + value + "]");
-										if (id != null && id.equals(value)) {
+										if (originalValue != null && originalValue.equals(value)) {
 											try {
 												JiraConfigDTO mappedDTO = util.findByDTO(dto);
 												if (mappedDTO != null) {
@@ -131,8 +166,8 @@ public class MapperConfigUtil {
 						// Default to using internalId for mapping
 						LOGGER.debug("Checking importStore item: " + dto.getInternalId() + " = " + dto.getUniqueKey());
 						// Note: internal ID can be null for object types with a default object
-						if (dto.getInternalId() != null && dto.getInternalId().equals(id)) {
-							LOGGER.debug("Found " + objectType + ", id " + id + " in importStore, uniqueKey " + dto.getUniqueKey());
+						if (dto.getInternalId() != null && dto.getInternalId().equals(originalValue)) {
+							LOGGER.debug("Found " + objectType + ", id " + originalValue + " in importStore, uniqueKey " + dto.getUniqueKey());
 							// Found import object referenced by id
 							// Look for matching name in util
 							try {

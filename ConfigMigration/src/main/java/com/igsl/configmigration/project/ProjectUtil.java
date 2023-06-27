@@ -1,6 +1,7 @@
 package com.igsl.configmigration.project;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -26,10 +27,12 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.igsl.configmigration.DTOStore;
 import com.igsl.configmigration.JiraConfigDTO;
+import com.igsl.configmigration.JiraConfigSearchType;
 import com.igsl.configmigration.JiraConfigTypeRegistry;
 import com.igsl.configmigration.JiraConfigUtil;
 import com.igsl.configmigration.MergeResult;
 import com.igsl.configmigration.applicationuser.ApplicationUserDTO;
+import com.igsl.configmigration.applicationuser.ApplicationUserSearchType;
 import com.igsl.configmigration.applicationuser.ApplicationUserUtil;
 import com.igsl.configmigration.avatar.AvatarDTO;
 import com.igsl.configmigration.avatar.AvatarUtil;
@@ -203,6 +206,11 @@ public class ProjectUtil extends JiraConfigUtil {
 			result.put(item.getUniqueKey(), item);
 		}
 		return result;
+	}
+
+	@Override
+	public List<JiraConfigSearchType> getSearchTypes() {
+		return ProjectSearchType.values();
 	}
 
 }
