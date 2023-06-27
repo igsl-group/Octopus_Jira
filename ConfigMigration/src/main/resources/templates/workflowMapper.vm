@@ -420,15 +420,19 @@
 								<tr>
 									<td colspan="100%">
 										#set ($disabled = "disabled")
+										#set ($clone = "")
 										#if ($action.getMapping() && $action.getMapping().isUpdated())
 											#set ($disabled = "")
+											#set ($clone = "disabled")
 										#end
 										#if ($action.getMapping().getConfig())
 											<input type="button" ${disabled} id="saveBtn" onclick="saveMapping()" value="Save"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete"/>
+											<input type="button" ${clone} onclick="submitForm('cloneMapping')" value="Clone"/>
 										#else
 											<input type="button" ${disabled} id="saveBtn" onclick="saveMapping()" value="Create"/>
 											<input type="button" onclick="submitForm('deleteMapping')" value="Delete" disabled/>
+											<input type="button" ${clone} onclick="submitForm('cloneMapping')" value="Clone"/>
 										#end
 									</td>
 								</tr>

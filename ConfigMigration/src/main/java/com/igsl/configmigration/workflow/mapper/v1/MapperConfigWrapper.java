@@ -43,15 +43,17 @@ public class MapperConfigWrapper {
 		config.copyTo(config.getConfig());
 	}
 	public void copyTo(MapperConfig config) {
-		config.setRegex(this.regex);
-		config.setCaptureGroups(this.captureGroups);
-		config.setReplacement(this.replacement);
-		config.setDescription(this.description);
-		config.setDisabled(this.disabled);
-		config.setObjectType(this.objectType);
-		config.setSearchType(this.searchType);
-		config.setXPath(this.xPath);
-		config.setWorkflowName(this.workflowName);
+		if (config != null) {
+			config.setRegex(this.regex);
+			config.setCaptureGroups(this.captureGroups);
+			config.setReplacement(this.replacement);
+			config.setDescription(this.description);
+			config.setDisabled(this.disabled);
+			config.setObjectType(this.objectType);
+			config.setSearchType(this.searchType);
+			config.setXPath(this.xPath);
+			config.setWorkflowName(this.workflowName);
+		}
 	}
 	@JsonIgnore
 	public String getId() {

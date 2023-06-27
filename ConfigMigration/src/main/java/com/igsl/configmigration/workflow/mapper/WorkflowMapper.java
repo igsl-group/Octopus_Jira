@@ -105,6 +105,7 @@ public class WorkflowMapper extends JiraWebActionSupport {
 	private static final String ACTION_LOAD_MAPPING = "loadMapping";
 	private static final String ACTION_CREATE_MAPPING = "createMapping";
 	private static final String ACTION_SAVE_MAPPING = "saveMapping";
+	private static final String ACTION_CLONE_MAPPING = "cloneMapping";
 	private static final String ACTION_DELETE_MAPPING = "deleteMapping";
 	private static final String PARAM_MAPPING = "mapping";
 	private static final String PARAM_MAPPING_DESCRIPTION = "mappingDesc";
@@ -452,6 +453,13 @@ public class WorkflowMapper extends JiraWebActionSupport {
 			if (this.sessionData.mapping != null) {
 				MapperConfigUtil.saveMapperConfig(this.ao, this.sessionData.mapping);
 				this.sessionData.mapping.setUpdated(false);
+			}
+		} else if (ACTION_CLONE_MAPPING.equals(action)) {
+			if (this.sessionData.mapping != null) {
+				MapperConfigWrapper newMapping = new MapperConfigWrapper();
+				this.sessionData.mapping.copyTo(newMapping);
+				newMapping.setDescription(null);	
+				this.sessionData.mapping = newMapping;
 			}
 		} else if (ACTION_DELETE_MAPPING.equals(action)) {
 			if (this.sessionData.mapping != null) {
