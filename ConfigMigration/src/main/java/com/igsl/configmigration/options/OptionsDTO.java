@@ -8,7 +8,6 @@ import java.util.TreeMap;
 
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.customfields.option.Options;
-import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -41,6 +40,18 @@ public class OptionsDTO extends JiraConfigDTO {
 			this.rootOptions.add(item);
 		}
 		this.uniqueKey = Integer.toString(this.hashCode());
+	}
+	
+	public String getConfigName() {
+		StringBuilder sb = new StringBuilder();
+		if (this.rootOptions != null) {
+			for (OptionDTO option : this.rootOptions) {
+				sb.append("/").append(option.getConfigName());
+			}
+			sb.delete(0, 1);
+			return sb.toString();
+		}
+		return JiraConfigDTO.DEFAULT_KEY;
 	}
 	
 	@Override
