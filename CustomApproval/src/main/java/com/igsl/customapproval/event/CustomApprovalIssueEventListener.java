@@ -161,13 +161,14 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 			List<ApplicationUser> manualParticipants = 
 					(List<ApplicationUser>) is.getCustomFieldValue(cfManualParticipants);
 			// The returned list is immutable, extract it into a set of user key for comparison
+			Set<String> oldParticipants = new HashSet<>();
 			Set<String> existingParticipants = new HashSet<>();
-//			if (participants != null) {
-//				for (ApplicationUser user : participants) {
-//					LOGGER.debug("Original participant: " + user.getName());
-//					existingParticipants.add(user.getKey());
-//				}
-//			}
+			if (participants != null) {
+				for (ApplicationUser user : participants) {
+					LOGGER.debug("Original participant: " + user.getName());
+					oldParticipants.add(user.getKey());
+				}
+			}
 			// Add manual participants
 			if (manualParticipants != null) {
 				for (ApplicationUser user : manualParticipants) {
@@ -185,28 +186,42 @@ public class CustomApprovalIssueEventListener implements InitializingBean, Dispo
 				LOGGER.debug("Delegation: " + user.getName());
 				existingParticipants.add(user.getKey());
 			}
-			// Form new list
-			List<ApplicationUser> newParticipants = new ArrayList<>();
-			for (String userKey : existingParticipants) {
-				ApplicationUser user = USER_MANAGER.getUserByKey(userKey);
-				if (user != null) {
-					newParticipants.add(user);
-					LOGGER.debug("Participant: " + user.getName());
-				} else {
-					LOGGER.warn("Request Participants contains invalid user: " + userKey);
+			// Compare old and new list, only update if there are changes
+			boolean doUpdate = false;
+			if (oldParticipants.size() != existingParticipants.size()) {
+				doUpdate = true;
+			} else {
+				if (!oldParticipants.containsAll(existingParticipants) || 
+					!existingParticipants.containsAll(oldParticipants)) {
+					doUpdate = true;
 				}
 			}
-			// Update issue
-			MutableIssue mi = ISSUE_MANAGER.getIssueObject(is.getKey());
-			if (mi == null) {
-				LOGGER.error("Unable to retrieve mutable issue: " + is.getKey());
-				continue;
+			if (doUpdate) {
+				// Form new list
+				List<ApplicationUser> newParticipants = new ArrayList<>();
+				for (String userKey : existingParticipants) {
+					ApplicationUser user = USER_MANAGER.getUserByKey(userKey);
+					if (user != null) {
+						newParticipants.add(user);
+						LOGGER.debug("Participant: " + user.getName());
+					} else {
+						LOGGER.warn("Request Participants contains invalid user: " + userKey);
+					}
+				}
+				// Update issue
+				MutableIssue mi = ISSUE_MANAGER.getIssueObject(is.getKey());
+				if (mi == null) {
+					LOGGER.error("Unable to retrieve mutable issue: " + is.getKey());
+					continue;
+				}
+				mi.setCustomFieldValue(cfRequestParticipants, newParticipants);
+				mi.setCustomFieldValue(indicatorField, Boolean.TRUE.toString());
+				LOGGER.error("Issue updated with indicator on: " + is.getKey());
+				ISSUE_MANAGER.updateIssue(
+						CustomApprovalUtil.getAdminUser(), mi, EventDispatchOption.ISSUE_UPDATED, false);
+			} else {
+				LOGGER.debug("No change in request participant, issue not updated");
 			}
-			mi.setCustomFieldValue(cfRequestParticipants, newParticipants);
-			mi.setCustomFieldValue(indicatorField, Boolean.TRUE.toString());
-			LOGGER.error("Issue updated with indicator on: " + is.getKey());
-			ISSUE_MANAGER.updateIssue(
-					CustomApprovalUtil.getAdminUser(), mi, EventDispatchOption.ISSUE_UPDATED, false);
 		}
 	}
 	
