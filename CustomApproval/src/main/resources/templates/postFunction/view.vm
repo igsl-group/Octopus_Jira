@@ -64,26 +64,26 @@
 	
 	#set ($ApprovedStatus = $statusList.get($approvedStatus.get($idx)))
 	#set ($ApproveTransition = $approveTransition.get($idx))
-	#if ($ApproveTransition)
+	#if ($ApproveTransition.length() != 0)
 		#set ($ApproveTransitionID = $Integer.parseInt($ApproveTransition))
 		#set ($ApproveTransitionName = $transitionList.get($ApproveTransitionID))
 	#else
 		#set ($ApproveTransitionID = "N/A")
 		#set ($ApproveTransitionName = "Auto")
 	#end
-			<td>${ApproveTransitionName} (${ApproveTransition})</td>
+			<td>${ApproveTransitionName} (${ApproveTransitionID})</td>
 			<td>$ApprovedStatus.getName() ($ApprovedStatus.getId())</td>
 	
 	#set ($RejectedStatus = $statusList.get($rejectedStatus.get($idx)))
 	#set ($RejectTransition = $rejectTransition.get($idx))
-	#if ($RejectTransition)
+	#if ($RejectTransition.length() != 0)
 		#set ($RejectTransitionID = $Integer.parseInt($RejectTransition))
 		#set ($RejectTransitionName = $transitionList.get($RejectTransitionID))
 	#else
 		#set ($RejectTransitionID = "N/A")
 		#set ($RejectTransitionName = "Auto")
 	#end
-			<td>${RejectTransitionName} (${RejectTransition})</td>
+			<td>${RejectTransitionName} (${RejectTransitionID})</td>
 			<td>$RejectedStatus.getName() ($RejectedStatus.getId())</td>
 	
 			<td>$confirmDecision.get($idx)</td>
