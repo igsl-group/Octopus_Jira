@@ -17,6 +17,7 @@ import com.igsl.customapproval.CustomApprovalSetup;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.igsl.customapproval.data.ApprovalData;
 import com.igsl.customapproval.data.ApprovalDataBuilder;
+import com.igsl.customapproval.data.NoApproverAction;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.WorkflowException;
 
@@ -89,6 +90,13 @@ public class InitializeApprovalPostFunction extends AbstractJiraFunctionProvider
 					}
 					builder.setApproverUserField(approvalName, userField);
 					builder.setApproverGroupField(approvalName, groupField);
+					// No approver action
+					NoApproverAction noApproverAction = null;
+					if (data.get(InitializeApprovalPostFunctionFactory.PARAM_NO_APPROVER_ACTION) != null) {
+						noApproverAction = NoApproverAction.parse(
+								data.get(InitializeApprovalPostFunctionFactory.PARAM_NO_APPROVER_ACTION)[i]);
+					}
+					builder.setNoApproverAction(approvalName, noApproverAction);
 				}
 			} catch (Exception ex) {
 				throw new WorkflowException("Failed to construct approval data", ex);

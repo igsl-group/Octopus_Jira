@@ -4,7 +4,9 @@ import java.util.Date;
 
 public class ApprovalHistory {
 	
-	private String approver;
+	public static final String SYSTEM = "system";
+	
+	private String approver;	// SYSTEM means approved/rejected by noApproverAction
 	private String delegated;
 	private boolean approved;
 	private Date approvedDate;

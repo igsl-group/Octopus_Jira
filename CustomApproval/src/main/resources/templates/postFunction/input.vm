@@ -27,8 +27,9 @@
 					<tr>
 						<th rowspan="2" style="width:10%">Approval Name</th>
 						<th style="width:20%" colspan="2">Approvers</th>
+						<th style="width:10%">Action If No Approver</th>
 						<th rowspan="2" style="width:10%">Starting Status</th>
-						<th style="width:30%" colspan="4">Target Status</th>
+						<th style="width:20%" colspan="4">Target Status</th>
 						<th style="width:20%" colspan="2">
 							Count
 							(Number of approvers required. 0 for all approvers, fraction for percentage of approvers)
@@ -38,6 +39,7 @@
 					<tr>
 						<th>Users Field</th>
 						<th>Groups Field</th>
+						<th></th>
 						<th>Approved</th>
 						<th>Approve Transition</th>
 						<th>Rejected</th>
@@ -64,6 +66,13 @@
 							#foreach ($item in $groupFieldList.values())
 								<option value="${item.getId()}">${item.getName()} (${item.getId()})</option>
 							#end
+						</select>
+					</td>
+					<td>
+						<select disabled name="noApproverAction">
+							<option value="NO_ACTION">No Action (wait until there are approvers)</option>
+							<option value="REJECT">Reject</option>
+							<option value="APPROVE">Approve</option>
 						</select>
 					</td>
 					<td>
@@ -216,6 +225,7 @@
 			'rejectTransition': '$!rejectTransition.get($idx)',
 			'approveCount': '$!approveCount.get($idx)',
 			'rejectCount': '$!rejectCount.get($idx)',
+			'noApproverAction': '$!noApproverAction.get($idx)',
 			'allowChangeDecision': '$!allowChangeDecision.get($idx)',
 			'confirmDecision': '$!confirmDecision.get($idx)',
 			'confirmTitle': '$!confirmTitle.get($idx)',

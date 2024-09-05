@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igsl.customapproval.CustomApprovalUtil;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
 import com.opensymphony.workflow.loader.FunctionDescriptor;
-import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
 public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunctionPluginFactory {
@@ -28,6 +27,8 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	public static final String VELOCITY_GROUP_FIELD_LIST = "groupFieldList";
 	public static final String VELOCITY_STATUS_LIST = "statusList";
 	public static final String VELOCITY_TRANSITION_LIST = "transitionList";
+	public static final String VELOCITY_INTEGER = "Integer";
+	public static final String VELOCITY_LONG = "Long";
 	
 	// Form data in Velocity template
 	public static final String PARAM_APPROVAL_NAME = "approvalName";
@@ -40,6 +41,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	public static final String PARAM_REJECT_TRANSITION = "rejectTransition";
 	public static final String PARAM_APPROVE_COUNT = "approveCount";
 	public static final String PARAM_REJECT_COUNT = "rejectCount";
+	public static final String PARAM_NO_APPROVER_ACTION = "noApproverAction";
 	public static final String PARAM_ALLOW_CHANGE_DECISION = "allowChangeDecision";
 	public static final String PARAM_CONFIRM_DECISION = "confirmDecision";
 	public static final String PARAM_CONFIRM_TITLE = "confirmTitle";
@@ -58,6 +60,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 			PARAM_REJECT_TRANSITION,
 			PARAM_APPROVE_COUNT,
 			PARAM_REJECT_COUNT,
+			PARAM_NO_APPROVER_ACTION,
 			PARAM_ALLOW_CHANGE_DECISION,
 			PARAM_CONFIRM_DECISION,
 			PARAM_CONFIRM_TITLE,
@@ -88,6 +91,8 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		velocityParams.put(VELOCITY_USER_FIELD_LIST, CustomApprovalUtil.getUserFieldList());
 		velocityParams.put(VELOCITY_GROUP_FIELD_LIST, CustomApprovalUtil.getGroupFieldList());
 		velocityParams.put(VELOCITY_STATUS_LIST, CustomApprovalUtil.getStatusList());
+		velocityParams.put(VELOCITY_INTEGER, new Integer(0));
+		velocityParams.put(VELOCITY_LONG, new Long(0));
 	}
 
 	protected WorkflowDescriptor getWorkflowDescriptor(AbstractDescriptor descriptor) {
@@ -159,6 +164,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 	@Override
     protected void getVelocityParamsForView(Map velocityParams, AbstractDescriptor descriptor) {
 		LOGGER.debug("getVelocityParamsForView");
+		getVelocityParamsForInput(velocityParams);
 		getVelocityParamsForEdit(velocityParams, descriptor);
     }
 

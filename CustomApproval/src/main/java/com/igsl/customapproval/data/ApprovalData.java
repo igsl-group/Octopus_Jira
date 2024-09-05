@@ -1,8 +1,9 @@
 package com.igsl.customapproval.data;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.apache.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * Allows multiple approval steps.
  */
 public class ApprovalData {
-	
+	private static final Logger LOGGER = Logger.getLogger(ApprovalData.class);
 	private static final ObjectMapper OM = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 	
 	/**
@@ -42,6 +43,7 @@ public class ApprovalData {
 		try {
 			return OM.writeValueAsString(this);
 		} catch (Exception ex) {
+			LOGGER.error("Unable to convert ApprovalData to string", ex);
 			return null;
 		}
 	}

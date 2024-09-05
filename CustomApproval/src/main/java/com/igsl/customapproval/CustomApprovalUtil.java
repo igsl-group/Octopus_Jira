@@ -245,7 +245,7 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of group picker fields.
-	 * @return Map. Key is field name, value is CustomField.
+	 * @return Map. Key is field id, value is CustomField.
 	 */
 	public static Map<String, CustomField> getGroupFieldList() {
 		Map<String, CustomField> result = new TreeMap<>();
@@ -254,7 +254,7 @@ public class CustomApprovalUtil {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (groupPicker.equals(cf.getCustomFieldType()) || 
 				groupPickerMulti.equals(cf.getCustomFieldType())) {
-				result.put(cf.getName(), cf);
+				result.put(cf.getId(), cf);
 			}
 		}
 		return result;
@@ -262,7 +262,7 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of user picker fields.
-	 * @return Map. Key is field name, value is CustomField.
+	 * @return Map. Key is field id, value is CustomField.
 	 */
 	public static Map<String, CustomField> getUserFieldList() {
 		Map<String, CustomField> result = new TreeMap<>();
@@ -271,7 +271,7 @@ public class CustomApprovalUtil {
 		for (CustomField cf : CUSTOM_FIELD_MANAGER.getCustomFieldObjects()) {
 			if (userPicker.equals(cf.getCustomFieldType()) || 
 				userPickerMulti.equals(cf.getCustomFieldType())) {
-				result.put(cf.getName(), cf);
+				result.put(cf.getId(), cf);
 			}
 		}
 		return result;
@@ -451,12 +451,12 @@ public class CustomApprovalUtil {
 	
 	/**
 	 * Get list of Status.
-	 * @return Map. Key is status key (Long), value is Status.
+	 * @return Map. Key is status id, value is Status.
 	 */
-	public static Map<Long, Status> getStatusList() {
-		Map<Long, Status> result = new TreeMap<>();
+	public static Map<String, Status> getStatusList() {
+		Map<String, Status> result = new LinkedHashMap<>();
 		for (Status s : STATUS_MANAGER.getStatuses()) {
-			result.put(s.getSequence(), s);
+			result.put(s.getId(), s);
 		}
 		return result;
 	}
@@ -1037,7 +1037,6 @@ public class CustomApprovalUtil {
 	
 	private static boolean transitIssueWithoutLock(MutableIssue issue, ApplicationUser user, ApprovalData approvalData)
 			throws LockException, InvalidWorkflowException, WorkflowException {
-		//ApprovalData approvalData = getApprovalData(issue);
 		ApprovalSettings approvalSettings = getApprovalSettings(issue);
 		try {
 			LOGGER.debug("Settings: " + OM.writeValueAsString(approvalSettings));
@@ -1097,12 +1096,63 @@ public class CustomApprovalUtil {
 			LOGGER.debug("Target count, approve: " + approveCountTarget + " reject: " + rejectCountTarget);
 			Integer targetAction = null;
 			boolean approved = false;
-			if (rejectCountTarget <= rejectCount) {
-				targetAction = rejectAction;
-				approved = false;
-			} else if (approveCountTarget <= approveCount) {
-				targetAction = approveAction;
-				approved = true;
+			if (approverList.size() == 0) {
+				// No approvers defined, follow configured action
+				if (approvalSettings.getNoApproverAction() == null) {
+					// Defaults to NO_ACTION
+					targetAction = null;
+					approved = false;
+					LOGGER.debug("No approvers defined: No decision is made");
+				} else {
+					switch (approvalSettings.getNoApproverAction()) {
+					case APPROVE:
+						targetAction = approveAction;
+						approved = true;
+						LOGGER.debug("No approvers defined: Auto-approved");
+						break;
+					case NO_ACTION:
+						targetAction = null;
+						approved = false;
+						LOGGER.debug("No approvers defined: No decision is made");
+						break;
+					case REJECT:
+						targetAction = rejectAction;
+						approved = false;
+						LOGGER.debug("No approvers defined: Auto-rejected");
+						break;
+					}
+					if (targetAction != null) {
+						// Set approval history by system
+						if (historyList == null) {
+							historyList = new LinkedHashMap<>();
+						}
+						ApprovalHistory historyItem = new ApprovalHistory();
+						historyItem.setApprover(ApprovalHistory.SYSTEM);
+						historyItem.setApprovedDate(new Date());
+						historyItem.setApproved(approved);
+						historyItem.setDelegated(null);
+						historyList.put(historyItem.getApprover(), historyItem);
+						Map<String, ApprovalHistory> history = 
+								approvalData.getHistory().get(approvalSettings.getApprovalName());
+						if (history == null) {
+							history = new LinkedHashMap<>();
+							approvalData.getHistory().put(
+									approvalSettings.getApprovalName(), history);
+						}
+						history.put(historyItem.getApprover(), historyItem);
+					}
+				}
+			} else {
+				// Check against approve/reject counts
+				if (rejectCountTarget <= rejectCount) {
+					targetAction = rejectAction;
+					approved = false;
+					LOGGER.debug("Reject count: " + rejectCount + "/" + rejectCountTarget + ", rejected");
+				} else if (approveCountTarget <= approveCount) {
+					targetAction = approveAction;
+					approved = true;
+					LOGGER.debug("Approve count: " + approveCount + "/" + approveCountTarget + ", approved");
+				}
 			}
 			if (targetAction != null) {
 				// Update settings to mark approve as completed
@@ -1600,10 +1650,10 @@ public class CustomApprovalUtil {
 							data.setRejectCountTarget(CustomApprovalUtil.getRejectCountTarget(settings, approverList));
 						}
 					}
-					// Insert history and update counts
-					Map<String, ApprovalPanelHistory> historyMap = data.getHistory();
 					int approveCount = 0;
 					int rejectCount = 0;
+					// Insert history and update counts
+					Map<String, ApprovalPanelHistory> historyMap = data.getHistory();
 					for (ApprovalHistory historyItem : entry.getValue().values()) {
 						ApprovalPanelHistory displayHistory = new ApprovalPanelHistory(historyItem, issue, settings);
 						historyMap.put(displayHistory.getApprover(), displayHistory);

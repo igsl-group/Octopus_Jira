@@ -43,6 +43,7 @@ public class ApprovalDataBuilder {
 			settings.setRejectMessage(src.getRejectMessage());
 			settings.setConfirmOK(src.getConfirmOK());
 			settings.setConfirmCancel(src.getConfirmCancel());
+			settings.setNoApproverAction(src.getNoApproverAction());
 			this.data.getSettings().put(entry.getKey(), settings);
 			this.data.getHistory().put(entry.getKey(), new HashMap<String, ApprovalHistory>());
 		}
@@ -82,6 +83,7 @@ public class ApprovalDataBuilder {
 			settings.setApproveTransition(approveTransition);
 			settings.setRejectedStatus(rejectStatus);
 			settings.setRejectTransition(rejectTransition);
+			settings.setNoApproverAction(NoApproverAction.NO_ACTION);
 			data.getSettings().put(approvalName, settings);
 		}
 		return this;
@@ -207,6 +209,26 @@ public class ApprovalDataBuilder {
 		} else {
 			ApprovalSettings setting = data.getSettings().get(approvalName);
 			setting.setAllowChangeDecision(allowChangeDecision);
+		}
+		return this;
+	}
+	
+	/**
+	 * Set noApproverAction
+	 * @param approvalName
+	 * @param noApproverAction
+	 * @return
+	 * @throws Exception
+	 */
+	public ApprovalDataBuilder setNoApproverAction(String approvalName, NoApproverAction noApproverAction) throws Exception {
+		if (!data.getSettings().containsKey(approvalName)) {
+			throw new Exception("Approval \"" + approvalName + "\" does not exist");
+		} else {
+			if (noApproverAction == null) {
+				noApproverAction = NoApproverAction.NO_ACTION;
+			}
+			ApprovalSettings setting = data.getSettings().get(approvalName);
+			setting.setNoApproverAction(noApproverAction);
 		}
 		return this;
 	}

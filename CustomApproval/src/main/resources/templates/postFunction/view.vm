@@ -1,8 +1,95 @@
-#set ($data = "")
-#foreach ($item in $approvalName)
-	#set ($data = $data + ", " + $item)
+#disable_html_escaping()
+
+<style type="text/css">
+	.table {
+		width: 95%;
+		border: solid 1px;
+	}
+	.table th,
+	.table td {
+		border: solid 1px;
+	}
+</style>
+<table class="table">
+	<thead>
+		<tr>
+			<th>Approval Name</th>
+			<th>From Status</th>
+			<th>Approvers</th>
+			<th>Approve Count</th>
+			<th>Reject Count</th>
+			<th>Action If No Approver</th>
+			<th>Approve Transition</th>
+			<th>Approved Status</th>
+			<th>Reject Transition</th>
+			<th>Rejected Status</th>
+			<th>Confirm Decision</th>
+			<th>Allow Change Decision</th>
+		</tr>
+	</thead>
+	<tbody>
+#foreach ($approvalNameValue in $approvalName)
+
+	#set ($ApproverUsersField = false)
+	#set ($ApproverGroupsField = false)
+
+	#set ($idx = $velocityCount - 1)
+		<tr>
+			<td>${approvalNameValue}</td>
+	
+	#set ($FromStatus = $statusList.get($startingStatus.get($idx)))
+			<td>$FromStatus.getName() ($FromStatus.getId())</td>
+	
+	#set ($ApproverUsersField = $approverUsersField.get($idx))
+	#set ($ApproverGroupsField = $approverGroupsField.get($idx))
+	#if ($ApproverUsersField.length() != 0) 
+		#set ($ApproverField = $userFieldList.get($ApproverUsersField))
+	#else
+		#set ($ApproverField = $groupFieldList.get($ApproverGroupsField))
+	#end
+			<td>$ApproverField.getName() ($ApproverField.getId())</td>
+	
+			<td>$approveCount.get($idx)</td>
+			<td>$rejectCount.get($idx)</td>
+	
+	#set ($NoApproverActionVaue = $noApproverAction.get($idx))
+	#if ($NoApproverActionVaue == "NO_ACTION") 
+		#set ($NoApproverActionName = "No action")
+	#elseif ($NoApproverActionVaue == "REJECT") 
+		#set ($NoApproverActionName = "Reject")
+	#elseif ($NoApproverActionVaue == "APPROVE") 
+		#set ($NoApproverActionName = "Approve")
+	#end
+			<td>${NoApproverActionName}</td>
+	
+	#set ($ApprovedStatus = $statusList.get($approvedStatus.get($idx)))
+	#set ($ApproveTransition = $approveTransition.get($idx))
+	#if ($ApproveTransition)
+		#set ($ApproveTransitionID = $Integer.parseInt($ApproveTransition))
+		#set ($ApproveTransitionName = $transitionList.get($ApproveTransitionID))
+	#else
+		#set ($ApproveTransitionID = "N/A")
+		#set ($ApproveTransitionName = "Auto")
+	#end
+			<td>${ApproveTransitionName} (${ApproveTransition})</td>
+			<td>$ApprovedStatus.getName() ($ApprovedStatus.getId())</td>
+	
+	#set ($RejectedStatus = $statusList.get($rejectedStatus.get($idx)))
+	#set ($RejectTransition = $rejectTransition.get($idx))
+	#if ($RejectTransition)
+		#set ($RejectTransitionID = $Integer.parseInt($RejectTransition))
+		#set ($RejectTransitionName = $transitionList.get($RejectTransitionID))
+	#else
+		#set ($RejectTransitionID = "N/A")
+		#set ($RejectTransitionName = "Auto")
+	#end
+			<td>${RejectTransitionName} (${RejectTransition})</td>
+			<td>$RejectedStatus.getName() ($RejectedStatus.getId())</td>
+	
+			<td>$confirmDecision.get($idx)</td>
+	
+			<td>$allowChangeDecision.get($idx)</td>
+		</tr>
 #end
-#if ($data.length() > 1)
-	#set ($data = $data.substring(1))
-#end
-Initialize approvals: ${data}
+	</tbody>
+</table>

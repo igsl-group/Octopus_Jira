@@ -93,6 +93,11 @@ public class ApprovalSettings {
 	 */
 	private boolean allowChangeDecision = false;
 	/**
+	 * Action if no approver is defined.
+	 * Default is NO_ACTION.
+	 */
+	private NoApproverAction noApproverAction = NoApproverAction.NO_ACTION;
+	/**
 	 * Flag to indicate approval has completed
 	 */
 	private boolean completed = false;
@@ -264,5 +269,11 @@ public class ApprovalSettings {
 	}
 	public void setRejectMessage(String rejectMessage) {
 		this.rejectMessage = rejectMessage;
+	}
+	public NoApproverAction getNoApproverAction() {
+		return noApproverAction;
+	}
+	public void setNoApproverAction(NoApproverAction noApproverAction) {
+		this.noApproverAction = noApproverAction;
 	}
 }

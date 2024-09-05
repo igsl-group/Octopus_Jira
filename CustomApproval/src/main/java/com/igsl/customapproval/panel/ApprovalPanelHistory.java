@@ -37,26 +37,34 @@ public class ApprovalPanelHistory {
 	private boolean valid;
 	
 	public ApprovalPanelHistory(ApprovalHistory history, Issue issue, ApprovalSettings settings) {
+		// history.getApprover() if null, means auto-approved/rejected
 		this.approver = history.getApprover();
 		this.delegated = history.getDelegated();
 		this.approved = history.getApproved();
 		this.approvedDate = history.getApprovedDate();
-		// Translate
-		ApplicationUser approverUser = CustomApprovalUtil.getUserByKey(this.approver);
-		if (approverUser != null) {
-			this.approverDisplayName = approverUser.getDisplayName();
-		} else {
-			this.approverDisplayName = this.approver;
-		}
-		if (this.delegated != null) {
-			ApplicationUser delegatedUser = CustomApprovalUtil.getUserByKey(this.delegated);
-			if (delegatedUser != null) {
-				this.delegatedDisplayName = delegatedUser.getDisplayName();
-			} else {
-				this.delegatedDisplayName = this.delegated;
-			}
-		} else {
+		if (ApprovalHistory.SYSTEM.equals(this.approver)) {
+			this.approverDisplayName = 
+					"Auto-" + (this.approved? "approved" : "rejected") + 
+					" because no approver is defined";
 			this.delegatedDisplayName = null;
+		} else {
+			// Translate
+			ApplicationUser approverUser = CustomApprovalUtil.getUserByKey(this.approver);
+			if (approverUser != null) {
+				this.approverDisplayName = approverUser.getDisplayName();
+			} else {
+				this.approverDisplayName = this.approver;
+			}
+			if (this.delegated != null) {
+				ApplicationUser delegatedUser = CustomApprovalUtil.getUserByKey(this.delegated);
+				if (delegatedUser != null) {
+					this.delegatedDisplayName = delegatedUser.getDisplayName();
+				} else {
+					this.delegatedDisplayName = this.delegated;
+				}
+			} else {
+				this.delegatedDisplayName = null;
+			}
 		}
 		if (this.approvedDate != null) {
 			this.approvedDateString = SDF.format(this.approvedDate);
@@ -74,7 +82,11 @@ public class ApprovalPanelHistory {
 		}
 		LOGGER.debug("User: " + this.approver);
 		if (settings.isCompleted()) {
-			this.valid = CustomApprovalUtil.isApprover(this.approver, settings.getFinalApproverList());
+			if (ApprovalHistory.SYSTEM.equals(this.approver)) {
+				this.valid = true;
+			} else {
+				this.valid = CustomApprovalUtil.isApprover(this.approver, settings.getFinalApproverList());
+			}
 		} else {
 			this.valid = CustomApprovalUtil.isApprover(this.approver, approverList);
 		}

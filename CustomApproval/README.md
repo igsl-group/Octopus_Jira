@@ -1,5 +1,9 @@
 ### Custom Approval
 
+### Build
+1. Open command prompt at project folder.
+2. Use KC's JiraSDK.cmd.
+
 #### Features
 1. Workflow approval without requiring Jira Service Management.
 	* Custom field "Approval Data" is used to store approval settings and approval history.
