@@ -1,6 +1,5 @@
 package com.igsl.customapproval.workflow.postfunction;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +123,38 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 		if (descriptor instanceof FunctionDescriptor) {
 			FunctionDescriptor fd = (FunctionDescriptor) descriptor;
 			Map map = fd.getArgs();
-			int listSize = 0;
+			// Scan for maxListSize
+			int maxListSize = 0;
+			for (String s : PARAMETERS_LIST) {
+				Object o = map.get(s);
+				if (o != null) {
+					List list = null;
+					try {
+						list = OM.readValue((String) o, List.class);
+						maxListSize = Math.max(maxListSize, list.size());
+					} catch (Exception ex) {
+						LOGGER.error("Failed to deserialize " + s, ex);
+					}
+				}
+			}
+			// Put the lists into velocityParams and map
+			for (String s : PARAMETERS_LIST) {
+				Object o = map.get(s);
+				if (o != null) {
+					List list = null;
+					try {
+						list = OM.readValue((String) o, List.class);
+					} catch (Exception ex) {
+						LOGGER.error("Failed to deserialize " + s, ex);
+					}
+					while (list.size() < maxListSize) {
+						list.add("");
+					}
+					velocityParams.put(s, list);
+					map.put(s, list);
+				}
+			}
+			/*
 			for (String s : PARAMETERS_LIST) {
 				Object o = map.get(s);
 				LOGGER.debug("getVelocityParamsForEdit <" + s + "> = <" + o + ">(" + ((o != null)?o.getClass():"N/A") + ")");
@@ -154,6 +184,7 @@ public class InitializeApprovalPostFunctionFactory extends UpdateIssueFieldFunct
 					map.put(s, list);
 				}
 			}
+			*/
 		} else {
 			throw new IllegalArgumentException("Descriptor must be a FunctionDescriptor.");
 		}

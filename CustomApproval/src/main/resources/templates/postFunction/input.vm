@@ -189,6 +189,7 @@
 			// Set default values
 			data = {
 				'confirmDecision': 'true',
+				'noApproverAction': 'NO_ACTION',
 				'confirmTitle': 'Confirm Approval Decision',
 				'approveMessage': 'You are approving the issue. Are you sure?',
 				'rejectMessage': 'You are rejecting the issue. Are you sure?',
@@ -199,6 +200,14 @@
 		var keys = Object.keys(data);
 		for (var i in keys) {
 			newRow.find('[name="' + keys[i] + '"]').val(data[keys[i]]);
+		}
+		// Set no approver action current value
+		if (data['noApproverAction'] == 'NO_ACTION' || data['noApproverAction'] == '') {
+			newRow.find('option[value="NO_ACTION"]').attr('selected', true);
+		} else if (data['noApproverAction'] == 'APPROVE') {
+			newRow.find('option[value="APPROVE"]').attr('selected', true);
+		} else if (data['noApproverAction'] == 'REJECT') {
+			newRow.find('option[value="REJECT"]').attr('selected', true);
 		}
 		// Set dropdown list current value
 		if (data['confirmDecision'] == 'true') {

@@ -59,6 +59,8 @@
 		#set ($NoApproverActionName = "Reject")
 	#elseif ($NoApproverActionVaue == "APPROVE") 
 		#set ($NoApproverActionName = "Approve")
+	#else 
+		#set ($NoApproverActionName = "No action")
 	#end
 			<td>${NoApproverActionName}</td>
 	
