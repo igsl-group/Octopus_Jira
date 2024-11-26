@@ -99,7 +99,13 @@ DELETE PROPERTYENTRY WHERE PROPERTY_KEY = 'customApprovalDelegation';
 			try {
 				List<ApplicationUser> list = filter.getFilteredUsers();
 				for (ApplicationUser user : list) {
-					this.settings.addAll(DelegationUtil.loadData(user.getKey(), cleanup));
+					String userKey = null;
+					try {
+						userKey = user.getKey();
+						this.settings.addAll(DelegationUtil.loadData(userKey, cleanup));
+					} catch (Exception ex) {
+						LOGGER.error("Unable to retrieve user key for user id [" + user.getId() + "]", ex);
+					}
 				}
 				LOGGER.debug("User list size: " + list.size());
 			} catch (Exception ex) {
