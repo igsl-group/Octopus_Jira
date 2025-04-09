@@ -27,6 +27,7 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 		
 	// Custom field configuration URL
 	private static final String PARENT_PAGE_URL = "/secure/admin/ConfigureCustomField!default.jspa?customFieldId=";
+	private static final String MY_PAGE_URL = "/secure/admin/GenericTableConfigurationItemAction.jspa?customFieldId=";
 	
 	// Web action key words
 	private static final String SAVE = "Save";
@@ -36,8 +37,9 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 	protected ManagedConfigurationItemService service;
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
 	
-	private String customFieldId;
+	private String fieldId;	// Without customfield_
 	private String customFieldName;
+	private String myPageURL;
 	private String parentPageURL;
 	
 	@Inject
@@ -48,52 +50,39 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 	}
 	
 	public GenericTableSettings getValue() {
-		String customFieldId = "customfield_" + getParameter(PARAM_CUSTOM_FIELD_ID);
-		String customFieldName = "";
-		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(customFieldId);
+		String id = "customfield_" + this.getHttpRequest().getParameter(PARAM_CUSTOM_FIELD_ID);
+		String name = "";
+		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(id);
 		if (cf != null) {
-			customFieldName = cf.getName();
+			name = cf.getName();
 		}
-		return GenericTableSettings.getSettings(customFieldId, customFieldName);
+		return GenericTableSettings.getSettings(id, name);
 	}
 	
 	protected void doValidation() {
 		LOGGER.debug("doValidation");
-		refreshData();
-		GenericTableSettings.parseParameters(this.getHttpRequest());
-	}
-	
-	private String getParameter(String name) {
-		String s = this.getHttpRequest().getParameter(name);
-		if (s != null && !s.isEmpty()) {
-			LOGGER.debug("From request param: " + name + " = [" + s + "]");
-			this.getHttpSession().setAttribute(name, s);
-			return s;
-		} else {
-			Object o = this.getHttpSession().getAttribute(name);
-			if (o != null && o instanceof String) {
-				LOGGER.debug("From session: " + name + " = [" + o + "]");
-				return (String) o;
-	 		}
-		}
-		return null;
 	}
 	
 	// Strangely setFieldConfigId() is never invoked. So instead, grab custom field ID from request parameters if possible
 	// The HTTP parameters available is... not consistent? In local site, both fieldConfigId and customFieldId are available. In Octopus site, only fieldConfigId is. 
 	private void refreshData() {
-		String fieldConfigId = getParameter(PARAM_FIELD_CONFIG_ID);
+		this.fieldId = this.getHttpRequest().getParameter(PARAM_CUSTOM_FIELD_ID);
+		LOGGER.debug("WTF fieldId: " + this.fieldId);
+		String fieldConfigId = this.getHttpRequest().getParameter(PARAM_FIELD_CONFIG_ID);
 		if (fieldConfigId != null) {
 			long id = Long.parseLong(fieldConfigId);
 			this.setFieldConfigId(id);
 		}
-		customFieldId = "customfield_" + getParameter(PARAM_CUSTOM_FIELD_ID);
-		customFieldName = "";
-		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(customFieldId);
+		this.customFieldName = "";
+		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject("customfield_" + this.fieldId);
 		if (cf != null) {
-			customFieldName = cf.getName();
+			this.customFieldName = cf.getName();
 		}
-		parentPageURL = PARENT_PAGE_URL + getParameter(PARAM_CUSTOM_FIELD_ID);
+		this.myPageURL = MY_PAGE_URL + this.fieldId;
+		this.parentPageURL = PARENT_PAGE_URL + this.fieldId;
+		LOGGER.debug("WTF customFieldName: " + this.customFieldName);
+		LOGGER.debug("WTF myPageURL: " + this.myPageURL);
+		LOGGER.debug("WTF parentPageURL: " + this.parentPageURL);
 	}
 	
 	// Expected return value is name of associated view
@@ -103,23 +92,29 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 		refreshData();
 		GenericTableSettings settings = GenericTableSettings.parseParameters(this.getHttpRequest());
 		if (settings != null) {
-			settings.setCustomFieldId(customFieldId);
+			settings.setCustomFieldId("customfield_" + this.fieldId);
 			settings.setCustomFieldName(customFieldName);
 			String save = getHttpRequest().getParameter(SAVE);
 	        String cancel = getHttpRequest().getParameter(CANCEL);
 	        if (save != null && save.equals(SAVE)) {
 	        	// Save data
+	        	LOGGER.debug("WTF Saving: " + settings);
 				settings.saveSettings();
-				// Stay on same page for preview
-				return INPUT;
+				LOGGER.debug("WTF Saved, Going to: " + this.myPageURL);
+				return getRedirect(this.myPageURL);
 	        } else if (cancel != null && cancel.equals(CANCEL)) {
-				// Return to parent page
-	        	if (parentPageURL != null) {
-					setReturnUrl(parentPageURL);
-		        	return getRedirect(INPUT);
-				}
+				LOGGER.debug("WTF Cancel, Going to: " + this.parentPageURL);
+	        	return getRedirect(this.parentPageURL);
 	        }
 		}
     	return INPUT;
+	}
+
+	public String getFieldId() {
+		return fieldId;
+	}
+
+	public String getCustomFieldName() {
+		return customFieldName;
 	}
 }

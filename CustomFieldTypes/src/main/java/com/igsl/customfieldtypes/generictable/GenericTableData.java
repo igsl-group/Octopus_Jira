@@ -1,5 +1,6 @@
 package com.igsl.customfieldtypes.generictable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,10 +15,18 @@ public class GenericTableData {
 		Gson gson = new Gson();
 		try {
 			GenericTableData data = gson.fromJson(s, GenericTableData.class);
+			if (data != null && data.data != null && data.data.size() == 0) {
+				// Convert empty data into null
+				return null;
+			}
 			return data;
 		} catch (JsonSyntaxException ex) {
 			throw new FieldValidationException(ex.getMessage());
 		}
+	}
+	
+	public GenericTableData() {
+		this.data = new ArrayList<>();
 	}
 	
 	@Override

@@ -84,7 +84,9 @@ public class GenericTable extends GenericTextCFType {
 		if (arg1 != null) {
 			try {
 				GenericTableData data = GenericTableData.parse(arg1);
-				value = data.toString();
+				if (data != null) {
+					value = data.toString();
+				}
 			} catch (FieldValidationException fvex) {
 				LOGGER.error("Invalid default value", fvex);
 			}
@@ -101,7 +103,9 @@ public class GenericTable extends GenericTextCFType {
 			LOGGER.debug("DefaultValue: " + s);
 			try {
 				GenericTableData data = GenericTableData.parse(s);
-				return data.toString();
+				if (data != null) {
+					return data.toString();
+				}
 			} catch (FieldValidationException fvex) {
 				LOGGER.error("Invalid default value", fvex);
 			}
@@ -121,7 +125,9 @@ public class GenericTable extends GenericTextCFType {
 		if (arg0 != null) {
 			try {
 				GenericTableData data = GenericTableData.parse(arg0);
-				return data.toString();
+				if (data != null) {
+					return data.toString();
+				}
 			} catch (FieldValidationException fvex) {
 				LOGGER.error("Invalid value", fvex);
 			}
@@ -135,7 +141,9 @@ public class GenericTable extends GenericTextCFType {
 		if (arg0 != null) {
 			try {
 				GenericTableData data = GenericTableData.parse(arg0);
-				return data.toString();
+				if (data != null) {
+					return data.toString();
+				}				
 			} catch (FieldValidationException fvex) {
 				LOGGER.error("Invalid value", fvex);
 			}
@@ -167,13 +175,16 @@ public class GenericTable extends GenericTextCFType {
 			// Parse as complete object
 			String s = String.valueOf(nullKeyValue);
 			if (!s.isEmpty()) {
+				LOGGER.debug("getValueFromCustomFieldParams parsing" + arg0.getCustomField().getId() + ": " + s);
 				try {
 					GenericTableData data = GenericTableData.parse(s);
-					result = data.toString();
+					if (data != null) {
+						result = data.toString();
+					}
 				} catch (FieldValidationException fvex) {
 					LOGGER.error("Invalid value", fvex);
 				}
-			}			
+			}
 		}
 		LOGGER.debug("getValueFromCustomFieldParams = " + result);
 		return result;
@@ -206,7 +217,9 @@ public class GenericTable extends GenericTextCFType {
 				}
 				try {
 					GenericTableData data = GenericTableData.parse(String.valueOf(values.get(0)));
-					result = data.toString();
+					if (data != null) {
+						result = data.toString();
+					}
 				} catch (FieldValidationException fvex) {
 					LOGGER.warn("Data cannot be parsed", fvex);
 				}

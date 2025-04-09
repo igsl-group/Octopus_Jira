@@ -1,8 +1,5 @@
 package com.igsl.customfieldtypes.generictable;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +24,7 @@ public class GenericTableSettings {
 	 * Form field name in edit-config.vm.
 	 */
 	private static final String PARAM_JS_TOGGLE_EMPTY = "jsToggleEmpty";
+	private static final String PARAM_JS_TOGGLE_DIRTY = "jsToggleDirty";
 	private static final String PARAM_JS_ADD_ROW = "jsAddRow";
 	private static final String PARAM_JS_DELETE_ROW = "jsDelRow";
 	private static final String PARAM_JS_SAVE = "jsSave";
@@ -36,7 +34,7 @@ public class GenericTableSettings {
 	private static final String PARAM_TABLE = "table";
 	private static final String PARAM_ROW_TEMPLATE = "rowTemplate";
 	
-	// private static final String CLASS_NO_DIRTY_WARNING = "ajs-dirty-warning-exempt";
+	private static final String CLASS_NO_DIRTY_WARNING = "ajs-dirty-warning-exempt";
 	
 	private static final String CUSTOM_FIELD_ID_PLACEHOLDER = "_CF_";
 	private static final String VIEW_PLACEHOLDER = "_VIEW_";
@@ -46,6 +44,17 @@ public class GenericTableSettings {
 	
 	private String customFieldId;
 	private String customFieldName;
+	private String jsToggleDirty = 
+			  "// JavaScript to toggle if a field is monitored for changes\r\n"
+			+ "function _CF_toggleDirty(monitor) {\r\n"
+			+ "    $('#_CF_tbody').find('tr').find('input, textarea, select').each(function(ctrl){\r\n"
+			+ "        if (monitor) {\r\n"
+			+ "            $(ctrl).removeClass('" + CLASS_NO_DIRTY_WARNING + "');\r\n"
+			+ "        } else {\r\n"
+			+ "            $(ctrl).addClass('" + CLASS_NO_DIRTY_WARNING + "');\r\n"
+			+ "        }\r\n"
+			+ "    });\r\n"
+			+ "}\r\n";
 	private String jsToggleEmpty = 
 			  "// JavaScript to show/hide no record row\r\n"
 			+ "function _CF_toggleEmpty(show) {\r\n"
@@ -95,6 +104,7 @@ public class GenericTableSettings {
 			+ "    // Example\r\n"
 			+ "    $('#_CF_tbody').empty();\r\n"
 			+ "    var json = JSON.parse($('#_CF_').val());\r\n"
+			+ "    if (!json) { return; }\r\n"
 			+ "    for (var idx in json['data']) {\r\n"
 			+ "        _CF_addRow();\r\n"
 			+ "        var row = $('#_CF_tbody').find('tr:last');\r\n"
@@ -120,7 +130,7 @@ public class GenericTableSettings {
 			+ "        var row = rows[idx];\r\n"
 			+ "        var field2 = $(row).find('input.Field2');\r\n"
 			+ "        field2[0].setCustomValidity('');\r\n"
-			+ "        var fgetStyleContentield3 = $(row).find('input.Field3');\r\n"
+			+ "        var field3 = $(row).find('input.Field3');\r\n"
 			+ "        field3[0].setCustomValidity('');\r\n"
 			+ "        if (Number(field2.val()) > Number(field3.val())) {\r\n"
 			+ "            field2[0].setCustomValidity('Field2 must be less than or equal to Field3');\r\n"
@@ -204,6 +214,11 @@ public class GenericTableSettings {
 	public static GenericTableSettings getSettings(CustomField customField) {
 		return getSettings(customField.getId(), customField.getName());
 	}	
+	
+	@Override
+	public String toString() {
+		return new Gson().toJson(this);
+	}
 		
 	public static GenericTableSettings getSettings(String fieldId, String fieldName) {
 		GenericTableSettings result = null;
@@ -230,6 +245,8 @@ public class GenericTableSettings {
 	public static GenericTableSettings parseParameters(HttpServletRequest req) {
 		GenericTableSettings result = new GenericTableSettings();
 		if (req != null) {
+			String jsToggleDirty = req.getParameter(PARAM_JS_TOGGLE_DIRTY);
+			result.setJsToggleDirty(jsToggleDirty);
 			String jsToggleEmpty = req.getParameter(PARAM_JS_TOGGLE_EMPTY);
 			result.setJsToggleEmpty(jsToggleEmpty);
 			String jsAddRow = req.getParameter(PARAM_JS_ADD_ROW);
@@ -292,6 +309,7 @@ public class GenericTableSettings {
 			sb.append(getJsDeleteRow());
 			sb.append(getJsSave());
 		}
+		sb.append(getJsToggleDirty());
 		sb.append(getJsAddRow());
 		sb.append(getJsToggleEmpty());
 		sb.append(getJsLoad());
@@ -448,5 +466,13 @@ public class GenericTableSettings {
 
 	public void setStyle(String style) {
 		this.style = style;
+	}
+
+	public String getJsToggleDirty() {
+		return jsToggleDirty;
+	}
+
+	public void setJsToggleDirty(String jsToggleDirty) {
+		this.jsToggleDirty = jsToggleDirty;
 	}
 }

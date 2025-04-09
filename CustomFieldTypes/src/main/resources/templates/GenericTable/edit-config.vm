@@ -23,6 +23,7 @@
 		#set ($settings = $action.getValue())
 		<h2 class="formtitle">Configure $!{settings.getCustomFieldName()} ($!{settings.getCustomFieldId()}):</h2>
 		<form action="GenericTableConfigurationItemAction.jspa" method="post">
+			<input type="hidden" name="customFieldId" value="$!{action.getFieldId()}"/>
 			<table class="table">
 				<thead>
 					<tr>
@@ -46,6 +47,17 @@
 					</tr>
 				</thead>
 				<tbody>
+					<tr>
+						<td>JavaScript - Toggle Dirty</td>
+						<td>JavaScript function to toggle value monitoring. This allows updating value without marking the form dirty.
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsToggleDirty" 
+										name="jsToggleDirty">$!{settings.getJsToggleDirty()}</textarea>
+						</td>
+					</tr>
 					<tr>
 						<td>JavaScript - Toggle Empty Row</td>
 						<td>JavaScript function to toggle the "no records" row.
