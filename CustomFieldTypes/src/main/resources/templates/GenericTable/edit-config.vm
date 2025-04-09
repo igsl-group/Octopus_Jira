@@ -32,9 +32,14 @@
 							<ul>
 								<li>"_CF_" will be substituted with "customfield_[#]_View_" in view mode.</li>
 								<li>"_CF_" will be substituted with "customfield_[#]" in edit mode.</li>
-								<li>"_RO_" will be substituted with "readonly='readonly'" in view mode.</li>
-								<li>"_ROCLASS_" will be substituted with "ajs-dirty-warning-exempt" in view mode, to suppress dirty form alert. Include it as input field's class.</li>
-								<li>"_HIDE_" will be substituted with "style='display: none'" in view mode.</li>
+								<li>"_EDITROW_" will be substituted with "style='display: none'" in view mode.</li>
+								<li>"_EDITROW_" will be substituted with "style='display: table-row'" in edit mode.</li>
+								<li>"_EDITCELL_" will be substituted with "style='display: none'" in view mode.</li>
+								<li>"_EDITCELL_" will be substituted with "style='display: table-cell'" in edit mode.</li>
+								<li>"_EDIT_" will be substituted with "style='display: none'" in view mode.</li>
+								<li>"_EDIT_" will be substituted with "style='display: inline-block'" in edit mode.</li>
+								<li>"_VIEW_" will be substituted with "style='display: inline-block'" in view mode.</li>
+								<li>"_VIEW_" will be substituted with "style='display: none'" in edit mode.</li>
 								<li>This ensures element ids to be unique.</li>
 							</ul>
 						</th>
@@ -161,7 +166,7 @@
 							<textarea 	rows="20" 
 										cols="80" 
 										id="table" 
-										name="table">$!{settings.getTable()}</textarea>
+										name="table">$!{settings.escapeHtml($settings.getTable())}</textarea>
 						</td>
 					</tr>
 					<tr>
@@ -170,18 +175,18 @@
 							<ul>
 								<li>Template should have id "_CF_template".</li>
 								<li>A row should include a delete button to invoke delete row function.</li>
-								<li>Input fields will be used for both view and edit mode.</li>
-								<li>Use onkeyup event to invoke save function.</li>
-								<li>Include "_RO_" as attribute in input fields. </li>
-								<li>Include "_ROCLASS_" in input field's class attribute.</li>
-								<li>Include "_HIDE_" as attribute in elements to be hidden in view mode.</li>
+								<li>Include both view and edit controls at the same time.</li>
+								<li>Use &lt;span _VIEW_&gt; for displaying a field in view mode.</li>
+								<li>Use &lt;input _EDIT_&gt; for displaying a field in edit mode.</li>
+								<li>Use onchange event to invoke _CF_save function.</li>
+								<li>Include "_EDIT_" in elements to be hidden in view mode.</li>
 							</ul>
 						</td>
 						<td>
 							<textarea 	rows="10" 
 										cols="80" 
 										id="rowTemplate" 
-										name="rowTemplate">$!{settings.getRowTemplate()}</textarea>
+										name="rowTemplate">$!{settings.escapeHtml($settings.getRowTemplate())}</textarea>
 						</td>
 					</tr>
 				</tbody>
@@ -202,11 +207,11 @@
 $!{settings.getScript($true)}
 &lt;/script&gt;
 &lt;style type="text/css"&gt;
-$!{settings.getStyleContent()}
+$!{settings.getStyleContent($true)}
 &lt;style&gt;
 &lt;div&gt;
 $!{settings.getHiddenField("", $true)}
-$!{settings.getHtml($true)}
+$!{settings.escapeHtml($settings.getHtml($true))}
 &lt;/div&gt;
 &lt;script type="text/javascript"&gt;
 $!{settings.getInitScript($true)}
@@ -222,30 +227,56 @@ $!{settings.getStyleContent()}
 &lt;style&gt;
 &lt;div&gt;
 $!{settings.getHiddenField("")}
-$!{settings.getHtml()}
+$!{settings.escapeHtml($settings.getHtml())}
 &lt;/div&gt;
 &lt;script type="text/javascript"&gt;
 $!{settings.getInitScript()}
 &lt;/script&gt;
 		</textarea>
-		<h3>Edit (Preview): </h3>
 		<script type="text/javascript">
 			$!{settings.getScript()}
+			$!{settings.getScript($true)}
+			function editFormSubmit() {
+				$('#editFormResult').val('Form is valid: ' + document.forms['editForm'].checkValidity());
+			}
 		</script>
 		<style type="text/css">
 			$!{settings.getStyleContent()}
+			$!{settings.getStyleContent($true)}
 		</style>
-		<div style="width: 100%">
-			Hidden field: 
-			#disable_html_escaping()
-			$!{settings.getHiddenField("", $false, $true)}
-			#enable_html_escaping()
-			<input type="button" onclick="$!{settings.getInitScript()}" value="Run Load Script"/>
-			<br/>
-			Table:
-			#disable_html_escaping()
-			$!{settings.getHtml()}
-			#enable_html_escaping()
-		</div>
+		<form id="editForm">
+			<h3>Edit (Preview): </h3>
+			<div style="width: 100%">
+				Hidden field: 
+				#disable_html_escaping()
+				$!{settings.getHiddenField("", $false, $true)}
+				#enable_html_escaping()
+				<input type="button" onclick="$!{settings.getInitScript()}" value="Run Load Script"/>
+				<br/>
+				Table:
+				#disable_html_escaping()
+				$!{settings.getHtml()}
+				#enable_html_escaping()
+			</div>
+			<div>
+				<input type="button" value="Test Submit" onclick="editFormSubmit();"/>
+				<input type="text" readonly="readonly" id="editFormResult" value=""/>
+			</div>
+		</form>
+		<form id="viewForm">
+			<h3>View (Preview): </h3>
+			<div style="width: 100%">
+				Hidden field: 
+				#disable_html_escaping()
+				$!{settings.getHiddenField("", $true, $true)}
+				#enable_html_escaping()
+				<input type="button" onclick="$!{settings.getInitScript($true)}" value="Run Load Script"/>
+				<br/>
+				Table:
+				#disable_html_escaping()
+				$!{settings.getHtml($true)}
+				#enable_html_escaping()
+			</div>
+		</form>
 	</body>
 </html>

@@ -1,5 +1,8 @@
 package com.igsl.customfieldtypes.generictable;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,12 +36,13 @@ public class GenericTableSettings {
 	private static final String PARAM_TABLE = "table";
 	private static final String PARAM_ROW_TEMPLATE = "rowTemplate";
 	
-	private static final String CLASS_NO_DIRTY_WARNING = "ajs-dirty-warning-exempt";
+	// private static final String CLASS_NO_DIRTY_WARNING = "ajs-dirty-warning-exempt";
 	
 	private static final String CUSTOM_FIELD_ID_PLACEHOLDER = "_CF_";
-	private static final String READ_ONLY_PLACEHOLDER = "_RO_";
-	private static final String HIDE_PLACEHOLDER = "_HIDE_";
-	private static final String READ_ONLY_CLASS_PLACEHOLDER = "_ROCLASS_";
+	private static final String VIEW_PLACEHOLDER = "_VIEW_";
+	private static final String EDIT_PLACEHOLDER = "_EDIT_";
+	private static final String EDITCELL_PLACEHOLDER = "_EDITCELL_";
+	private static final String EDITROW_PLACEHOLDER = "_EDITROW_";
 	
 	private String customFieldId;
 	private String customFieldName;
@@ -95,8 +99,11 @@ public class GenericTableSettings {
 			+ "        _CF_addRow();\r\n"
 			+ "        var row = $('#_CF_tbody').find('tr:last');\r\n"
 			+ "        $(row).find('input.Field1').val(json['data'][idx]['Field1']);\r\n"
+			+ "        $(row).find('span.Field1').html(json['data'][idx]['Field1']);\r\n"
 			+ "        $(row).find('input.Field2').val(json['data'][idx]['Field2']);\r\n"
+			+ "        $(row).find('span.Field2').html(json['data'][idx]['Field2']);\r\n"
 			+ "        $(row).find('input.Field3').val(json['data'][idx]['Field3']);\r\n"
+			+ "        $(row).find('span.Field3').html(json['data'][idx]['Field3']);\r\n"
 			+ "    }\r\n"
 			+ "    if ($('#_CF_tbody').find('tr').length == 0) {\r\n"
 			+ "        _CF_toggleEmpty(true);\r\n"
@@ -113,7 +120,7 @@ public class GenericTableSettings {
 			+ "        var row = rows[idx];\r\n"
 			+ "        var field2 = $(row).find('input.Field2');\r\n"
 			+ "        field2[0].setCustomValidity('');\r\n"
-			+ "        var field3 = $(row).find('input.Field3');\r\n"
+			+ "        var fgetStyleContentield3 = $(row).find('input.Field3');\r\n"
 			+ "        field3[0].setCustomValidity('');\r\n"
 			+ "        if (Number(field2.val()) > Number(field3.val())) {\r\n"
 			+ "            field2[0].setCustomValidity('Field2 must be less than or equal to Field3');\r\n"
@@ -141,17 +148,19 @@ public class GenericTableSettings {
 			  "<!-- HTML table with an empty tbody with an id -->\r\n"
 			+ "<table class='_CF_'>\r\n"
 			+ "    <thead>\r\n" 
-			+ "        <th _HIDE_></th>\r\n"
-			+ "        <th>Field 1</th>\r\n" 
-			+ "        <th>Field 2</th>\r\n" 
-			+ "        <th>Field 3</th>\r\n" 
+			+ "        <tr>\r\n"
+			+ "            <th _EDITCELL_></th>\r\n"
+			+ "            <th>Field 1</th>\r\n" 
+			+ "            <th>Field 2</th>\r\n" 
+			+ "            <th>Field 3</th>\r\n" 
+			+ "        </tr>\r\n"
 			+ "    </thead>\r\n"
 			+ "    <tbody id='_CF_tbody'></tbody>\r\n"
 			+ "    <tfoot>\r\n"
 			+ "        <tr id='_CF_empty'>\r\n"
 			+ "            <td colspan='100%'>No record(s)</td>\r\n"
 			+ "        </tr>\r\n"
-			+ "        <tr _HIDE_>\r\n"
+			+ "        <tr _EDITROW_>\r\n"
 			+ "	           <td colspan='100%'>\r\n" 
 			+ "                <button type='button' onclick='_CF_addRow()'>\r\n"
 			+ "                    <span class='aui-icon aui-icon-small aui-iconfont-add'></span> Add\r\n"
@@ -163,14 +172,23 @@ public class GenericTableSettings {
 	private String rowTemplate = 
 			  "<template id='_CF_template'>\r\n" 
 			+ "    <tr>\r\n"
-			+ "        <td _HIDE_>\r\n" 
+			+ "        <td _EDITCELL_>\r\n" 
 			+ "            <button type='button' onclick='_CF_delRow(this.parentNode.parentNode)'>\r\n"
 			+ "                <span class='aui-icon aui-icon-small aui-iconfont-close-dialog'></span>\r\n"
 			+ "            </button>\r\n"
 			+ "        </td>\r\n"
-			+ "        <td><input _RO_ class='_ROCLASS_ Field1' type='text' value='' onkeyup='_CF_save()'/></td>\r\n" 
-			+ "        <td><input _RO_ class='_ROCLASS_ Field2' type='number' min='0' max='99' step='1' value='' onkeyup='_CF_save()'/></td>\r\n" 
-			+ "        <td><input _RO_ class='_ROCLASS_ Field3' type='number' min='0' max='99' step='1' value='' onkeyup='_CF_save()'/></td>\r\n" 
+			+ "        <td>\r\n"
+			+ "            <input _EDIT_ class='Field1' type='text' value='' onchange='_CF_save()'/>\r\n"
+			+ "            <span _VIEW_ class='Field1'></span>\r\n"
+			+ "        </td>\r\n" 
+			+ "        <td>\r\n"
+			+ "            <input _EDIT_ class='Field2' type='number' min='0' max='99' step='1' value='' onchange='_CF_save()'/>\r\n" 
+			+ "            <span _VIEW_ class='Field2'></span>\r\n"
+			+ "        </td>\r\n" 
+			+ "        <td>\r\n"
+			+ "            <input _EDIT_ class='Field3' type='number' min='0' max='99' step='1' value='' onchange='_CF_save()'/>\r\n" 
+			+ "            <span _VIEW_ class='Field3'></span>\r\n"
+			+ "        </td>\r\n" 
 			+ "    </tr>\r\n"
 			+ "</template>\r\n";
 	
@@ -246,16 +264,18 @@ public class GenericTableSettings {
 	
 	private String replacePlaceHolder(String s, boolean readOnly) {
 		if (readOnly) {
-			s = s.replaceAll(READ_ONLY_PLACEHOLDER, "readonly='readonly'");
-			s = s.replaceAll(HIDE_PLACEHOLDER, "style='display: none'");
+			s = s.replaceAll(EDITROW_PLACEHOLDER, "style='display: none'");
+			s = s.replaceAll(EDITCELL_PLACEHOLDER, "style='display: none'");
+			s = s.replaceAll(EDIT_PLACEHOLDER, "style='display: none'");
+			s = s.replaceAll(VIEW_PLACEHOLDER, "style='display: inline-block'");
 		} else {
-			s = s.replaceAll(READ_ONLY_PLACEHOLDER, "");
-			s = s.replaceAll(HIDE_PLACEHOLDER, "");
+			s = s.replaceAll(EDITROW_PLACEHOLDER, "style='display: table-row'");
+			s = s.replaceAll(EDITCELL_PLACEHOLDER, "style='display: table-cell'");
+			s = s.replaceAll(EDIT_PLACEHOLDER, "style='display: inline-block'");
+			s = s.replaceAll(VIEW_PLACEHOLDER, "style='display: none'");
 		}
 		s = s.replaceAll(CUSTOM_FIELD_ID_PLACEHOLDER, 
 				getCustomFieldId() + (readOnly? "_VIEW_" : ""));
-		s = s.replaceAll(READ_ONLY_CLASS_PLACEHOLDER, 
-				(readOnly? CLASS_NO_DIRTY_WARNING : CLASS_NO_DIRTY_WARNING));
 		return s;
 	}
 	
@@ -285,7 +305,10 @@ public class GenericTableSettings {
 	 * @return
 	 */
 	public String getStyleContent() {
-		return replacePlaceHolder(getStyle(), false);	// readOnly does not matter here
+		return getStyleContent(false);
+	}
+	public String getStyleContent(boolean readOnly) {
+		return replacePlaceHolder(getStyle(), readOnly);
 	}
 	
 	public String getInitScript() {
@@ -316,6 +339,12 @@ public class GenericTableSettings {
 		return result;
 	}
 	
+	public String escapeHtml(String s) {
+		s = s.replaceAll("<", "&lt;");
+		s = s.replaceAll(">", "&gt;");
+		return s;
+	}
+	
 	/**
 	 * Return table and row template
 	 * @return
@@ -329,6 +358,7 @@ public class GenericTableSettings {
 		sb.append(getRowTemplate());
 		String html = sb.toString();
 		html = replacePlaceHolder(html, readOnly);
+		LOGGER.debug("getHtml(): " + html);
 		return html;
 	}
 	

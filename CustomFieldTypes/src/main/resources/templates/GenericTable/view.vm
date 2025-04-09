@@ -8,7 +8,7 @@
 			$!{settings.getScript($true)}
 		</script>
 		<style type="text/css">
-			$!{settings.getStyleContent()}
+			$!{settings.getStyleContent($true)}
 		</style>
 		#disable_html_escaping()
 		$!{settings.getHiddenField($obj, $true)}
