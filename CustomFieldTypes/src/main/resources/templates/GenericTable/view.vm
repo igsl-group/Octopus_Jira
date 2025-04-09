@@ -1,0 +1,21 @@
+#if ($value)
+	#set ($obj = $value)
+#end
+#if ($obj)
+	#set ($json = $gson.fromJson($obj, $type))
+	#if ($json.data.size() != 0)
+		<script type="text/javascript">
+			$!{settings.getScript($true)}
+		</script>
+		<style type="text/css">
+			$!{settings.getStyleContent()}
+		</style>
+		#disable_html_escaping()
+		$!{settings.getHiddenField($obj, $true)}
+		$!{settings.getHtml($true)}
+		#enable_html_escaping()
+		<script type="text/javascript">
+			$!{settings.getInitScript($true)}
+		</script>
+	#end
+#end

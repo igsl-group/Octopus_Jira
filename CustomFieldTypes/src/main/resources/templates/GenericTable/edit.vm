@@ -1,0 +1,22 @@
+#controlHeader ($action $customField.id $customField.name $fieldLayoutItem.required $displayParameters.noHeader)
+#if ($value)
+	#if ($issue)
+		#set ($obj = $value)
+	#else
+		#set ($obj = $configs.default)
+	#end
+#end
+<script type="text/javascript">
+	$!{settings.getScript()}
+</script>
+<style type="text/css">
+	$!{settings.getStyleContent()}
+</style>
+#disable_html_escaping()
+$!{settings.getHiddenField($obj)}
+$!{settings.getHtml()}
+#enable_html_escaping()
+<script type="text/javascript">
+	$!{settings.getInitScript()}
+</script>
+#controlFooter ($action $customField.name $displayParameters.noHeader)

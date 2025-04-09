@@ -286,7 +286,7 @@
 		}
 		var field = $('#${customField.id}\\:totalHeadCountDay')[0];
 		if (field) {
-			field.value = sum.toFixed(0);
+			field.value = sum.toFixed(1);
 		}
 	}
 	

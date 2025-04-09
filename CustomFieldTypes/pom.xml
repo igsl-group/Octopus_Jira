@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.igsl</groupId>
     <artifactId>CustomFieldTypes</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 
     <organization>
         <name>Integrated Global Solutions Limited</name>
@@ -201,6 +201,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Atlassian removed some REST APIs needed by Plugin SDK. Bastards. -->
+		<skipAllPrompts>true</skipAllPrompts>
     </properties>
 
 </project>

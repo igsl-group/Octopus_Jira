@@ -1,0 +1,251 @@
+## i18n
+#set ($title = $i18n.getText('GenericTable.config.title'))
+#set ($name = $i18n.getText('GenericTable.config.name'))
+#set ($deleteButton = $i18n.getText("GenericTable.deleteButton"))
+#set ($addButton = $i18n.getText("GenericTable.addButton"))
+#set ($save = $i18n.getText('common.words.save'))
+#set ($cancel = $i18n.getText('common.words.cancel'))
+
+<html>
+	<head>
+		<title>$!{title}</title>
+		<!-- This is responsible for showing the left menu -->
+		<meta name="admin.active.section" content="admin_issues_menu/element_options_section/fields_section"/>
+    	<meta name="admin.active.tab" content="view_custom_fields"/>
+    	<style type="text/css">
+			table.table, table.table tr, table.table th, table.table td {
+				border: 1px solid; 
+				border-collapse: collapse;
+			}
+		</style>
+	</head>
+	<body>
+		#set ($settings = $action.getValue())
+		<h2 class="formtitle">Configure $!{settings.getCustomFieldName()} ($!{settings.getCustomFieldId()}):</h2>
+		<form action="GenericTableConfigurationItemAction.jspa" method="post">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Property</th>
+						<th>Notes</th>
+						<th style="text-align: left;">Value<br/>
+							<ul>
+								<li>"_CF_" will be substituted with "customfield_[#]_View_" in view mode.</li>
+								<li>"_CF_" will be substituted with "customfield_[#]" in edit mode.</li>
+								<li>"_RO_" will be substituted with "readonly='readonly'" in view mode.</li>
+								<li>"_ROCLASS_" will be substituted with "ajs-dirty-warning-exempt" in view mode, to suppress dirty form alert. Include it as input field's class.</li>
+								<li>"_HIDE_" will be substituted with "style='display: none'" in view mode.</li>
+								<li>This ensures element ids to be unique.</li>
+							</ul>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>JavaScript - Toggle Empty Row</td>
+						<td>JavaScript function to toggle the "no records" row.
+							<ul>
+								<li>This uses "_CF_empty" as id to locate the tr element.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsToggleEmpty" 
+										name="jsToggleEmpty">$!{settings.getJsToggleEmpty()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>JavaScript - Add Row</td>
+						<td>JavaScript function to add a new row to table.
+							<ul>
+								<li>This uses "_CF_tbody" as id to locate tbody</li>
+								<li>This uses "_CF_template" as id to locate row template.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsAddRow" 
+										name="jsAddRow">$!{settings.getJsAddRow()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>JavaScript - Delete Row</td>
+						<td>JavaScript function to delete a row from table.<br/>
+							<ul>
+								<li>Parameter is the tr element to be removed.</li>
+								<li>Invokes _CF_save() to update hidden field value.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsDelRow" 
+										name="jsDelRow">$!{settings.getJsDeleteRow()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>JavaScript - Load</td>
+						<td>JavaScript function to update value from hidden field to table.
+							<ul>
+								<li>This uses "_CF_" as id to locate hidden field.</li>
+								<li>Take JSON from hidden field.</li>
+								<li>Add rows to _CF_tbody and set input element values.</li>
+							</ul>						
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsLoad" 
+										name="jsLoad">$!{settings.getJsLoad()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>JavaScript - Save</td>
+						<td>JavaScript function to update value from table to hidden field.
+							<ul>
+								<li>This uses "_CF_" as id to locate hidden field.</li>
+								<li>Take values from "_CF_tbody".</li>
+								<li>JSON format: {"data":[ {"Field":"Value"}, ...]}</li>
+								<li>Save JSON to hidden field.</li>
+								<li>Invokes _CF_validation() to perform validation.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsSave" 
+										name="jsSave">$!{settings.getJsSave()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>JavaScript - Vaidation</td>
+						<td>JavaScript function to validate values.
+							<ul>
+								<li>This uses "_CF_tbody" as id to locate the table rows.</li>
+								<li>Call input field's .setCustomValidity() to set error message.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="jsValidation" 
+										name="jsValidation">$!{settings.getJsValidation()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>CSS Style</td>
+						<td>CSS styles.</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="style" 
+										name="style">$!{settings.getStyle()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>HTML Table</td>
+						<td>HTML table. 
+							<ul>
+								<li>Style the HTML table as needed.</li>
+								<li>The tbody must be empty and have id "_CF_tbody".</li>
+								<li>Input elements should not have id attribute (since there will be multiple rows).</li>
+								<li>Input elements can have name or class attributes to distinguish them.</li>
+								<li>Do not include a form element.</li>
+								<li>Include a row with id "_CF_empty". This will be displayed when there are no rows.</li>
+								<li>A hidden field with id and name "_CF_" will be added automatically before the table.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="20" 
+										cols="80" 
+										id="table" 
+										name="table">$!{settings.getTable()}</textarea>
+						</td>
+					</tr>
+					<tr>
+						<td>Row Template</td>
+						<td>HTML template for a single row.
+							<ul>
+								<li>Template should have id "_CF_template".</li>
+								<li>A row should include a delete button to invoke delete row function.</li>
+								<li>Input fields will be used for both view and edit mode.</li>
+								<li>Use onkeyup event to invoke save function.</li>
+								<li>Include "_RO_" as attribute in input fields. </li>
+								<li>Include "_ROCLASS_" in input field's class attribute.</li>
+								<li>Include "_HIDE_" as attribute in elements to be hidden in view mode.</li>
+							</ul>
+						</td>
+						<td>
+							<textarea 	rows="10" 
+										cols="80" 
+										id="rowTemplate" 
+										name="rowTemplate">$!{settings.getRowTemplate()}</textarea>
+						</td>
+					</tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="100%">
+							<input type="submit" id="Save" name="Save" value="Save"/>
+							<input type="submit" id="Cancel" name="Cancel" value="Cancel" />
+						</td>
+					</tr>
+				</tfoot>
+			</table>
+		</form>
+		<hr/>		
+		<h3>View (Source): </h3>
+		<textarea rows="10" cols="130" readonly="readonly">
+&lt;script type="text/javascript"&gt;
+$!{settings.getScript($true)}
+&lt;/script&gt;
+&lt;style type="text/css"&gt;
+$!{settings.getStyleContent()}
+&lt;style&gt;
+&lt;div&gt;
+$!{settings.getHiddenField("", $true)}
+$!{settings.getHtml($true)}
+&lt;/div&gt;
+&lt;script type="text/javascript"&gt;
+$!{settings.getInitScript($true)}
+&lt;/script&gt;
+		</textarea>
+		<h3>Edit (Source): </h3>
+		<textarea rows="10" cols="130" readonly="readonly">
+&lt;script type="text/javascript"&gt;
+$!{settings.getScript()}
+&lt;/script&gt;
+&lt;style type="text/css"&gt;
+$!{settings.getStyleContent()}
+&lt;style&gt;
+&lt;div&gt;
+$!{settings.getHiddenField("")}
+$!{settings.getHtml()}
+&lt;/div&gt;
+&lt;script type="text/javascript"&gt;
+$!{settings.getInitScript()}
+&lt;/script&gt;
+		</textarea>
+		<h3>Edit (Preview): </h3>
+		<script type="text/javascript">
+			$!{settings.getScript()}
+		</script>
+		<style type="text/css">
+			$!{settings.getStyleContent()}
+		</style>
+		<div style="width: 100%">
+			Hidden field: 
+			#disable_html_escaping()
+			$!{settings.getHiddenField("", $false, $true)}
+			#enable_html_escaping()
+			<input type="button" onclick="$!{settings.getInitScript()}" value="Run Load Script"/>
+			<br/>
+			Table:
+			#disable_html_escaping()
+			$!{settings.getHtml()}
+			#enable_html_escaping()
+		</div>
+	</body>
+</html>

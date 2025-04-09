@@ -77,6 +77,22 @@
 		</actions> 
 	</webwork1>
 	
+	<!-- Generic Table -->
+	<customfield-type name="Generic Table" i18n-name-key="GenericTable.name" key="GenericTable" class="com.igsl.customfieldtypes.generictable.GenericTable">
+		<description>Generic table (not supported in Jira Service Management customer portal)</description>
+		<resource type="velocity" name="view" location="templates/GenericTable/view.vm"/>
+		<resource type="velocity" name="edit" location="templates/GenericTable/edit.vm"/>
+		<resource type="velocity" name="xml" location="/templates/plugins/fields/xml/xml-basictext.vm"/>
+	</customfield-type>
+	<webwork1 key="GenericTableConfig" name="Generic Table Configuration" class="java.lang.Object">
+		<description>Generic Table</description>
+			<actions>
+				<action name="com.igsl.customfieldtypes.generictable.GenericTableConfigurationItemAction" alias="GenericTableConfigurationItemAction"> 
+				<view name="input">/templates/GenericTable/edit-config.vm</view>
+			</action>
+		</actions> 
+	</webwork1>
+	
 	<!-- Product Packing Note -->
 	<customfield-type name="Product/File Packing Note" i18n-name-key="ProductPackingNote.name" key="ProductPackingNote" class="com.igsl.customfieldtypes.productpackingnote.ProductPackingNote">
 		<description>Product/File Packing Note</description>

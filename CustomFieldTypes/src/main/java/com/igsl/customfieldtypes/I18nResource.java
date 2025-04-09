@@ -16,6 +16,12 @@ public class I18nResource {
 	// StaticImage
 	public static final String STATICIMAGE_NAME = "StaticImage.name";
 	
+	// GenericTable
+	public static final String GENERICTABLE_CONFIG_NAME = "GenericTable.config.name";
+	public static final String GENERICTABLE_CONFIG_TITLE = "GenericTable.config.title";
+	public static final String GENERICTABLE_DELETE_BUTTON = "GenericTable.deleteButton";
+	public static final String GENERICTABLE_ADD_BUTTON = "GenericTable.addButton";
+	
 	// EffortTable
 	public static final String EFFORTTABLE_NAME = "EffortTable.name";
 	public static final String EFFORTTABLE_TASK_LABEL = "EffortTable.task.label";
