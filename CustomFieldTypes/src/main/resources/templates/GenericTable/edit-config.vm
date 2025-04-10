@@ -23,7 +23,7 @@
 		#set ($settings = $action.getValue())
 		<h2 class="formtitle">Configure $!{settings.getCustomFieldName()} ($!{settings.getCustomFieldId()}):</h2>
 		<form action="GenericTableConfigurationItemAction.jspa" method="post">
-			<input type="hidden" name="customFieldId" value="$!{action.getFieldId()}"/>
+			<input type="hidden" name="fieldConfigId" value="$!{action.getFieldConfigId()}"/>
 			<table class="table">
 				<thead>
 					<tr>

@@ -10,6 +10,8 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.managedconfiguration.ManagedConfigurationItemService;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
+import com.atlassian.jira.issue.fields.config.manager.FieldConfigSchemeManager;
 import com.atlassian.jira.web.action.admin.customfields.AbstractEditConfigurationItemAction;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 
@@ -26,8 +28,8 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 	private static final String PARAM_FIELD_CONFIG_ID = "fieldConfigId";
 		
 	// Custom field configuration URL
-	private static final String PARENT_PAGE_URL = "/secure/admin/ConfigureCustomField!default.jspa?customFieldId=";
-	private static final String MY_PAGE_URL = "/secure/admin/GenericTableConfigurationItemAction.jspa?customFieldId=";
+	private static final String PARENT_PAGE_URL = "/secure/admin/ConfigureCustomField!default.jspa?" + PARAM_FIELD_CONFIG_ID + "=";
+	private static final String MY_PAGE_URL = "/secure/admin/GenericTableConfigurationItemAction.jspa?" + PARAM_FIELD_CONFIG_ID + "=";
 	
 	// Web action key words
 	private static final String SAVE = "Save";
@@ -36,6 +38,8 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 
 	protected ManagedConfigurationItemService service;
 	private static final CustomFieldManager CUSTOM_FIELD_MANAGER = ComponentAccessor.getCustomFieldManager();
+	private static final FieldConfigSchemeManager FIELD_CONFIG_SCHEME_MANAGER = 
+			ComponentAccessor.getFieldConfigSchemeManager();
 	
 	private String fieldId;	// Without customfield_
 	private String customFieldName;
@@ -50,12 +54,9 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 	}
 	
 	public GenericTableSettings getValue() {
-		String id = "customfield_" + this.getHttpRequest().getParameter(PARAM_CUSTOM_FIELD_ID);
-		String name = "";
-		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(id);
-		if (cf != null) {
-			name = cf.getName();
-		}
+		String id = fieldId;
+		String name = customFieldName;
+		LOGGER.debug("getSettings: " + id + ", " + name);
 		return GenericTableSettings.getSettings(id, name);
 	}
 	
@@ -65,45 +66,52 @@ public class GenericTableConfigurationItemAction extends AbstractEditConfigurati
 	
 	// Strangely setFieldConfigId() is never invoked. So instead, grab custom field ID from request parameters if possible
 	// The HTTP parameters available is... not consistent? In local site, both fieldConfigId and customFieldId are available. In Octopus site, only fieldConfigId is. 
-	private void refreshData() {
-		this.fieldId = this.getHttpRequest().getParameter(PARAM_CUSTOM_FIELD_ID);
-		LOGGER.debug("WTF fieldId: " + this.fieldId);
-		String fieldConfigId = this.getHttpRequest().getParameter(PARAM_FIELD_CONFIG_ID);
-		if (fieldConfigId != null) {
-			long id = Long.parseLong(fieldConfigId);
-			this.setFieldConfigId(id);
+	private boolean refreshData() {
+		String fcid = this.getHttpRequest().getParameter(PARAM_FIELD_CONFIG_ID);
+		LOGGER.info("refreshData Parameter: [" + fcid + "]");
+		if (fcid != null) {
+			long id = Long.parseLong(fcid);
+			setFieldConfigId(id);
+			FieldConfigScheme scheme = FIELD_CONFIG_SCHEME_MANAGER.getFieldConfigScheme(id);
+			if (scheme != null) {
+				fieldId = scheme.getField().getId();
+				LOGGER.info("refreshData fieldId: [" + fieldId + "]");
+				customFieldName = "";
+				CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject(this.fieldId);
+				if (cf != null) {
+					customFieldName = cf.getName();
+				}
+				LOGGER.info("refreshData customFieldName: [" + customFieldName + "]");
+				this.myPageURL = MY_PAGE_URL + id;
+				LOGGER.info("refreshData myPageURL: [" + myPageURL + "]");
+				this.parentPageURL = PARENT_PAGE_URL + id;
+				return true;
+			}
 		}
-		this.customFieldName = "";
-		CustomField cf = CUSTOM_FIELD_MANAGER.getCustomFieldObject("customfield_" + this.fieldId);
-		if (cf != null) {
-			this.customFieldName = cf.getName();
-		}
-		this.myPageURL = MY_PAGE_URL + this.fieldId;
-		this.parentPageURL = PARENT_PAGE_URL + this.fieldId;
-		LOGGER.debug("WTF customFieldName: " + this.customFieldName);
-		LOGGER.debug("WTF myPageURL: " + this.myPageURL);
-		LOGGER.debug("WTF parentPageURL: " + this.parentPageURL);
+		return false;
 	}
 	
 	// Expected return value is name of associated view
 	@Override
 	protected String doExecute() throws Exception {
 		LOGGER.debug("doExecute");
-		refreshData();
+		if (!refreshData()) {
+			String msg = "Unable to locate custom field";
+			LOGGER.error(msg);
+			throw new Exception(msg);
+		}
 		GenericTableSettings settings = GenericTableSettings.parseParameters(this.getHttpRequest());
 		if (settings != null) {
-			settings.setCustomFieldId("customfield_" + this.fieldId);
+			settings.setCustomFieldId(fieldId);
 			settings.setCustomFieldName(customFieldName);
 			String save = getHttpRequest().getParameter(SAVE);
 	        String cancel = getHttpRequest().getParameter(CANCEL);
 	        if (save != null && save.equals(SAVE)) {
 	        	// Save data
-	        	LOGGER.debug("WTF Saving: " + settings);
+	        	LOGGER.debug("saveSettings: " + settings);
 				settings.saveSettings();
-				LOGGER.debug("WTF Saved, Going to: " + this.myPageURL);
 				return getRedirect(this.myPageURL);
 	        } else if (cancel != null && cancel.equals(CANCEL)) {
-				LOGGER.debug("WTF Cancel, Going to: " + this.parentPageURL);
 	        	return getRedirect(this.parentPageURL);
 	        }
 		}
