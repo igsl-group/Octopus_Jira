@@ -639,7 +639,6 @@ function ProcessImage {
 				$Markdown += "|height=${ImageHeight}"
 			}
 			$Markdown += "!"
-			Write-Host Markdown: $Markdown
 			$Body = @{
 				'fields' = @{
 					"${TargetField}" = "${Markdown}"
