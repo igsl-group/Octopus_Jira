@@ -5,6 +5,14 @@ Read data of CustomFieldTypes plugin from CSV and import them to Jira Cloud.
 .DESCRIPTION
 Export CSV from Jira DC using GenerateReport.ps1 to use in this script.
 
+.PARAMETER ApprovalPath_Translate
+Translate exported data for Approval Path.
+
+.PARAMETER ApprovalPath
+Import translated data for Approval Path. 
+The approval history will be converted to a readable format.
+A Paragraph field should be prepared in Jira Cloud.
+
 .PARAMETER PackingNote
 Import data for Product/File Packing Note custom fields.
 A table grid should be defined in Table Grid NG in Jira Cloud.
@@ -19,13 +27,15 @@ A Paragraph custom field should be prepared in Jira Cloud.
 
 .PARAMETER StaticImage
 Import data for Static Image custom fields. 
-A Paragraph custom field should be prepared in Jira Cloud. You can optionally make this field read-only with ScriptRunner Behaviour.
+A Paragraph custom field should be prepared in Jira Cloud. 
+You can optionally make this field read-only with ScriptRunner Behaviour.
 
 .PARAMETER ChangeRequest_Translate
 Translate exported data for Change Request custom fields, converting from issue id to issue key.
 
 .PARAMETER ChangeRequest
-Import data for Change Request fields.
+Import data for Change Request fields. 
+The data will be imported as Linked Work Items in Jira Cloud.
 
 .PARAMETER In
 Input CSV path.
@@ -54,7 +64,13 @@ Destination table grid name or custom field id.
 .PARAMETER ImageURL
 Static image URL. This value will be updated to all issues found by ImageJQL.
 
-.PARAMETER ImageJQL
+.PARAMETER ImageWidth
+Image width in pixels. Default is 0 for auto.
+
+.PARAMETER ImageHeight
+Image height in pixels. Default is 0 for auto.
+
+.PARAMETER JQL
 JQL to locate issues with Static Image field.
 
 .PARAMETER DCProtocol
@@ -153,7 +169,9 @@ Output directory, defaults to current directory.
 		[-JiraToken <API token, prompt if not provided>]
 		-TargetField <destination paragraph field in Jira Cloud>
 		-ImageURL <URL of static image to be displayed>
-		-ImageJQL <JQL to search for issues to update>
+		[-ImageWidth <Width of image in pixels, skip both ImageWidth and ImageHeight for auto size>]
+		[-ImageHeight <Height of image in pixels, skip both ImageWidth and ImageHeight for auto size>]
+		-JQL <JQL to search for issues to update>
 
 	Imports Static Image custom field in Jira DC into a Paragraph field in Jira Cloud.
 
@@ -185,64 +203,76 @@ Output directory, defaults to current directory.
 	Imports translated Change Request data into Linked Issues field in Jira Cloud.
 #>
 Param(
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
+	[switch] $ApprovalPath_Translate,
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[switch] $ApprovalPath,
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
 	[switch] $PackingNote,
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]
 	[switch] $EffortTable,
-	[Parameter(Mandatory, ParameterSetName="URL")]
+	[Parameter(Mandatory, ParameterSetName='URL')]
 	[switch] $URL,
-	[Parameter(Mandatory, ParameterSetName="StaticImage")]
+	[Parameter(Mandatory, ParameterSetName='StaticImage')]
 	[switch] $StaticImage,
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest_Translate")]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest_Translate')]
 	[switch] $ChangeRequest_Translate,
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest")]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest')]
 	[switch] $ChangeRequest,
 
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]
-	[Parameter(Mandatory, ParameterSetName="URL")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest_Translate")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]
+	[Parameter(Mandatory, ParameterSetName='URL')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest_Translate')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest')]
 	[string] $In,
 
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]
-	[Parameter(Mandatory, ParameterSetName="URL")]
-	[Parameter(Mandatory, ParameterSetName="StaticImage")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]
+	[Parameter(Mandatory, ParameterSetName='URL')]
+	[Parameter(Mandatory, ParameterSetName='StaticImage')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest')]
 	[string] $JiraDomain,
 
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]	
-	[Parameter(Mandatory, ParameterSetName="URL")]
-	[Parameter(Mandatory, ParameterSetName="StaticImage")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]	
+	[Parameter(Mandatory, ParameterSetName='URL')]
+	[Parameter(Mandatory, ParameterSetName='StaticImage')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest')]
 	[string] $JiraEmail,
 
-	[Parameter(ParameterSetName="PackingNote")]
-	[Parameter(ParameterSetName="EffortTable")]
-	[Parameter(ParameterSetName="URL")]
-	[Parameter(ParameterSetName="StaticImage")]
-	[Parameter(ParameterSetName="ChangeRequest")]
+	[Parameter(ParameterSetName='ApprovalPath')]
+	[Parameter(ParameterSetName='PackingNote')]
+	[Parameter(ParameterSetName='EffortTable')]
+	[Parameter(ParameterSetName='URL')]
+	[Parameter(ParameterSetName='StaticImage')]
+	[Parameter(ParameterSetName='ChangeRequest')]
 	[string] $JiraToken,
 
-	[Parameter(ParameterSetName="PackingNote")]
-	[Parameter(ParameterSetName="EffortTable")]
+	[Parameter(ParameterSetName='PackingNote')]
+	[Parameter(ParameterSetName='EffortTable')]
 	[string] $TableGridDomain = 'databuckets.net',
 
-	[Parameter(ParameterSetName="PackingNote")]
-	[Parameter(ParameterSetName="EffortTable")]
+	[Parameter(ParameterSetName='PackingNote')]
+	[Parameter(ParameterSetName='EffortTable')]
 	[string] $TableGridToken,
 
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]	
-	[Parameter(Mandatory, ParameterSetName="URL")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest_Translate")]
-	[Parameter(Mandatory, ParameterSetName="ChangeRequest")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]
+	[Parameter(Mandatory, ParameterSetName='URL')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest_Translate')]
+	[Parameter(Mandatory, ParameterSetName='ChangeRequest')]
 	[string] $SourceField,
 
-	[Parameter(Mandatory, ParameterSetName="PackingNote")]
-	[Parameter(Mandatory, ParameterSetName="EffortTable")]
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath')]
+	[Parameter(Mandatory, ParameterSetName='PackingNote')]
+	[Parameter(Mandatory, ParameterSetName='EffortTable')]
 	[Parameter(Mandatory, ParameterSetName='URL')]
 	[Parameter(Mandatory, ParameterSetName='StaticImage')]
 	[string] $TargetField,
@@ -250,18 +280,28 @@ Param(
 	[Parameter(Mandatory, ParameterSetName='StaticImage')]
 	[string] $ImageURL,
 
-	[Parameter(Mandatory, ParameterSetName='StaticImage')]
-	[string] $ImageJQL,
+	[Parameter(ParameterSetName='StaticImage')]
+	[int] $ImageWidth = 0,
 
+	[Parameter(ParameterSetName='StaticImage')]
+	[int] $ImageHeight = 0,
+
+	[Parameter(Mandatory, ParameterSetName='StaticImage')]
+	[string] $JQL,
+
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
 	[Parameter(ParameterSetName='ChangeRequest_Translate')]
 	[string] $DCProtocol = 'https',
 
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
 	[Parameter(Mandatory, ParameterSetName='ChangeRequest_Translate')]
 	[string] $DCDomain,
 
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
 	[Parameter(Mandatory, ParameterSetName='ChangeRequest_Translate')]
 	[string] $DCUser,
 
+	[Parameter(Mandatory, ParameterSetName='ApprovalPath_Translate')]
 	[Parameter(ParameterSetName='ChangeRequest_Translate')]
 	[string] $DCPass,
 
@@ -558,8 +598,26 @@ function ProcessImage {
 	param (
 		[string] $TargetField,
 		[string] $ImageURL,
+		[int] $ImageWidth,
+		[int] $ImageHeight,
 		[string] $ImageJQL
 	)
+	if (($ImageWidth -eq 0) -and ($ImageHeight -eq 0)) {
+		# Calculate image size
+		$WebClient = New-Object System.Net.WebClient
+		$ImageStream = $Null
+		try {
+			$ImageStream = $WebClient.OpenRead($ImageURL)
+			$Image = [System.Drawing.Image]::FromStream($ImageStream)
+			$ImageWidth = $Image.Width
+			$ImageHeight = $Image.Height
+		} finally {
+			$WebClient.Dispose()
+			if ($ImageStream) {
+				$ImageStream.Dispose()
+			}
+		}
+	}
 	$NextPageToken = $Null
 	$Total = 0
 	$Success = 0
@@ -572,9 +630,19 @@ function ProcessImage {
 			Write-Host -NoNewLine Processing $IssueKey ...
 			$Url = "https://${JiraDomain}/rest/api/latest/issue/${IssueKey}"
 			$Method = 'PUT'
+			$Markdown = "!${ImageURL}"
+			if (($ImageWidth -ne 0) -and ($ImageHeight -ne 0)) {
+				$Markdown += "|width=${ImageWidth},height=${ImageHeight}"
+			} elseif (($ImageWidth -ne 0) -and ($ImageHeight -eq 0)) {
+				$Markdown += "|width=${ImageWidth}"
+			} elseif (($ImageHeight -ne 0) -and ($ImageWidth -eq 0)) {
+				$Markdown += "|height=${ImageHeight}"
+			}
+			$Markdown += "!"
+			Write-Host Markdown: $Markdown
 			$Body = @{
 				'fields' = @{
-					"${TargetField}" = "!${ImageURL}!"
+					"${TargetField}" = "${Markdown}"
 				}
 			}
 			$Payload = $Body | ConvertTo-Json -Depth 100
@@ -689,12 +757,121 @@ function ProcessChangeRequest {
 	Write-Host Links added/total: ${Success}/${Total}
 }
 
+function GetDCUserInfo {
+	param (
+		[string] $UserKey
+	)
+	$Resp = WebRequest "${DCProtocol}://${DCDomain}/rest/api/latest/user?key=${UserKey}" 'GET' $DCAuthHeader
+	if ($Resp.StatusCode -eq 200) {
+		$Json = $Resp.Content | ConvertFrom-Json
+		$Output = $Json.displayName + ' (' + $Json.emailAddress + ')'
+		$Output
+	} else {
+		$UserKey
+	}
+}
+
+function TranslateApprovalPath {
+	param (
+		[string] $SourceField,
+		[object] $CsvData
+	)
+	$Total = 0
+	foreach ($Row in $CsvData) {
+		$Total += 1
+		$IssueKey = $Row."Issue Key"
+		$Json = $Row."$SourceField" | ConvertFrom-Json
+		Write-Host Processing issue $IssueKey ...
+		$Output = ''
+		# Get approval names from settings
+		if ($Json.settings) {
+			foreach ($ApprovalSetting in $Json.settings.psobject.Properties) {
+				$ApprovalName = $ApprovalSetting.Name
+				$Output += '- ' + $ApprovalName + ": `n"
+				if ($Json.history."${ApprovalName}") {
+					$ApprovalItems = $Json.history."${ApprovalName}"
+					if ($ApprovalItems -and $ApprovalItems.psobject.Properties.Count -gt 0) {
+						foreach ($ApprovalItem in $ApprovalItems.psobject.Properties) {
+							$ApprovalData = $ApprovalItem.Value
+							$Output += "`t- "
+							if ($ApprovalData.approved) {
+								$Output += 'Approved by '
+							} else {
+								$Output += 'Rejected by '
+							}
+							if ($ApprovalData.delegated) {
+								$Approver = (GetDCUserInfo($ApprovalData.delegated)) + ' on behalf of ' + (GetDCUserInfo($ApprovalData.approver))
+							} else {
+								$Approver = GetDCUserInfo($ApprovalData.approver)
+							}
+							$Output += $Approver + ' at ' + $ApprovalData.approvalDate + "`n"
+						}
+					} else {
+						$Output += "`t- No approval record`n"
+					}
+				} else {
+					$Output += "`t- No approval record`n"
+				}
+			}
+		}
+		$Map = @{}
+		$Map."Issue Key" = $IssueKey
+		$Map."$SourceField" = $Output
+		$Obj = New-Object PsObject -Property $Map
+		Export-Csv -Path $Out -Append -NoTypeInformation -InputObject $Obj
+	}
+	Write-Host Issues translated: ${Total}
+}
+
+function ProcessApprovalPath {
+	param (
+		[string] $SourceField,
+		[string] $TargetField,
+		[object] $CsvData
+	)
+	$Total = 0
+	$Success = 0
+	foreach ($Row in $CsvData) {
+		$IssueKey = $Row."Issue Key"
+		$Message = $Row."$SourceField"
+		$Total = $Total + 1
+		Write-Host -NoNewLine Processing $IssueKey ...
+		$Url = "https://${JiraDomain}/rest/api/latest/issue/${IssueKey}"
+		$Method = 'PUT'
+		$Body = @{
+			'fields' = @{
+				"${TargetField}" = "${Message}"
+			}
+		}
+		$Payload = $Body | ConvertTo-Json -Depth 100
+		$Resp = WebRequest $Url $Method $JiraAuthHeader $Payload
+		Write-Host $Resp.StatusCode
+		if (($Resp.StatusCode -band 200) -eq 200) {
+			$Success = $Success + 1
+		}
+		LogResult $IssueKey $Url $Method $Payload $Resp
+	}
+	Write-Host Issues updated/total: ${Success}/${Total}
+}
+
 # Main
 $Timestamp = $(Get-Date -Format 'yyyyMMddHHmmss')
 $JiraAuthHeader = @{}
 $TableGridAuthHeader = @{}
 $DCAuthHeader = @{}
-if ($EffortTable) {
+if ($ApprovalPath_Translate) {
+	$DCAuthHeader = GetDCAuthHeader
+	$FileName = $In | Split-Path -LeafBase
+	$Out = "${OutDir}\${FileName}.Translated.csv"
+	$CsvData = Import-Csv -Path $In
+	TranslateApprovalPath $SourceField $CsvData
+} elseif ($ApprovalPath) {
+	$JiraAuthHeader = GetJiraAuthHeader
+	$FileName = $In | Split-Path -LeafBase
+	$Out = "${OutDir}\${FileName}.Result.${Timestamp}.csv"
+	$CsvData = Import-Csv -Path $In
+	ProcessApprovalPath $SourceField $TargetField $CsvData
+} elseif ($EffortTable) {
 	$JiraAuthHeader = GetJiraAuthHeader
 	$AccountId = GetJiraAccountId
 	$TableGridAuthHeader = GetTableGridAuthHeader $AccountId
@@ -723,20 +900,18 @@ if ($EffortTable) {
 } elseif ($StaticImage) {
 	$JiraAuthHeader = GetJiraAuthHeader
 	$Out = "${OutDir}\StaticImage.Result.${Timestamp}.csv"
-	ProcessImage $TargetField $ImageURL $ImageJQL
+	ProcessImage $TargetField $ImageURL $ImageWidth $ImageHeight $JQL
 } elseif ($ChangeRequest_Translate) {
 	$DCAuthHeader = GetDCAuthHeader
 	$FileName = $In | Split-Path -LeafBase
 	$Out = "${OutDir}\${FileName}.Translated.csv"
 	$CsvData = Import-Csv -Path $In
-	# Translate issueId to issue key
 	TranslateChangeRequest $SourceField $CsvData
 } elseif ($ChangeRequest) {
 	$JiraAuthHeader = GetJiraAuthHeader
 	$FileName = $In | Split-Path -LeafBase
 	$Out = "${OutDir}\${FileName}.Result.${Timestamp}.csv"
 	$CsvData = Import-Csv -Path $In
-	# Update issues
 	ProcessChangeRequest $SourceField $TargetField $IssueLinkName $IssueLinkDirection $CsvData
 }
 Write-Host Output written to $Out
