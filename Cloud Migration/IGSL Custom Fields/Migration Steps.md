@@ -108,11 +108,35 @@ Create a new custom field to store legacy approval history for viewing.
 1. Add the field to appropriate screens.
 1. Note the custom field id.
 ### Production/File Packing Note
-Create a new table grid.
-1. TODO
+1. Gear | Marketplace Apps | Table Grid.
+1. Click Add Grid.
+1. Select Grid Field and click Confirm.
+1. Enter "Product/File Packing Note" in Name.
+1. Enter a description if needed.
+1. In Scopes, select the target project(s) and issue type(s).
+1. In Configuration, delete the default columns by clicking on their X.
+1. For each row, click Add new column, enter the following details and click Add: 
+    | Column type | Identifier | Title | Default value | Cell value required | Summary label | Aggregation operation | 
+    |-------------|------------|-------|---------------|---------------------|---------------|-----------------------|
+    | String | Name | Name | -Blank- | Yes | -Blank- | -Blank- | 
+    | String | Version | Version | -Blank- | No | -Blank- | -Blank- |
+    | String | MD5Signature | MD5 Signature | -Blank- | No | -Blank- | -Blank- |
+1. Click Save.
 ### Effort Table
-Create a new table grid.
-1. TODO
+1. Gear | Marketplace Apps | Table Grid.
+1. Click Add Grid.
+1. Select Grid Field and click Confirm.
+1. Enter "Effort Table" in Name.
+1. Enter a description if needed.
+1. In Scopes, select the target project(s) and issue type(s).
+1. In Configuration, delete the default columns by clicking on their X.
+1. For each row, click Add new column, enter the following details and click Add: 
+    | Column type | Identifier | Title | Default value | Cell value required | Summary label | Aggregation operation | 
+    |-------------|------------|-------|---------------|---------------------|---------------|-----------------------|
+    | String | Task | Task | -Blank- | Yes | -Blank- | -Blank- | 
+    | Number | HeadCountDay | Head Count Day | 0 | Yes | Total Head Count Day | Sum |
+    | Number | Expenses | Expenses | 0 | Yes | Total Expenses | Sum |
+1. Click Save.
 ### URL 
 Create a new custom field to store URLs.
 1. Gear | Work items | Fields.
